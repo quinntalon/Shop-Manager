@@ -46,7 +46,7 @@ export default function Layout({ children }: LayoutProps) {
 
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
   const businessName = settings?.businessName || "Nexus POS";
-  const logoUrl = settings?.logoUrl ? `${BASE_URL}/api/storage${settings.logoUrl}` : null;
+  const logoUrl = settings?.logoUrl ?? null;
 
   const allNavItems: { href: string; label: string; icon: typeof LayoutDashboard; permission: Permission }[] = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard" },

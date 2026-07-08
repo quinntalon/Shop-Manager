@@ -15,9 +15,9 @@ import { cn } from "@/lib/utils";
 
 const BASE_URL = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-function logoUrl(objectPath: string | null | undefined): string | null {
-  if (!objectPath) return null;
-  return `${BASE_URL}/api/storage${objectPath}`;
+function logoUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  return url;
 }
 
 const COLOR_PRESETS: { name: string; value: string }[] = [
@@ -92,7 +92,7 @@ export default function SettingsPage() {
 
   const { uploadFile, isUploading } = useUpload({
     onSuccess: (response) => {
-      setLogoPath(response.objectPath);
+      setLogoPath(response.url);
     },
     onError: (err) => {
       toast({

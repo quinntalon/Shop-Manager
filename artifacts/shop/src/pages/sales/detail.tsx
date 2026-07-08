@@ -6,11 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Receipt, Printer, ImagePlus } from "lucide-react";
 
-const BASE_URL = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-function photoUrl(objectPath: string | null | undefined): string | null {
-  if (!objectPath) return null;
-  return `${BASE_URL}/api/storage${objectPath}`;
+function photoUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  return url;
 }
 
 export default function SaleDetail() {

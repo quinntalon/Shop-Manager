@@ -249,7 +249,7 @@ function ClerkProviderWithRoutes() {
 
   const businessName = settings?.businessName || "Nexus POS";
   const logoImageUrl = settings?.logoUrl
-    ? `${window.location.origin}${basePath}/api/storage${settings.logoUrl}`
+    ? settings.logoUrl
     : `${window.location.origin}${basePath}/logo.svg`;
   const colorPrimary = settings?.primaryColor
     ? `hsl(${settings.primaryColor})`

@@ -19,11 +19,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Search, Plus, Minus, Trash2, ShoppingCart, ImagePlus, Banknote, CreditCard, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const BASE_URL = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-function photoUrl(objectPath: string | null | undefined): string | null {
-  if (!objectPath) return null;
-  return `${BASE_URL}/api/storage${objectPath}`;
+function photoUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  return url;
 }
 
 interface CartItem {
