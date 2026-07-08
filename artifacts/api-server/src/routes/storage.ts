@@ -10,6 +10,14 @@ import { ObjectPermission } from "../lib/objectAcl";
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
 
+function isStorageConfigError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return (
+    msg.includes("PRIVATE_OBJECT_DIR not set") ||
+    msg.includes("PUBLIC_OBJECT_SEARCH_PATHS not set")
+  );
+}
+
 /**
  * POST /storage/uploads/request-url
  *
@@ -38,6 +46,12 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
       }),
     );
   } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes("PRIVATE_OBJECT_DIR not set") || msg.includes("PUBLIC_OBJECT_SEARCH_PATHS not set")) {
+      req.log.warn({ err: error }, "Object storage not configured");
+      res.status(503).json({ error: "Object storage is not configured on this server." });
+      return;
+    }
     req.log.error({ err: error }, "Error generating upload URL");
     res.status(500).json({ error: "Failed to generate upload URL" });
   }
@@ -72,6 +86,11 @@ router.get("/storage/public-objects/*filePath", async (req: Request, res: Respon
       res.end();
     }
   } catch (error) {
+    if (isStorageConfigError(error)) {
+      req.log.warn({ err: error }, "Object storage not configured");
+      res.status(503).json({ error: "Object storage is not configured on this server." });
+      return;
+    }
     req.log.error({ err: error }, "Error serving public object");
     res.status(500).json({ error: "Failed to serve public object" });
   }
@@ -121,6 +140,11 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
     if (error instanceof ObjectNotFoundError) {
       req.log.warn({ err: error }, "Object not found");
       res.status(404).json({ error: "Object not found" });
+      return;
+    }
+    if (isStorageConfigError(error)) {
+      req.log.warn({ err: error }, "Object storage not configured");
+      res.status(503).json({ error: "Object storage is not configured on this server." });
       return;
     }
     req.log.error({ err: error }, "Error serving object");

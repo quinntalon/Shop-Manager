@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { db, salesTable, saleItemsTable, productsTable } from "@workspace/db";
 import {
   ListSalesQueryParams,
@@ -61,7 +61,7 @@ router.get("/sales", requirePermission("sales"), async (req, res): Promise<void>
   const sales = await db
     .select()
     .from(salesTable)
-    .orderBy(salesTable.createdAt)
+    .orderBy(desc(salesTable.createdAt))
     .limit(limit)
     .offset(offset);
 
@@ -107,7 +107,7 @@ router.get("/sales", requirePermission("sales"), async (req, res): Promise<void>
     })),
   }));
 
-  res.json(result.reverse());
+  res.json(result);
 });
 
 router.post("/sales", requirePermission("sales"), async (req, res): Promise<void> => {

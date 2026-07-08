@@ -126,12 +126,13 @@ function Calendar({
       }}
       components={{
         Root: ({ className, rootRef, ...props }) => {
+          const divProps = props as unknown as React.HTMLAttributes<HTMLDivElement>
           return (
             <div
               data-slot="calendar"
-              ref={rootRef}
+              ref={rootRef as React.Ref<HTMLDivElement>}
               className={cn(className)}
-              {...props}
+              {...divProps}
             />
           )
         },
@@ -158,7 +159,7 @@ function Calendar({
         DayButton: CalendarDayButton,
         WeekNumber: ({ children, ...props }) => {
           return (
-            <td {...props}>
+            <td {...(props as React.TdHTMLAttributes<HTMLTableDataCellElement>)}>
               <div className="flex size-[--cell-size] items-center justify-center text-center">
                 {children}
               </div>
@@ -185,6 +186,9 @@ function CalendarDayButton({
     if (modifiers.focused) ref.current?.focus()
   }, [modifiers.focused])
 
+  // Cast needed: DayButton spreads props typed against @types/react 19.1.x (Expo peer dep)
+  // which is structurally incompatible with the workspace's @types/react 19.2.x.
+  const buttonProps = props as unknown as React.ComponentProps<typeof Button>
   return (
     <Button
       ref={ref}
@@ -205,7 +209,7 @@ function CalendarDayButton({
         defaultClassNames.day,
         className
       )}
-      {...props}
+      {...buttonProps}
     />
   )
 }
