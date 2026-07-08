@@ -4,35 +4,59 @@ Nexus POS is a shop sales & inventory management system: a web dashboard (Shop M
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm --filter @workspace/pos-mobile run dev` — run the Expo mobile app (via its workflow)
+- **API Server** (port 3001): `PORT=3001 pnpm --filter @workspace/api-server run dev` — managed by the "API Server" workflow
+- **Shop frontend** (port 5000): `pnpm --filter @workspace/shop run dev` — managed by the "Start application" workflow
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+
+## Required Secrets
+
+| Variable | Description |
+|---|---|
+| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key — find it in the Clerk dashboard under API Keys (starts with `pk_test_` or `pk_live_`) |
+
+`DATABASE_URL` is provided automatically by Replit's managed PostgreSQL.
+
+## Setup (already done on Replit)
+
+1. `pnpm install` — install all workspace dependencies
+2. `pnpm --filter @workspace/db run push` — push Drizzle schema to the database
+3. Add `VITE_CLERK_PUBLISHABLE_KEY` secret — required for the frontend auth to load
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React 19, Vite 7, Tailwind CSS 4, TanStack Query
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
+- Auth: Clerk
+- Validation: Zod (v4), drizzle-zod
 - API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Build: esbuild (ESM bundle)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/shop` — React + Vite frontend (Shop Manager UI)
+- `artifacts/api-server` — Express 5 API server
+- `artifacts/mockup-sandbox` — Design / Canvas artifact
+- `lib/db` — Drizzle schema and database client
+- `lib/api-spec` — OpenAPI spec + generated hooks and schemas
+- `lib/api-client-react` — Generated TanStack Query hooks
+- `lib/api-zod` — Generated Zod schemas
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Auth is handled entirely by Clerk — the frontend uses `@clerk/react`, the API uses `@clerk/express` middleware
+- The Vite dev server proxies `/api/*` to the Express server at port 3001, so the frontend never calls the API directly by absolute URL
+- esbuild bundles the API server into a single ESM file (`dist/index.mjs`) on every `dev` start
+- `VITE_CLERK_PUBLISHABLE_KEY` is used at build time by Vite, so a restart is required after changing it
 
 ## Product
 
-- **Shop Manager** (web, `artifacts/shop`): admin dashboard for categories, products, sales, and reporting.
-- **Nexus POS Mobile** (Expo, `artifacts/pos-mobile`): handheld register for retail staff — PIN login, browse inventory, ring up sales via a cart/checkout flow, view sale history, and see low-stock alerts on the home screen. Talks to the same `artifacts/api-server` and Postgres DB as the web app via the generated `@workspace/api-client-react` hooks (no separate mobile auth backend — PIN is stored locally since the API itself has no auth middleware).
+- **Shop Manager** (web, `artifacts/shop`): admin dashboard for categories, products, sales, and reporting
+- **Nexus POS Mobile** (Expo, `artifacts/pos-mobile`): handheld register for retail staff
 
 ## User preferences
 
@@ -40,8 +64,5 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- The frontend hard-errors on startup if `VITE_CLERK_PUBLISHABLE_KEY` is missing — set the secret and restart the "Start application" workflow
+- The API Server workflow builds with esbuild before starting; this takes ~500ms on each restart
