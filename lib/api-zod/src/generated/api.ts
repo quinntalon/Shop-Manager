@@ -363,6 +363,7 @@ export const ListSalesResponseItem = zod.object({
   "customerName": zod.string().nullish(),
   "note": zod.string().nullish(),
   "total": zod.number(),
+  "paymentMethod": zod.enum(['cash', 'card', 'mobile']),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "productName": zod.string().nullish(),
@@ -384,6 +385,7 @@ export const ListSalesResponse = zod.array(ListSalesResponseItem)
 export const CreateSaleBody = zod.object({
   "customerName": zod.string().optional(),
   "note": zod.string().optional(),
+  "paymentMethod": zod.enum(['cash', 'card', 'mobile']).optional(),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "quantity": zod.number().min(1)
@@ -398,6 +400,7 @@ export const CreateSaleResponse = zod.object({
   "customerName": zod.string().nullish(),
   "note": zod.string().nullish(),
   "total": zod.number(),
+  "paymentMethod": zod.enum(['cash', 'card', 'mobile']),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "productName": zod.string().nullish(),
@@ -424,6 +427,7 @@ export const GetSaleResponse = zod.object({
   "customerName": zod.string().nullish(),
   "note": zod.string().nullish(),
   "total": zod.number(),
+  "paymentMethod": zod.enum(['cash', 'card', 'mobile']),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "productName": zod.string().nullish(),

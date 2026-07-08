@@ -7,6 +7,7 @@ export const salesTable = pgTable("sales", {
   customerName: text("customer_name"),
   note: text("note"),
   total: numeric("total", { precision: 10, scale: 2 }).notNull().default("0"),
+  paymentMethod: text("payment_method").notNull().default("cash"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

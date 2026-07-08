@@ -195,10 +195,20 @@ export default function SaleDetailScreen() {
             <Text style={styles.rowLabel}>Date</Text>
             <Text style={styles.rowValue}>{formatDate(sale.createdAt)}</Text>
           </View>
-          <View style={[styles.sectionRow, !sale.note && styles.sectionRowLast]}>
+          <View style={styles.sectionRow}>
             <Text style={styles.rowLabel}>Customer</Text>
             <Text style={styles.rowValue}>
               {sale.customerName ?? "Walk-in Customer"}
+            </Text>
+          </View>
+          <View style={[styles.sectionRow, !sale.note && styles.sectionRowLast]}>
+            <Text style={styles.rowLabel}>Payment</Text>
+            <Text style={styles.rowValue}>
+              {sale.paymentMethod === "mobile"
+                ? "Mobile Pay"
+                : sale.paymentMethod
+                ? sale.paymentMethod.charAt(0).toUpperCase() + sale.paymentMethod.slice(1)
+                : "Cash"}
             </Text>
           </View>
           {sale.note && (

@@ -103,6 +103,7 @@ export interface SaleItemInput {
 export interface SaleInput {
   customerName?: string;
   note?: string;
+  paymentMethod?: 'cash' | 'card' | 'mobile';
   items: SaleItemInput[];
 }
 
@@ -113,6 +114,7 @@ export interface Sale {
   /** @nullable */
   note?: string | null;
   total: number;
+  paymentMethod: 'cash' | 'card' | 'mobile';
   items: SaleItem[];
   createdAt: string;
 }

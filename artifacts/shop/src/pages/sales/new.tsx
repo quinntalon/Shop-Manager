@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Search, Plus, Minus, Trash2, ShoppingCart, ImagePlus } from "lucide-react";
+import { ArrowLeft, Search, Plus, Minus, Trash2, ShoppingCart, ImagePlus, Banknote, CreditCard, Smartphone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const BASE_URL = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -40,6 +40,7 @@ export default function NewSale() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [note, setNote] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "mobile">("cash");
 
   const { data: products, isLoading } = useListProducts(
     { search: search || undefined },
@@ -109,6 +110,7 @@ export default function NewSale() {
     const data: SaleInput = {
       customerName: customerName || undefined,
       note: note || undefined,
+      paymentMethod,
       items: cart.map((c) => ({ productId: c.product.id, quantity: c.quantity })),
     };
     createSaleMutation.mutate({ data });
@@ -262,6 +264,33 @@ export default function NewSale() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Payment method */}
+          <div className="rounded-lg border bg-card p-4 space-y-3">
+            <h2 className="font-semibold text-sm">Payment Method</h2>
+            <div className="grid grid-cols-3 gap-2">
+              {([ 
+                { value: "cash", label: "Cash", Icon: Banknote },
+                { value: "card", label: "Card", Icon: CreditCard },
+                { value: "mobile", label: "Mobile Pay", Icon: Smartphone },
+              ] as const).map(({ value, label, Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setPaymentMethod(value)}
+                  className={[
+                    "flex flex-col items-center gap-1.5 rounded-lg border p-3 text-xs font-medium transition-colors",
+                    paymentMethod === value
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:bg-muted/50",
+                  ].join(" ")}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Customer info */}

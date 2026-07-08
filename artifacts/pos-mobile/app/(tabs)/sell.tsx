@@ -30,6 +30,7 @@ export default function SellScreen() {
   const [search, setSearch] = useState("");
   const [cartVisible, setCartVisible] = useState(false);
   const [customerName, setCustomerName] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "mobile">("cash");
   const queryClient = useQueryClient();
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
@@ -54,6 +55,7 @@ export default function SellScreen() {
       {
         data: {
           customerName: customerName.trim() || undefined,
+          paymentMethod,
           items: items.map((i) => ({
             productId: i.productId,
             quantity: i.quantity,
@@ -65,9 +67,10 @@ export default function SellScreen() {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           clearCart();
           setCustomerName("");
+          setPaymentMethod("cash");
           setCartVisible(false);
           queryClient.invalidateQueries();
-          Alert.alert("Sale Complete", `Total: $${total.toFixed(2)}`);
+          Alert.alert("Sale Complete", `Total: ${total.toFixed(2)}`);
         },
         onError: () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -307,6 +310,32 @@ export default function SellScreen() {
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
+    },
+    paymentLabel: {
+      fontSize: 13,
+      color: colors.mutedForeground,
+      fontFamily: "Inter_400Regular",
+      marginLeft: 20,
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    paymentRow: {
+      flexDirection: "row",
+      gap: 8,
+      marginHorizontal: 20,
+    },
+    paymentOption: {
+      flex: 1,
+      borderWidth: 1,
+      borderRadius: colors.radius,
+      paddingVertical: 10,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 4,
+    },
+    paymentOptionText: {
+      fontSize: 12,
+      fontFamily: "Inter_600SemiBold",
     },
     inputLabel: {
       fontSize: 13,
@@ -574,6 +603,46 @@ export default function SellScreen() {
                   </View>
                 </View>
               ))}
+              <Text style={styles.paymentLabel}>Payment Method</Text>
+              <View style={styles.paymentRow}>
+                {([
+                  { value: "cash", label: "Cash", icon: "dollar-sign" },
+                  { value: "card", label: "Card", icon: "credit-card" },
+                  { value: "mobile", label: "Mobile Pay", icon: "smartphone" },
+                ] as const).map(({ value, label, icon }) => {
+                  const selected = paymentMethod === value;
+                  return (
+                    <Pressable
+                      key={value}
+                      style={[
+                        styles.paymentOption,
+                        {
+                          borderColor: selected ? colors.primary : colors.border,
+                          backgroundColor: selected ? colors.primary + "18" : colors.card,
+                        },
+                      ]}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setPaymentMethod(value);
+                      }}
+                    >
+                      <Feather
+                        name={icon}
+                        size={16}
+                        color={selected ? colors.primary : colors.mutedForeground}
+                      />
+                      <Text
+                        style={[
+                          styles.paymentOptionText,
+                          { color: selected ? colors.primary : colors.mutedForeground },
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
               <Text style={styles.inputLabel}>Customer Name (optional)</Text>
               <TextInput
                 style={styles.customerInput}

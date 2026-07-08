@@ -14,6 +14,7 @@ export interface Sale {
   /** @nullable */
   note?: string | null;
   total: number;
+  paymentMethod: 'cash' | 'card' | 'mobile';
   items: SaleItem[];
   createdAt: string;
 }

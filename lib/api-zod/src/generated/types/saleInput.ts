@@ -10,5 +10,6 @@ import type { SaleItemInput } from './saleItemInput';
 export interface SaleInput {
   customerName?: string;
   note?: string;
+  paymentMethod?: 'cash' | 'card' | 'mobile';
   items: SaleItemInput[];
 }

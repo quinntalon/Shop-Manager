@@ -98,6 +98,12 @@ export default function SaleDetail() {
             <p className="text-sm text-muted-foreground">Customer</p>
             <p className="font-semibold">{sale.customerName || "Walk-in Customer"}</p>
           </div>
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">Payment</p>
+            <p className="font-semibold capitalize">
+              {sale.paymentMethod === "mobile" ? "Mobile Pay" : sale.paymentMethod ?? "Cash"}
+            </p>
+          </div>
           {sale.note && (
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Note</p>

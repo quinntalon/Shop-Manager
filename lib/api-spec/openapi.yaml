@@ -644,6 +644,10 @@ components:
           type: string
         note:
           type: string
+        paymentMethod:
+          type: string
+          enum: [cash, card, mobile]
+          default: cash
         items:
           type: array
           items:
@@ -661,7 +665,7 @@ components:
 
     Sale:
       type: object
-      required: [id, total, items, createdAt]
+      required: [id, total, items, createdAt, paymentMethod]
       properties:
         id:
           type: integer
@@ -671,6 +675,9 @@ components:
           type: ["string", "null"]
         total:
           type: number
+        paymentMethod:
+          type: string
+          enum: [cash, card, mobile]
         items:
           type: array
           items:

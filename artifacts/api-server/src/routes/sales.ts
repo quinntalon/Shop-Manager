@@ -36,6 +36,7 @@ async function buildSaleResponse(saleId: number) {
     customerName: sale.customerName,
     note: sale.note,
     total: parseFloat(sale.total),
+    paymentMethod: sale.paymentMethod as 'cash' | 'card' | 'mobile',
     createdAt: sale.createdAt.toISOString(),
     items: items.map((item) => ({
       productId: item.productId,
@@ -95,6 +96,7 @@ router.get("/sales", requirePermission("sales"), async (req, res): Promise<void>
     customerName: sale.customerName,
     note: sale.note,
     total: parseFloat(sale.total),
+    paymentMethod: sale.paymentMethod as 'cash' | 'card' | 'mobile',
     createdAt: sale.createdAt.toISOString(),
     items: (itemsBySaleId[sale.id] ?? []).map((item) => ({
       productId: item.productId,
@@ -115,7 +117,7 @@ router.post("/sales", requirePermission("sales"), async (req, res): Promise<void
     return;
   }
 
-  const { items, customerName, note } = parsed.data;
+  const { items, customerName, note, paymentMethod } = parsed.data;
 
   const productIds = items.map((i) => i.productId);
   const products = await db
@@ -149,6 +151,7 @@ router.post("/sales", requirePermission("sales"), async (req, res): Promise<void
       customerName: customerName ?? null,
       note: note ?? null,
       total: String(total.toFixed(2)),
+      paymentMethod: paymentMethod ?? "cash",
     })
     .returning();
 
