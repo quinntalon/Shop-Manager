@@ -313,7 +313,7 @@ export default function Inventory() {
                   <td className="px-4 py-3">
                     {product.photoUrl ? (
                       <img
-                        src={`${BASE_URL}/api/storage${product.photoUrl}`}
+                        src={product.photoUrl}
                         alt={product.name}
                         className="h-9 w-9 rounded-md object-cover border"
                       />

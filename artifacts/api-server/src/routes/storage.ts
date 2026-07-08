@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import multer from "multer";
 import { uploadImage } from "../lib/cloudinary";
+import { requirePermission } from "../middlewares/requireRole";
 
 const router: IRouter = Router();
 
@@ -26,6 +27,7 @@ const upload = multer({
  */
 router.post(
   "/storage/upload",
+  requirePermission("inventory"),
   upload.single("file"),
   async (req: Request, res: Response): Promise<void> => {
     if (!req.file) {
