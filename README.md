@@ -1,4 +1,4 @@
-# Nexus POS
+# Shop Manager
 
 A point-of-sale and shop management system with inventory tracking, sales recording, and category management. Built as a pnpm monorepo with a React frontend and Express API backend.
 
