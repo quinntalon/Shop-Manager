@@ -15,7 +15,9 @@ Nexus POS is a shop sales & inventory management system: a web dashboard (Shop M
 
 | Variable | Description |
 |---|---|
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key — find it in the Clerk dashboard under API Keys (starts with `pk_test_` or `pk_live_`) |
+| `VITE_CLERK_PUBLISHABLE_KEY` / `CLERK_PUBLISHABLE_KEY` | Clerk publishable key (same value, both names are read by frontend/backend respectively) |
+| `CLERK_SECRET_KEY` | Clerk secret key — used by the API server's Clerk middleware and proxy |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Optional — only needed for the image-upload endpoint (`/api/storage/upload`); the API server runs fine without them |
 
 `DATABASE_URL` is provided automatically by Replit's managed PostgreSQL.
 
@@ -23,7 +25,7 @@ Nexus POS is a shop sales & inventory management system: a web dashboard (Shop M
 
 1. `pnpm install` — install all workspace dependencies
 2. `pnpm --filter @workspace/db run push` — push Drizzle schema to the database
-3. Add `VITE_CLERK_PUBLISHABLE_KEY` secret — required for the frontend auth to load
+3. Clerk keys set as env vars/secrets (see above) — required for the frontend auth to load and the API server to start
 
 ## Stack
 
@@ -66,3 +68,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 - The frontend hard-errors on startup if `VITE_CLERK_PUBLISHABLE_KEY` is missing — set the secret and restart the "Start application" workflow
 - The API Server workflow builds with esbuild before starting; this takes ~500ms on each restart
+- After a fresh GitHub import, `node_modules` won't exist yet — run `pnpm install` at the workspace root before starting either workflow
+- The root `.env` file is committed for local-dev reference only; it is **not** auto-loaded into the Replit process environment. Values needed at runtime (Clerk keys, etc.) must be set as real Replit env vars/secrets
+- `cloudinary.ts` no longer throws at import time when Cloudinary credentials are missing — it only throws when `uploadImage()` is actually called, so the API server can start without them
+- If API requests 500 with a Drizzle "Failed query" error on a fresh database, the schema hasn't been pushed yet — run `pnpm --filter @workspace/db run push`
