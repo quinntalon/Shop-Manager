@@ -26,3 +26,6 @@ pnpm-debug.log*
 
 # Replit
 .replit.nix
+
+# Local environment values — never commit real secrets
+.env
