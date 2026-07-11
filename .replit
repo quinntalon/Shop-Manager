@@ -11,6 +11,8 @@ channel = "stable-25_05"
 API_PORT = "3001"
 BASE_PATH = "/"
 PORT = "5000"
+CLERK_PUBLISHABLE_KEY = "pk_test_bmV4dC1kaW5vc2F1ci04OS5jbGVyay5hY2NvdW50cy5kZXYk"
+VITE_CLERK_PUBLISHABLE_KEY = "pk_test_bmV4dC1kaW5vc2F1ci04OS5jbGVyay5hY2NvdW50cy5kZXYk"
 
 [workflows]
 runButton = "Project"
