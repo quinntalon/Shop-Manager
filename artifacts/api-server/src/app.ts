@@ -3,6 +3,8 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   CLERK_PROXY_PATH,
   clerkProxyMiddleware,
@@ -50,4 +52,16 @@ app.use(
 
 app.use("/api", router);
 
+// Serve React frontend as static files
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const frontendPath = path.join(__dirname, "../../shop/dist");
+
+app.use(express.static(frontendPath));
+
+// Fallback route for SPA: serve index.html for non-API routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
+
 export default app;
+
