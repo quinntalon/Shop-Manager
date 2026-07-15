@@ -192,7 +192,7 @@ export default function SettingsPage() {
               >
                 {preview ? (
                   <>
-                    <img src={preview} alt="Logo preview" className="h-full w-full object-cover" />
+                    <img src={preview} alt="Logo preview" className="h-full w-full object-contain" />
                     <button
                       type="button"
                       className="absolute top-0.5 right-0.5 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80"

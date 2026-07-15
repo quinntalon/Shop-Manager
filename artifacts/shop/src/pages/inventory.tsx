@@ -315,7 +315,7 @@ export default function Inventory() {
                       <img
                         src={product.photoUrl}
                         alt={product.name}
-                        className="h-9 w-9 rounded-md object-cover border"
+                        className="h-9 w-9 rounded-md object-contain border bg-muted/30"
                       />
                     ) : (
                       <div className="h-9 w-9 rounded-md bg-muted flex items-center justify-center">
@@ -394,7 +394,7 @@ export default function Inventory() {
                 >
                   {photoPreview ? (
                     <>
-                      <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+                      <img src={photoPreview} alt="Preview" className="h-full w-full object-contain" />
                       <button
                         type="button"
                         className="absolute top-0.5 right-0.5 rounded-full bg-black/60 p-0.5 text-white hover:bg-black/80"
