@@ -285,7 +285,7 @@ export default function Inventory() {
         <table className="w-full text-sm">
           <thead className="bg-muted/50 border-b">
             <tr>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground w-10"></th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground w-20"></th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Product</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">SKU</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Category</th>
