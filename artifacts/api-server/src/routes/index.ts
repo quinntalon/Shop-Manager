@@ -7,6 +7,7 @@ import salesRouter from "./sales";
 import dashboardRouter from "./dashboard";
 import usersRouter from "./users";
 import settingsRouter from "./settings";
+import receiptTemplatesRouter from "./receiptTemplates";
 
 const router: IRouter = Router();
 
@@ -14,6 +15,7 @@ router.use(healthRouter);
 router.use(storageRouter);
 router.use(usersRouter);
 router.use(settingsRouter);
+router.use(receiptTemplatesRouter);
 router.use(categoriesRouter);
 router.use(productsRouter);
 router.use(salesRouter);

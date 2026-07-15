@@ -272,6 +272,100 @@ export interface SettingsUpdate {
   primaryColor?: string;
 }
 
+export type ReceiptElementId = typeof ReceiptElementId[keyof typeof ReceiptElementId];
+
+
+export const ReceiptElementId = {
+  logo: 'logo',
+  storeInfo: 'storeInfo',
+  receiptMeta: 'receiptMeta',
+  customerInfo: 'customerInfo',
+  itemsTable: 'itemsTable',
+  totals: 'totals',
+  paymentDetails: 'paymentDetails',
+  footer: 'footer',
+} as const;
+
+export type ReceiptElementStyleAlign = typeof ReceiptElementStyleAlign[keyof typeof ReceiptElementStyleAlign];
+
+
+export const ReceiptElementStyleAlign = {
+  left: 'left',
+  center: 'center',
+  right: 'right',
+} as const;
+
+export type ReceiptElementStyleFontSize = typeof ReceiptElementStyleFontSize[keyof typeof ReceiptElementStyleFontSize];
+
+
+export const ReceiptElementStyleFontSize = {
+  xs: 'xs',
+  sm: 'sm',
+  base: 'base',
+  lg: 'lg',
+  xl: 'xl',
+} as const;
+
+export interface ReceiptElementStyle {
+  id: ReceiptElementId;
+  visible: boolean;
+  order: number;
+  align: ReceiptElementStyleAlign;
+  bold: boolean;
+  fontSize: ReceiptElementStyleFontSize;
+  /** @nullable */
+  color?: string | null;
+}
+
+export type ReceiptTemplateConfigPaperSize = typeof ReceiptTemplateConfigPaperSize[keyof typeof ReceiptTemplateConfigPaperSize];
+
+
+export const ReceiptTemplateConfigPaperSize = {
+  '58mm': '58mm',
+  '80mm': '80mm',
+} as const;
+
+export type ReceiptTemplateConfigFontFamily = typeof ReceiptTemplateConfigFontFamily[keyof typeof ReceiptTemplateConfigFontFamily];
+
+
+export const ReceiptTemplateConfigFontFamily = {
+  sans: 'sans',
+  mono: 'mono',
+  serif: 'serif',
+} as const;
+
+export interface ReceiptTemplateConfig {
+  paperSize: ReceiptTemplateConfigPaperSize;
+  fontFamily: ReceiptTemplateConfigFontFamily;
+  baseFontSize: number;
+  spacing: number;
+  textColor: string;
+  accentColor: string;
+  backgroundColor: string;
+  showLogo: boolean;
+  /** @nullable */
+  logoUrl?: string | null;
+  storeName: string;
+  storeAddress?: string;
+  storePhone?: string;
+  footerText: string;
+  elements: ReceiptElementStyle[];
+}
+
+export interface ReceiptTemplate {
+  id: number;
+  name: string;
+  isDefault: boolean;
+  config: ReceiptTemplateConfig;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReceiptTemplateInput {
+  name: string;
+  config: ReceiptTemplateConfig;
+}
+
 export type ListProductsParams = {
 categoryId?: number;
 search?: string;

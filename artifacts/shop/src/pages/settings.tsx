@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "wouter";
 import { useUpdateSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 import { useUpload } from "@workspace/object-storage-web";
 import { useQueryClient } from "@tanstack/react-query";
@@ -9,7 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ImagePlus, Moon, Store, Sun, X } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { ImagePlus, Moon, Receipt, SlidersHorizontal, Store, Sun, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +79,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [, navigate] = useLocation();
 
   const [businessName, setBusinessName] = useState("");
   const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
@@ -160,11 +165,29 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Customize your business branding and appearance.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Settings</h1>
+          <p className="text-sm text-muted-foreground">
+            Customize your business branding and appearance.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Jump to section</Label>
+          <Select value="general" onValueChange={(v) => { if (v === "receipt-editor") navigate("/settings/receipt-editor"); }}>
+            <SelectTrigger className="h-9 w-56 text-sm" data-testid="select-settings-section">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="general">
+                <span className="flex items-center gap-2"><SlidersHorizontal className="h-3.5 w-3.5" /> General Settings</span>
+              </SelectItem>
+              <SelectItem value="receipt-editor">
+                <span className="flex items-center gap-2"><Receipt className="h-3.5 w-3.5" /> Receipt Editor</span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Card>

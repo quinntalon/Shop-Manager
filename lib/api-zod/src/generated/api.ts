@@ -52,6 +52,301 @@ export const UpdateSettingsResponse = zod.object({
 
 
 /**
+ * @summary List receipt templates
+ */
+export const ListReceiptTemplatesResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "isDefault": zod.boolean(),
+  "config": zod.object({
+  "paperSize": zod.enum(['58mm', '80mm']),
+  "fontFamily": zod.enum(['sans', 'mono', 'serif']),
+  "baseFontSize": zod.number(),
+  "spacing": zod.number(),
+  "textColor": zod.string(),
+  "accentColor": zod.string(),
+  "backgroundColor": zod.string(),
+  "showLogo": zod.boolean(),
+  "logoUrl": zod.string().nullish(),
+  "storeName": zod.string(),
+  "storeAddress": zod.string().optional(),
+  "storePhone": zod.string().optional(),
+  "footerText": zod.string(),
+  "elements": zod.array(zod.object({
+  "id": zod.enum(['logo', 'storeInfo', 'receiptMeta', 'customerInfo', 'itemsTable', 'totals', 'paymentDetails', 'footer']),
+  "visible": zod.boolean(),
+  "order": zod.number(),
+  "align": zod.enum(['left', 'center', 'right']),
+  "bold": zod.boolean(),
+  "fontSize": zod.enum(['xs', 'sm', 'base', 'lg', 'xl']),
+  "color": zod.string().nullish()
+}))
+}),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+export const ListReceiptTemplatesResponse = zod.array(ListReceiptTemplatesResponseItem)
+
+
+/**
+ * @summary Create a receipt template (admin only)
+ */
+export const CreateReceiptTemplateBody = zod.object({
+  "name": zod.string(),
+  "config": zod.object({
+  "paperSize": zod.enum(['58mm', '80mm']),
+  "fontFamily": zod.enum(['sans', 'mono', 'serif']),
+  "baseFontSize": zod.number(),
+  "spacing": zod.number(),
+  "textColor": zod.string(),
+  "accentColor": zod.string(),
+  "backgroundColor": zod.string(),
+  "showLogo": zod.boolean(),
+  "logoUrl": zod.string().nullish(),
+  "storeName": zod.string(),
+  "storeAddress": zod.string().optional(),
+  "storePhone": zod.string().optional(),
+  "footerText": zod.string(),
+  "elements": zod.array(zod.object({
+  "id": zod.enum(['logo', 'storeInfo', 'receiptMeta', 'customerInfo', 'itemsTable', 'totals', 'paymentDetails', 'footer']),
+  "visible": zod.boolean(),
+  "order": zod.number(),
+  "align": zod.enum(['left', 'center', 'right']),
+  "bold": zod.boolean(),
+  "fontSize": zod.enum(['xs', 'sm', 'base', 'lg', 'xl']),
+  "color": zod.string().nullish()
+}))
+})
+})
+
+export const CreateReceiptTemplateResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "isDefault": zod.boolean(),
+  "config": zod.object({
+  "paperSize": zod.enum(['58mm', '80mm']),
+  "fontFamily": zod.enum(['sans', 'mono', 'serif']),
+  "baseFontSize": zod.number(),
+  "spacing": zod.number(),
+  "textColor": zod.string(),
+  "accentColor": zod.string(),
+  "backgroundColor": zod.string(),
+  "showLogo": zod.boolean(),
+  "logoUrl": zod.string().nullish(),
+  "storeName": zod.string(),
+  "storeAddress": zod.string().optional(),
+  "storePhone": zod.string().optional(),
+  "footerText": zod.string(),
+  "elements": zod.array(zod.object({
+  "id": zod.enum(['logo', 'storeInfo', 'receiptMeta', 'customerInfo', 'itemsTable', 'totals', 'paymentDetails', 'footer']),
+  "visible": zod.boolean(),
+  "order": zod.number(),
+  "align": zod.enum(['left', 'center', 'right']),
+  "bold": zod.boolean(),
+  "fontSize": zod.enum(['xs', 'sm', 'base', 'lg', 'xl']),
+  "color": zod.string().nullish()
+}))
+}),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get the default receipt template (falls back to built-in defaults)
+ */
+export const GetDefaultReceiptTemplateResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "isDefault": zod.boolean(),
+  "config": zod.object({
+  "paperSize": zod.enum(['58mm', '80mm']),
+  "fontFamily": zod.enum(['sans', 'mono', 'serif']),
+  "baseFontSize": zod.number(),
+  "spacing": zod.number(),
+  "textColor": zod.string(),
+  "accentColor": zod.string(),
+  "backgroundColor": zod.string(),
+  "showLogo": zod.boolean(),
+  "logoUrl": zod.string().nullish(),
+  "storeName": zod.string(),
+  "storeAddress": zod.string().optional(),
+  "storePhone": zod.string().optional(),
+  "footerText": zod.string(),
+  "elements": zod.array(zod.object({
+  "id": zod.enum(['logo', 'storeInfo', 'receiptMeta', 'customerInfo', 'itemsTable', 'totals', 'paymentDetails', 'footer']),
+  "visible": zod.boolean(),
+  "order": zod.number(),
+  "align": zod.enum(['left', 'center', 'right']),
+  "bold": zod.boolean(),
+  "fontSize": zod.enum(['xs', 'sm', 'base', 'lg', 'xl']),
+  "color": zod.string().nullish()
+}))
+}),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get a receipt template by ID
+ */
+export const GetReceiptTemplateParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetReceiptTemplateResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "isDefault": zod.boolean(),
+  "config": zod.object({
+  "paperSize": zod.enum(['58mm', '80mm']),
+  "fontFamily": zod.enum(['sans', 'mono', 'serif']),
+  "baseFontSize": zod.number(),
+  "spacing": zod.number(),
+  "textColor": zod.string(),
+  "accentColor": zod.string(),
+  "backgroundColor": zod.string(),
+  "showLogo": zod.boolean(),
+  "logoUrl": zod.string().nullish(),
+  "storeName": zod.string(),
+  "storeAddress": zod.string().optional(),
+  "storePhone": zod.string().optional(),
+  "footerText": zod.string(),
+  "elements": zod.array(zod.object({
+  "id": zod.enum(['logo', 'storeInfo', 'receiptMeta', 'customerInfo', 'itemsTable', 'totals', 'paymentDetails', 'footer']),
+  "visible": zod.boolean(),
+  "order": zod.number(),
+  "align": zod.enum(['left', 'center', 'right']),
+  "bold": zod.boolean(),
+  "fontSize": zod.enum(['xs', 'sm', 'base', 'lg', 'xl']),
+  "color": zod.string().nullish()
+}))
+}),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update a receipt template (admin only)
+ */
+export const UpdateReceiptTemplateParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateReceiptTemplateBody = zod.object({
+  "name": zod.string(),
+  "config": zod.object({
+  "paperSize": zod.enum(['58mm', '80mm']),
+  "fontFamily": zod.enum(['sans', 'mono', 'serif']),
+  "baseFontSize": zod.number(),
+  "spacing": zod.number(),
+  "textColor": zod.string(),
+  "accentColor": zod.string(),
+  "backgroundColor": zod.string(),
+  "showLogo": zod.boolean(),
+  "logoUrl": zod.string().nullish(),
+  "storeName": zod.string(),
+  "storeAddress": zod.string().optional(),
+  "storePhone": zod.string().optional(),
+  "footerText": zod.string(),
+  "elements": zod.array(zod.object({
+  "id": zod.enum(['logo', 'storeInfo', 'receiptMeta', 'customerInfo', 'itemsTable', 'totals', 'paymentDetails', 'footer']),
+  "visible": zod.boolean(),
+  "order": zod.number(),
+  "align": zod.enum(['left', 'center', 'right']),
+  "bold": zod.boolean(),
+  "fontSize": zod.enum(['xs', 'sm', 'base', 'lg', 'xl']),
+  "color": zod.string().nullish()
+}))
+})
+})
+
+export const UpdateReceiptTemplateResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "isDefault": zod.boolean(),
+  "config": zod.object({
+  "paperSize": zod.enum(['58mm', '80mm']),
+  "fontFamily": zod.enum(['sans', 'mono', 'serif']),
+  "baseFontSize": zod.number(),
+  "spacing": zod.number(),
+  "textColor": zod.string(),
+  "accentColor": zod.string(),
+  "backgroundColor": zod.string(),
+  "showLogo": zod.boolean(),
+  "logoUrl": zod.string().nullish(),
+  "storeName": zod.string(),
+  "storeAddress": zod.string().optional(),
+  "storePhone": zod.string().optional(),
+  "footerText": zod.string(),
+  "elements": zod.array(zod.object({
+  "id": zod.enum(['logo', 'storeInfo', 'receiptMeta', 'customerInfo', 'itemsTable', 'totals', 'paymentDetails', 'footer']),
+  "visible": zod.boolean(),
+  "order": zod.number(),
+  "align": zod.enum(['left', 'center', 'right']),
+  "bold": zod.boolean(),
+  "fontSize": zod.enum(['xs', 'sm', 'base', 'lg', 'xl']),
+  "color": zod.string().nullish()
+}))
+}),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a receipt template (admin only)
+ */
+export const DeleteReceiptTemplateParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteReceiptTemplateResponse = zod.void()
+
+
+/**
+ * @summary Mark a receipt template as the default (admin only)
+ */
+export const SetDefaultReceiptTemplateParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SetDefaultReceiptTemplateResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "isDefault": zod.boolean(),
+  "config": zod.object({
+  "paperSize": zod.enum(['58mm', '80mm']),
+  "fontFamily": zod.enum(['sans', 'mono', 'serif']),
+  "baseFontSize": zod.number(),
+  "spacing": zod.number(),
+  "textColor": zod.string(),
+  "accentColor": zod.string(),
+  "backgroundColor": zod.string(),
+  "showLogo": zod.boolean(),
+  "logoUrl": zod.string().nullish(),
+  "storeName": zod.string(),
+  "storeAddress": zod.string().optional(),
+  "storePhone": zod.string().optional(),
+  "footerText": zod.string(),
+  "elements": zod.array(zod.object({
+  "id": zod.enum(['logo', 'storeInfo', 'receiptMeta', 'customerInfo', 'itemsTable', 'totals', 'paymentDetails', 'footer']),
+  "visible": zod.boolean(),
+  "order": zod.number(),
+  "align": zod.enum(['left', 'center', 'right']),
+  "bold": zod.boolean(),
+  "fontSize": zod.enum(['xs', 'sm', 'base', 'lg', 'xl']),
+  "color": zod.string().nullish()
+}))
+}),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
  * @summary Get current user role and permissions
  */
 export const GetMyRoleResponse = zod.object({

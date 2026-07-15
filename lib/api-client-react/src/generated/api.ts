@@ -33,6 +33,8 @@ import type {
   Product,
   ProductInput,
   ProductUpdate,
+  ReceiptTemplate,
+  ReceiptTemplateInput,
   RequestUploadUrlBody,
   RequestUploadUrlResponse,
   Sale,
@@ -292,6 +294,518 @@ export const useUpdateSettings = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateSettingsMutationOptions(options));
+    }
+
+export const getListReceiptTemplatesUrl = () => {
+
+
+
+
+  return `/api/receipt-templates`
+}
+
+/**
+ * @summary List receipt templates
+ */
+export const listReceiptTemplates = async ( options?: RequestInit): Promise<ReceiptTemplate[]> => {
+
+  return customFetch<ReceiptTemplate[]>(getListReceiptTemplatesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListReceiptTemplatesQueryKey = () => {
+    return [
+    `/api/receipt-templates`
+    ] as const;
+    }
+
+
+export const getListReceiptTemplatesQueryOptions = <TData = Awaited<ReturnType<typeof listReceiptTemplates>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listReceiptTemplates>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListReceiptTemplatesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listReceiptTemplates>>> = ({ signal }) => listReceiptTemplates({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listReceiptTemplates>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListReceiptTemplatesQueryResult = NonNullable<Awaited<ReturnType<typeof listReceiptTemplates>>>
+export type ListReceiptTemplatesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List receipt templates
+ */
+
+export function useListReceiptTemplates<TData = Awaited<ReturnType<typeof listReceiptTemplates>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listReceiptTemplates>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListReceiptTemplatesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateReceiptTemplateUrl = () => {
+
+
+
+
+  return `/api/receipt-templates`
+}
+
+/**
+ * @summary Create a receipt template (admin only)
+ */
+export const createReceiptTemplate = async (receiptTemplateInput: ReceiptTemplateInput, options?: RequestInit): Promise<ReceiptTemplate> => {
+
+  return customFetch<ReceiptTemplate>(getCreateReceiptTemplateUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(receiptTemplateInput)
+  }
+);}
+
+
+
+
+export const getCreateReceiptTemplateMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReceiptTemplate>>, TError,{data: BodyType<ReceiptTemplateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createReceiptTemplate>>, TError,{data: BodyType<ReceiptTemplateInput>}, TContext> => {
+
+const mutationKey = ['createReceiptTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createReceiptTemplate>>, {data: BodyType<ReceiptTemplateInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createReceiptTemplate(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateReceiptTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof createReceiptTemplate>>>
+    export type CreateReceiptTemplateMutationBody = BodyType<ReceiptTemplateInput>
+    export type CreateReceiptTemplateMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a receipt template (admin only)
+ */
+export const useCreateReceiptTemplate = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createReceiptTemplate>>, TError,{data: BodyType<ReceiptTemplateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createReceiptTemplate>>,
+        TError,
+        {data: BodyType<ReceiptTemplateInput>},
+        TContext
+      > => {
+      return useMutation(getCreateReceiptTemplateMutationOptions(options));
+    }
+
+export const getGetDefaultReceiptTemplateUrl = () => {
+
+
+
+
+  return `/api/receipt-templates/default`
+}
+
+/**
+ * @summary Get the default receipt template (falls back to built-in defaults)
+ */
+export const getDefaultReceiptTemplate = async ( options?: RequestInit): Promise<ReceiptTemplate> => {
+
+  return customFetch<ReceiptTemplate>(getGetDefaultReceiptTemplateUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDefaultReceiptTemplateQueryKey = () => {
+    return [
+    `/api/receipt-templates/default`
+    ] as const;
+    }
+
+
+export const getGetDefaultReceiptTemplateQueryOptions = <TData = Awaited<ReturnType<typeof getDefaultReceiptTemplate>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDefaultReceiptTemplate>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDefaultReceiptTemplateQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDefaultReceiptTemplate>>> = ({ signal }) => getDefaultReceiptTemplate({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDefaultReceiptTemplate>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDefaultReceiptTemplateQueryResult = NonNullable<Awaited<ReturnType<typeof getDefaultReceiptTemplate>>>
+export type GetDefaultReceiptTemplateQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get the default receipt template (falls back to built-in defaults)
+ */
+
+export function useGetDefaultReceiptTemplate<TData = Awaited<ReturnType<typeof getDefaultReceiptTemplate>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDefaultReceiptTemplate>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDefaultReceiptTemplateQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetReceiptTemplateUrl = (id: number,) => {
+
+
+
+
+  return `/api/receipt-templates/${id}`
+}
+
+/**
+ * @summary Get a receipt template by ID
+ */
+export const getReceiptTemplate = async (id: number, options?: RequestInit): Promise<ReceiptTemplate> => {
+
+  return customFetch<ReceiptTemplate>(getGetReceiptTemplateUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetReceiptTemplateQueryKey = (id: number,) => {
+    return [
+    `/api/receipt-templates/${id}`
+    ] as const;
+    }
+
+
+export const getGetReceiptTemplateQueryOptions = <TData = Awaited<ReturnType<typeof getReceiptTemplate>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReceiptTemplate>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetReceiptTemplateQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getReceiptTemplate>>> = ({ signal }) => getReceiptTemplate(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getReceiptTemplate>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetReceiptTemplateQueryResult = NonNullable<Awaited<ReturnType<typeof getReceiptTemplate>>>
+export type GetReceiptTemplateQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a receipt template by ID
+ */
+
+export function useGetReceiptTemplate<TData = Awaited<ReturnType<typeof getReceiptTemplate>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReceiptTemplate>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetReceiptTemplateQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateReceiptTemplateUrl = (id: number,) => {
+
+
+
+
+  return `/api/receipt-templates/${id}`
+}
+
+/**
+ * @summary Update a receipt template (admin only)
+ */
+export const updateReceiptTemplate = async (id: number,
+    receiptTemplateInput: ReceiptTemplateInput, options?: RequestInit): Promise<ReceiptTemplate> => {
+
+  return customFetch<ReceiptTemplate>(getUpdateReceiptTemplateUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(receiptTemplateInput)
+  }
+);}
+
+
+
+
+export const getUpdateReceiptTemplateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReceiptTemplate>>, TError,{id: number;data: BodyType<ReceiptTemplateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateReceiptTemplate>>, TError,{id: number;data: BodyType<ReceiptTemplateInput>}, TContext> => {
+
+const mutationKey = ['updateReceiptTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateReceiptTemplate>>, {id: number;data: BodyType<ReceiptTemplateInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateReceiptTemplate(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateReceiptTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof updateReceiptTemplate>>>
+    export type UpdateReceiptTemplateMutationBody = BodyType<ReceiptTemplateInput>
+    export type UpdateReceiptTemplateMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a receipt template (admin only)
+ */
+export const useUpdateReceiptTemplate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReceiptTemplate>>, TError,{id: number;data: BodyType<ReceiptTemplateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateReceiptTemplate>>,
+        TError,
+        {id: number;data: BodyType<ReceiptTemplateInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateReceiptTemplateMutationOptions(options));
+    }
+
+export const getDeleteReceiptTemplateUrl = (id: number,) => {
+
+
+
+
+  return `/api/receipt-templates/${id}`
+}
+
+/**
+ * @summary Delete a receipt template (admin only)
+ */
+export const deleteReceiptTemplate = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteReceiptTemplateUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteReceiptTemplateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReceiptTemplate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteReceiptTemplate>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteReceiptTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteReceiptTemplate>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteReceiptTemplate(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteReceiptTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof deleteReceiptTemplate>>>
+
+    export type DeleteReceiptTemplateMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a receipt template (admin only)
+ */
+export const useDeleteReceiptTemplate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReceiptTemplate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteReceiptTemplate>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteReceiptTemplateMutationOptions(options));
+    }
+
+export const getSetDefaultReceiptTemplateUrl = (id: number,) => {
+
+
+
+
+  return `/api/receipt-templates/${id}/set-default`
+}
+
+/**
+ * @summary Mark a receipt template as the default (admin only)
+ */
+export const setDefaultReceiptTemplate = async (id: number, options?: RequestInit): Promise<ReceiptTemplate> => {
+
+  return customFetch<ReceiptTemplate>(getSetDefaultReceiptTemplateUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getSetDefaultReceiptTemplateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setDefaultReceiptTemplate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setDefaultReceiptTemplate>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['setDefaultReceiptTemplate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setDefaultReceiptTemplate>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  setDefaultReceiptTemplate(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetDefaultReceiptTemplateMutationResult = NonNullable<Awaited<ReturnType<typeof setDefaultReceiptTemplate>>>
+
+    export type SetDefaultReceiptTemplateMutationError = ErrorType<void>
+
+    /**
+ * @summary Mark a receipt template as the default (admin only)
+ */
+export const useSetDefaultReceiptTemplate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setDefaultReceiptTemplate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setDefaultReceiptTemplate>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getSetDefaultReceiptTemplateMutationOptions(options));
     }
 
 export const getGetMyRoleUrl = () => {

@@ -67,6 +67,134 @@ paths:
               schema:
                 $ref: "#/components/schemas/Settings"
 
+  # ── Receipt Templates ───────────────────────────────────────────────────────
+  /receipt-templates:
+    get:
+      operationId: listReceiptTemplates
+      tags: [settings]
+      summary: List receipt templates
+      responses:
+        "200":
+          description: List of receipt templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReceiptTemplate"
+    post:
+      operationId: createReceiptTemplate
+      tags: [settings]
+      summary: Create a receipt template (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceiptTemplateInput"
+      responses:
+        "201":
+          description: Receipt template created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptTemplate"
+
+  /receipt-templates/default:
+    get:
+      operationId: getDefaultReceiptTemplate
+      tags: [settings]
+      summary: Get the default receipt template (falls back to built-in defaults)
+      responses:
+        "200":
+          description: Default receipt template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptTemplate"
+
+  /receipt-templates/{id}:
+    get:
+      operationId: getReceiptTemplate
+      tags: [settings]
+      summary: Get a receipt template by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Receipt template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptTemplate"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateReceiptTemplate
+      tags: [settings]
+      summary: Update a receipt template (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceiptTemplateInput"
+      responses:
+        "200":
+          description: Updated receipt template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptTemplate"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteReceiptTemplate
+      tags: [settings]
+      summary: Delete a receipt template (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /receipt-templates/{id}/set-default:
+    post:
+      operationId: setDefaultReceiptTemplate
+      tags: [settings]
+      summary: Mark a receipt template as the default (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Receipt template set as default
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptTemplate"
+        "404":
+          description: Not found
+
   # ── Users ────────────────────────────────────────────────────────────────────
   /users/me:
     get:
@@ -854,3 +982,112 @@ components:
           enum: [light, dark]
         primaryColor:
           type: string
+
+    ReceiptElementId:
+      type: string
+      enum:
+        - logo
+        - storeInfo
+        - receiptMeta
+        - customerInfo
+        - itemsTable
+        - totals
+        - paymentDetails
+        - footer
+
+    ReceiptElementStyle:
+      type: object
+      required: [id, visible, order, align, bold, fontSize]
+      properties:
+        id:
+          $ref: "#/components/schemas/ReceiptElementId"
+        visible:
+          type: boolean
+        order:
+          type: integer
+        align:
+          type: string
+          enum: [left, center, right]
+        bold:
+          type: boolean
+        fontSize:
+          type: string
+          enum: [xs, sm, base, lg, xl]
+        color:
+          type: ["string", "null"]
+
+    ReceiptTemplateConfig:
+      type: object
+      required:
+        - paperSize
+        - fontFamily
+        - baseFontSize
+        - spacing
+        - textColor
+        - accentColor
+        - backgroundColor
+        - showLogo
+        - storeName
+        - footerText
+        - elements
+      properties:
+        paperSize:
+          type: string
+          enum: ["58mm", "80mm"]
+        fontFamily:
+          type: string
+          enum: [sans, mono, serif]
+        baseFontSize:
+          type: integer
+        spacing:
+          type: integer
+        textColor:
+          type: string
+        accentColor:
+          type: string
+        backgroundColor:
+          type: string
+        showLogo:
+          type: boolean
+        logoUrl:
+          type: ["string", "null"]
+        storeName:
+          type: string
+        storeAddress:
+          type: string
+        storePhone:
+          type: string
+        footerText:
+          type: string
+        elements:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReceiptElementStyle"
+
+    ReceiptTemplate:
+      type: object
+      required: [id, name, isDefault, config, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        isDefault:
+          type: boolean
+        config:
+          $ref: "#/components/schemas/ReceiptTemplateConfig"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ReceiptTemplateInput:
+      type: object
+      required: [name, config]
+      properties:
+        name:
+          type: string
+        config:
+          $ref: "#/components/schemas/ReceiptTemplateConfig"

@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { Link, useParams, useSearch } from "wouter";
-import { useGetSale, getGetSaleQueryKey } from "@workspace/api-client-react";
+import { useGetSale, useGetDefaultReceiptTemplate, getGetSaleQueryKey, getGetDefaultReceiptTemplateQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Receipt, Printer, ImagePlus } from "lucide-react";
+import { ReceiptView } from "@/components/receipt/receipt-view";
 
 function photoUrl(url: string | null | undefined): string | null {
   if (!url) return null;
@@ -32,15 +33,19 @@ export default function SaleDetail() {
     query: { queryKey: getGetSaleQueryKey(saleId), enabled: !!saleId },
   });
 
+  const { data: template, isLoading: isTemplateLoading } = useGetDefaultReceiptTemplate({
+    query: { queryKey: getGetDefaultReceiptTemplateQueryKey() },
+  });
+
   useEffect(() => {
-    if (autoPrint && sale && !isLoading) {
+    if (autoPrint && sale && !isLoading && template && !isTemplateLoading) {
       const timer = setTimeout(() => window.print(), 400);
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [autoPrint, sale, isLoading]);
+  }, [autoPrint, sale, isLoading, template, isTemplateLoading]);
 
-  if (isLoading) {
+  if (isLoading || isTemplateLoading) {
     return (
       <div className="space-y-6 animate-in fade-in duration-300">
         <Skeleton className="h-8 w-48" />
@@ -61,8 +66,12 @@ export default function SaleDetail() {
     );
   }
 
+  const paperWidthMm = template?.config.paperSize === "58mm" ? "58mm" : "80mm";
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl">
+      <style>{`@media print { @page { size: ${paperWidthMm} auto; margin: 0; } }`}</style>
+
       <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-3">
           <Link href="/sales">
@@ -86,22 +95,8 @@ export default function SaleDetail() {
         </Button>
       </div>
 
-      {/* Receipt — visible on screen and in print */}
-      <div id="receipt" className="rounded-lg border bg-card print:border-0 print:shadow-none print:rounded-none">
-
-        {/* Print-only header */}
-        <div className="hidden print:block text-center py-6 border-b">
-          <p className="text-2xl font-bold tracking-tight">Nexus POS</p>
-          <p className="text-sm text-muted-foreground mt-1">Sales Receipt</p>
-          <p className="text-sm mt-1">
-            {new Date(sale.createdAt).toLocaleString(undefined, {
-              weekday: "long", month: "long", day: "numeric",
-              year: "numeric", hour: "2-digit", minute: "2-digit",
-            })}
-          </p>
-          <p className="text-lg font-semibold mt-2">Sale #{sale.id}</p>
-        </div>
-
+      {/* On-screen summary */}
+      <div className="rounded-lg border bg-card print:hidden">
         <div className="p-5 border-b flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Customer</p>
@@ -134,7 +129,7 @@ export default function SaleDetail() {
         </div>
 
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 border-b print:bg-gray-100">
+          <thead className="bg-muted/50 border-b">
             <tr>
               <th className="text-left px-5 py-3 font-medium text-muted-foreground">Product</th>
               <th className="text-right px-5 py-3 font-medium text-muted-foreground">Qty</th>
@@ -152,10 +147,10 @@ export default function SaleDetail() {
                       <img
                         src={photoUrl(item.productPhotoUrl)!}
                         alt={item.productName ?? `Product #${item.productId}`}
-                        className="h-9 w-9 rounded-md object-cover border shrink-0 print:hidden"
+                        className="h-9 w-9 rounded-md object-cover border shrink-0"
                       />
                     ) : (
-                      <div className="h-9 w-9 rounded-md border bg-muted flex items-center justify-center shrink-0 print:hidden">
+                      <div className="h-9 w-9 rounded-md border bg-muted flex items-center justify-center shrink-0">
                         <ImagePlus className="h-3.5 w-3.5 text-muted-foreground" />
                       </div>
                     )}
@@ -163,7 +158,7 @@ export default function SaleDetail() {
                   </div>
                 </td>
                 <td className="px-5 py-3 text-right">
-                  <Badge variant="secondary" className="print:bg-transparent print:border print:border-gray-300">
+                  <Badge variant="secondary">
                     {item.quantity}
                   </Badge>
                 </td>
@@ -193,12 +188,14 @@ export default function SaleDetail() {
             <p className="text-2xl font-bold">Total: ${Number(sale.total).toFixed(2)}</p>
           </div>
         </div>
-
-        {/* Print-only footer */}
-        <div className="hidden print:block text-center py-4 border-t text-sm text-muted-foreground">
-          <p>Thank you for your purchase!</p>
-        </div>
       </div>
+
+      {/* Printed receipt — rendered from the default receipt template */}
+      {template && (
+        <div className="hidden print:block">
+          <ReceiptView config={template.config} sale={sale} />
+        </div>
+      )}
     </div>
   );
 }

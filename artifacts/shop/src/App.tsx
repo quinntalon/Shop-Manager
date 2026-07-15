@@ -17,6 +17,7 @@ import NewSale from "@/pages/sales/new";
 import Categories from "@/pages/categories";
 import UsersPage from "@/pages/users";
 import SettingsPage from "@/pages/settings";
+import ReceiptEditorPage from "@/pages/settings/receipt-editor";
 import { useRole, type Permission } from "@/hooks/use-role";
 import { useSettings, applyTheme } from "@/hooks/use-settings";
 import { ShieldAlert } from "lucide-react";
@@ -211,6 +212,11 @@ function AppRoutes() {
           <Route path="/settings">
             <RequirePermission permission="settings">
               <SettingsPage />
+            </RequirePermission>
+          </Route>
+          <Route path="/settings/receipt-editor">
+            <RequirePermission permission="settings">
+              <ReceiptEditorPage />
             </RequirePermission>
           </Route>
           <Route component={NotFound} />
