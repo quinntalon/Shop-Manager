@@ -315,10 +315,10 @@ export default function Inventory() {
                       <img
                         src={product.photoUrl}
                         alt={product.name}
-                        className="w-16 h-16 aspect-square rounded-xl object-cover flex-shrink-0"
+                        className="w-12 h-12 aspect-square rounded-xl object-cover flex-shrink-0"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
                         <ImagePlus className="h-5 w-5 text-muted-foreground/40" />
                       </div>
                     )}
