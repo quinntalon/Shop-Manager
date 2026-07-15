@@ -15,4 +15,5 @@ export interface SaleItem {
   /** @minimum 1 */
   quantity: number;
   unitPrice: number;
+  discount?: number;
 }

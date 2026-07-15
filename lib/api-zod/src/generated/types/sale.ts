@@ -5,16 +5,29 @@
  * Shop Sales & Inventory Management API
  * OpenAPI spec version: 0.1.0
  */
+import type { SaleDeliveryPaymentStatus } from './saleDeliveryPaymentStatus';
 import type { SaleItem } from './saleItem';
+import type { SalePaymentMethod } from './salePaymentMethod';
 
 export interface Sale {
   id: number;
   /** @nullable */
   customerName?: string | null;
   /** @nullable */
+  customerPhone?: string | null;
+  /** @nullable */
   note?: string | null;
+  subtotal: number;
+  cartDiscount?: number;
+  discountTotal: number;
   total: number;
-  paymentMethod: 'cash' | 'card' | 'mobile';
+  paymentMethod: SalePaymentMethod;
+  /** @nullable */
+  transactionId?: string | null;
+  /** @nullable */
+  bankName?: string | null;
+  /** @nullable */
+  deliveryPaymentStatus?: SaleDeliveryPaymentStatus;
   items: SaleItem[];
   createdAt: string;
 }

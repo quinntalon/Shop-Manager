@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Search, Plus, Minus, Trash2, ShoppingCart, ImagePlus, Banknote, CreditCard, Smartphone } from "lucide-react";
+import { ArrowLeft, Search, Plus, Minus, Trash2, ShoppingCart, ImagePlus, Banknote, CreditCard, Smartphone, Landmark, Truck, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 function photoUrl(url: string | null | undefined): string | null {
@@ -24,9 +24,13 @@ function photoUrl(url: string | null | undefined): string | null {
   return url;
 }
 
+type PaymentMethod = "cash" | "momo" | "card" | "bank" | "delivery";
+type DeliveryPaymentStatus = "pay_on_delivery" | "paid";
+
 interface CartItem {
   product: Product;
   quantity: number;
+  discount: number;
 }
 
 export default function NewSale() {
@@ -37,8 +41,13 @@ export default function NewSale() {
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [note, setNote] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "mobile">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
+  const [transactionId, setTransactionId] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [deliveryPaymentStatus, setDeliveryPaymentStatus] = useState<DeliveryPaymentStatus>("pay_on_delivery");
+  const [cartDiscount, setCartDiscount] = useState("");
 
   const { data: products, isLoading } = useListProducts(
     { search: search || undefined },
@@ -78,7 +87,7 @@ export default function NewSale() {
         toast({ title: "Out of stock", variant: "destructive" });
         return prev;
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { product, quantity: 1, discount: 0 }];
     });
   }
 
@@ -101,15 +110,39 @@ export default function NewSale() {
     setCart((prev) => prev.filter((c) => c.product.id !== productId));
   }
 
-  const total = cart.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
+  function updateItemDiscount(productId: number, value: string) {
+    setCart((prev) => prev.map((c) => {
+      if (c.product.id !== productId) return c;
+      const lineTotal = Number(c.product.price) * c.quantity;
+      let discount = value === "" ? 0 : Number(value);
+      if (Number.isNaN(discount) || discount < 0) discount = 0;
+      if (discount > lineTotal) discount = lineTotal;
+      return { ...c, discount };
+    }));
+  }
+
+  const subtotal = cart.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
+  const itemDiscountTotal = cart.reduce((sum, item) => sum + item.discount, 0);
+  const rawCartDiscount = cartDiscount === "" ? 0 : Number(cartDiscount);
+  const maxCartDiscount = Math.max(subtotal - itemDiscountTotal, 0);
+  const appliedCartDiscount = Number.isNaN(rawCartDiscount)
+    ? 0
+    : Math.min(Math.max(rawCartDiscount, 0), maxCartDiscount);
+  const discountTotal = itemDiscountTotal + appliedCartDiscount;
+  const total = Math.max(subtotal - discountTotal, 0);
 
   function handleCheckout() {
     if (cart.length === 0) return;
     const data: SaleInput = {
       customerName: customerName || undefined,
+      customerPhone: customerPhone || undefined,
       note: note || undefined,
       paymentMethod,
-      items: cart.map((c) => ({ productId: c.product.id, quantity: c.quantity })),
+      transactionId: paymentMethod === "momo" ? transactionId || undefined : undefined,
+      bankName: paymentMethod === "bank" ? bankName || undefined : undefined,
+      deliveryPaymentStatus: paymentMethod === "delivery" ? deliveryPaymentStatus : undefined,
+      cartDiscount: appliedCartDiscount || undefined,
+      items: cart.map((c) => ({ productId: c.product.id, quantity: c.quantity, discount: c.discount || undefined })),
     };
     createSaleMutation.mutate({ data });
   }
@@ -221,57 +254,121 @@ export default function NewSale() {
             {cart.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">No items added yet</p>
             ) : (
-              <div className="space-y-2">
-                {cart.map((item) => (
-                  <div key={item.product.id} className="flex items-center gap-2 text-sm">
-                    {photoUrl(item.product.photoUrl) ? (
-                      <img
-                        src={photoUrl(item.product.photoUrl)!}
-                        alt={item.product.name}
-                        className="h-8 w-8 rounded-md object-cover border shrink-0"
-                      />
-                    ) : (
-                      <div className="h-8 w-8 rounded-md border bg-muted flex items-center justify-center shrink-0">
-                        <ImagePlus className="h-3.5 w-3.5 text-muted-foreground" />
+              <div className="space-y-3">
+                {cart.map((item) => {
+                  const lineTotal = Number(item.product.price) * item.quantity;
+                  const lineNet = lineTotal - item.discount;
+                  return (
+                    <div key={item.product.id} className="space-y-1.5 pb-2 border-b last:border-0">
+                      <div className="flex items-center gap-2 text-sm">
+                        {photoUrl(item.product.photoUrl) ? (
+                          <img
+                            src={photoUrl(item.product.photoUrl)!}
+                            alt={item.product.name}
+                            className="h-8 w-8 rounded-md object-cover border shrink-0"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded-md border bg-muted flex items-center justify-center shrink-0">
+                            <ImagePlus className="h-3.5 w-3.5 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{item.product.name}</p>
+                          <p className="text-xs text-muted-foreground">${Number(item.product.price).toFixed(2)} each</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, -1)}>
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-6 text-center font-semibold">{item.quantity}</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, 1)}>
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <span className="w-16 text-right font-semibold">
+                          ${lineNet.toFixed(2)}
+                        </span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeFromCart(item.product.id)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{item.product.name}</p>
-                      <p className="text-xs text-muted-foreground">${Number(item.product.price).toFixed(2)} each</p>
+                      <div className="flex items-center gap-1.5 pl-10">
+                        <Tag className="h-3 w-3 text-muted-foreground shrink-0" />
+                        <Label className="text-xs text-muted-foreground shrink-0">Discount</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={lineTotal}
+                          step="0.01"
+                          value={item.discount === 0 ? "" : item.discount}
+                          onChange={(e) => updateItemDiscount(item.product.id, e.target.value)}
+                          placeholder="0.00"
+                          className="h-7 text-xs w-24"
+                        />
+                        {item.discount > 0 && (
+                          <span className="text-xs text-destructive font-medium">-${item.discount.toFixed(2)}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, -1)}>
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <span className="w-6 text-center font-semibold">{item.quantity}</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, 1)}>
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                    <span className="w-16 text-right font-semibold">
-                      ${(Number(item.product.price) * item.quantity).toFixed(2)}
-                    </span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeFromCart(item.product.id)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                  );
+                })}
+                <div className="pt-1 space-y-1 text-sm">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Subtotal</span>
+                    <span>${subtotal.toFixed(2)}</span>
                   </div>
-                ))}
-                <div className="border-t pt-2 flex justify-between font-bold">
-                  <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  {itemDiscountTotal > 0 && (
+                    <div className="flex justify-between text-destructive">
+                      <span>Item discounts</span>
+                      <span>-${itemDiscountTotal.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {appliedCartDiscount > 0 && (
+                    <div className="flex justify-between text-destructive">
+                      <span>Cart discount</span>
+                      <span>-${appliedCartDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="border-t pt-2 flex justify-between font-bold text-base">
+                    <span>Total</span>
+                    <span>${total.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
+          {/* Cart-wide discount */}
+          {cart.length > 0 && (
+            <div className="rounded-lg border bg-card p-4 space-y-2">
+              <h2 className="font-semibold text-sm flex items-center gap-1.5">
+                <Tag className="h-3.5 w-3.5 text-primary" />
+                Cart Discount
+              </h2>
+              <Input
+                type="number"
+                min={0}
+                max={maxCartDiscount}
+                step="0.01"
+                value={cartDiscount}
+                onChange={(e) => setCartDiscount(e.target.value)}
+                placeholder="0.00"
+                className="h-8 text-sm"
+              />
+              <p className="text-xs text-muted-foreground">Fixed amount off the entire cart (max ${maxCartDiscount.toFixed(2)}).</p>
+            </div>
+          )}
+
           {/* Payment method */}
           <div className="rounded-lg border bg-card p-4 space-y-3">
             <h2 className="font-semibold text-sm">Payment Method</h2>
             <div className="grid grid-cols-3 gap-2">
-              {([ 
+              {([
                 { value: "cash", label: "Cash", Icon: Banknote },
+                { value: "momo", label: "Momo", Icon: Smartphone },
                 { value: "card", label: "Card", Icon: CreditCard },
-                { value: "mobile", label: "Mobile Pay", Icon: Smartphone },
+                { value: "bank", label: "Bank", Icon: Landmark },
+                { value: "delivery", label: "Delivery", Icon: Truck },
               ] as const).map(({ value, label, Icon }) => (
                 <button
                   key={value}
@@ -289,6 +386,34 @@ export default function NewSale() {
                 </button>
               ))}
             </div>
+
+            {paymentMethod === "momo" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Transaction ID</Label>
+                <Input value={transactionId} onChange={(e) => setTransactionId(e.target.value)} placeholder="e.g. MP240715.1234.A56789" className="h-8 text-sm" />
+              </div>
+            )}
+
+            {paymentMethod === "bank" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Bank Name</Label>
+                <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. GT Bank" className="h-8 text-sm" />
+              </div>
+            )}
+
+            {paymentMethod === "delivery" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Payment Status</Label>
+                <select
+                  value={deliveryPaymentStatus}
+                  onChange={(e) => setDeliveryPaymentStatus(e.target.value as DeliveryPaymentStatus)}
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="pay_on_delivery">Pay on Delivery</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Customer info */}
@@ -299,6 +424,10 @@ export default function NewSale() {
               <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Walk-in" className="h-8 text-sm" />
             </div>
             <div className="space-y-1.5">
+              <Label className="text-xs">Telephone</Label>
+              <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g. 024 123 4567" className="h-8 text-sm" type="tel" />
+            </div>
+            <div className="space-y-1.5">
               <Label className="text-xs">Note</Label>
               <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Order note..." className="h-8 text-sm" />
             </div>
@@ -307,10 +436,15 @@ export default function NewSale() {
           <Button
             className="w-full"
             size="lg"
-            disabled={cart.length === 0 || createSaleMutation.isPending}
+            disabled={
+              cart.length === 0 ||
+              createSaleMutation.isPending ||
+              (paymentMethod === "momo" && !transactionId.trim()) ||
+              (paymentMethod === "bank" && !bankName.trim())
+            }
             onClick={handleCheckout}
           >
-            {createSaleMutation.isPending ? "Processing..." : `Checkout — $${total.toFixed(2)}`}
+            {createSaleMutation.isPending ? "Processing..." : `Checkout — ${total.toFixed(2)}`}
           </Button>
         </div>
       </div>

@@ -92,29 +92,90 @@ export interface SaleItem {
   /** @minimum 1 */
   quantity: number;
   unitPrice: number;
+  discount?: number;
 }
+
+export type SaleInputPaymentMethod = typeof SaleInputPaymentMethod[keyof typeof SaleInputPaymentMethod];
+
+
+export const SaleInputPaymentMethod = {
+  cash: 'cash',
+  momo: 'momo',
+  card: 'card',
+  bank: 'bank',
+  delivery: 'delivery',
+} as const;
+
+export type SaleInputDeliveryPaymentStatus = typeof SaleInputDeliveryPaymentStatus[keyof typeof SaleInputDeliveryPaymentStatus];
+
+
+export const SaleInputDeliveryPaymentStatus = {
+  pay_on_delivery: 'pay_on_delivery',
+  paid: 'paid',
+} as const;
 
 export interface SaleItemInput {
   productId: number;
   /** @minimum 1 */
   quantity: number;
+  /** @minimum 0 */
+  discount?: number;
 }
 
 export interface SaleInput {
   customerName?: string;
+  customerPhone?: string;
   note?: string;
-  paymentMethod?: 'cash' | 'card' | 'mobile';
+  paymentMethod?: SaleInputPaymentMethod;
+  transactionId?: string;
+  bankName?: string;
+  deliveryPaymentStatus?: SaleInputDeliveryPaymentStatus;
+  /** @minimum 0 */
+  cartDiscount?: number;
   items: SaleItemInput[];
 }
+
+export type SalePaymentMethod = typeof SalePaymentMethod[keyof typeof SalePaymentMethod];
+
+
+export const SalePaymentMethod = {
+  cash: 'cash',
+  momo: 'momo',
+  card: 'card',
+  bank: 'bank',
+  delivery: 'delivery',
+} as const;
+
+/**
+ * @nullable
+ */
+export type SaleDeliveryPaymentStatus = typeof SaleDeliveryPaymentStatus[keyof typeof SaleDeliveryPaymentStatus] | null;
+
+
+export const SaleDeliveryPaymentStatus = {
+  pay_on_delivery: 'pay_on_delivery',
+  paid: 'paid',
+} as const;
 
 export interface Sale {
   id: number;
   /** @nullable */
   customerName?: string | null;
   /** @nullable */
+  customerPhone?: string | null;
+  /** @nullable */
   note?: string | null;
+  subtotal: number;
+  cartDiscount?: number;
+  discountTotal: number;
   total: number;
-  paymentMethod: 'cash' | 'card' | 'mobile';
+  paymentMethod: SalePaymentMethod;
+  /** @nullable */
+  transactionId?: string | null;
+  /** @nullable */
+  bankName?: string | null;
+  /** @nullable */
+  deliveryPaymentStatus?: SaleDeliveryPaymentStatus;
   items: SaleItem[];
   createdAt: string;
 }

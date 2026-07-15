@@ -10,4 +10,6 @@ export interface SaleItemInput {
   productId: number;
   /** @minimum 1 */
   quantity: number;
+  /** @minimum 0 */
+  discount?: number;
 }

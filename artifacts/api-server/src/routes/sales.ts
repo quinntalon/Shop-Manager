@@ -10,6 +10,9 @@ import { requirePermission } from "../middlewares/requireRole";
 
 const router: IRouter = Router();
 
+type PaymentMethod = 'cash' | 'momo' | 'card' | 'bank' | 'delivery';
+type DeliveryPaymentStatus = 'pay_on_delivery' | 'paid';
+
 async function buildSaleResponse(saleId: number) {
   const [sale] = await db
     .select()
@@ -24,6 +27,7 @@ async function buildSaleResponse(saleId: number) {
       productId: saleItemsTable.productId,
       quantity: saleItemsTable.quantity,
       unitPrice: saleItemsTable.unitPrice,
+      discount: saleItemsTable.discount,
       productName: productsTable.name,
       productPhotoUrl: productsTable.photoUrl,
     })
@@ -31,12 +35,23 @@ async function buildSaleResponse(saleId: number) {
     .leftJoin(productsTable, eq(saleItemsTable.productId, productsTable.id))
     .where(eq(saleItemsTable.saleId, saleId));
 
+  const subtotal = parseFloat(sale.subtotal);
+  const cartDiscount = parseFloat(sale.cartDiscount);
+  const itemDiscountTotal = items.reduce((sum, item) => sum + parseFloat(item.discount), 0);
+
   return {
     id: sale.id,
     customerName: sale.customerName,
+    customerPhone: sale.customerPhone,
     note: sale.note,
+    subtotal,
+    cartDiscount,
+    discountTotal: itemDiscountTotal + cartDiscount,
     total: parseFloat(sale.total),
-    paymentMethod: sale.paymentMethod as 'cash' | 'card' | 'mobile',
+    paymentMethod: sale.paymentMethod as PaymentMethod,
+    transactionId: sale.transactionId,
+    bankName: sale.bankName,
+    deliveryPaymentStatus: sale.deliveryPaymentStatus as DeliveryPaymentStatus | null,
     createdAt: sale.createdAt.toISOString(),
     items: items.map((item) => ({
       productId: item.productId,
@@ -44,6 +59,7 @@ async function buildSaleResponse(saleId: number) {
       productPhotoUrl: item.productPhotoUrl ?? null,
       quantity: item.quantity,
       unitPrice: parseFloat(item.unitPrice),
+      discount: parseFloat(item.discount),
     })),
   };
 }
@@ -78,6 +94,7 @@ router.get("/sales", requirePermission("sales"), async (req, res): Promise<void>
       productId: saleItemsTable.productId,
       quantity: saleItemsTable.quantity,
       unitPrice: saleItemsTable.unitPrice,
+      discount: saleItemsTable.discount,
       productName: productsTable.name,
       productPhotoUrl: productsTable.photoUrl,
     })
@@ -91,21 +108,34 @@ router.get("/sales", requirePermission("sales"), async (req, res): Promise<void>
     itemsBySaleId[item.saleId].push(item);
   }
 
-  const result = sales.map((sale) => ({
-    id: sale.id,
-    customerName: sale.customerName,
-    note: sale.note,
-    total: parseFloat(sale.total),
-    paymentMethod: sale.paymentMethod as 'cash' | 'card' | 'mobile',
-    createdAt: sale.createdAt.toISOString(),
-    items: (itemsBySaleId[sale.id] ?? []).map((item) => ({
-      productId: item.productId,
-      productName: item.productName ?? null,
-      productPhotoUrl: item.productPhotoUrl ?? null,
-      quantity: item.quantity,
-      unitPrice: parseFloat(item.unitPrice),
-    })),
-  }));
+  const result = sales.map((sale) => {
+    const saleItems = itemsBySaleId[sale.id] ?? [];
+    const itemDiscountTotal = saleItems.reduce((sum, item) => sum + parseFloat(item.discount), 0);
+    const cartDiscount = parseFloat(sale.cartDiscount);
+    return {
+      id: sale.id,
+      customerName: sale.customerName,
+      customerPhone: sale.customerPhone,
+      note: sale.note,
+      subtotal: parseFloat(sale.subtotal),
+      cartDiscount,
+      discountTotal: itemDiscountTotal + cartDiscount,
+      total: parseFloat(sale.total),
+      paymentMethod: sale.paymentMethod as PaymentMethod,
+      transactionId: sale.transactionId,
+      bankName: sale.bankName,
+      deliveryPaymentStatus: sale.deliveryPaymentStatus as DeliveryPaymentStatus | null,
+      createdAt: sale.createdAt.toISOString(),
+      items: saleItems.map((item) => ({
+        productId: item.productId,
+        productName: item.productName ?? null,
+        productPhotoUrl: item.productPhotoUrl ?? null,
+        quantity: item.quantity,
+        unitPrice: parseFloat(item.unitPrice),
+        discount: parseFloat(item.discount),
+      })),
+    };
+  });
 
   res.json(result);
 });
@@ -117,7 +147,32 @@ router.post("/sales", requirePermission("sales"), async (req, res): Promise<void
     return;
   }
 
-  const { items, customerName, note, paymentMethod } = parsed.data;
+  const {
+    items,
+    customerName,
+    customerPhone,
+    note,
+    paymentMethod,
+    transactionId,
+    bankName,
+    deliveryPaymentStatus,
+    cartDiscount,
+  } = parsed.data;
+
+  const method = (paymentMethod ?? "cash") as PaymentMethod;
+
+  if (method === "momo" && !transactionId?.trim()) {
+    res.status(400).json({ error: "Transaction ID is required for Momo payments" });
+    return;
+  }
+  if (method === "bank" && !bankName?.trim()) {
+    res.status(400).json({ error: "Bank name is required for Bank payments" });
+    return;
+  }
+  if (method === "delivery" && !deliveryPaymentStatus) {
+    res.status(400).json({ error: "Payment status is required for Delivery orders" });
+    return;
+  }
 
   const productIds = items.map((i) => i.productId);
   const products = await db
@@ -137,21 +192,37 @@ router.post("/sales", requirePermission("sales"), async (req, res): Promise<void
       res.status(400).json({ error: `Insufficient stock for "${product.name}"` });
       return;
     }
+    const lineTotal = parseFloat(product.price) * item.quantity;
+    if ((item.discount ?? 0) > lineTotal) {
+      res.status(400).json({ error: `Discount for "${product.name}" cannot exceed its line total` });
+      return;
+    }
   }
 
-  let total = 0;
+  let subtotal = 0;
+  let itemDiscountTotal = 0;
   for (const item of items) {
     const product = productMap.get(item.productId)!;
-    total += parseFloat(product.price) * item.quantity;
+    subtotal += parseFloat(product.price) * item.quantity;
+    itemDiscountTotal += item.discount ?? 0;
   }
+
+  const cartDiscountAmount = Math.min(cartDiscount ?? 0, Math.max(subtotal - itemDiscountTotal, 0));
+  const total = Math.max(subtotal - itemDiscountTotal - cartDiscountAmount, 0);
 
   const [sale] = await db
     .insert(salesTable)
     .values({
       customerName: customerName ?? null,
+      customerPhone: customerPhone ?? null,
       note: note ?? null,
+      subtotal: String(subtotal.toFixed(2)),
+      cartDiscount: String(cartDiscountAmount.toFixed(2)),
       total: String(total.toFixed(2)),
-      paymentMethod: paymentMethod ?? "cash",
+      paymentMethod: method,
+      transactionId: method === "momo" ? transactionId ?? null : null,
+      bankName: method === "bank" ? bankName ?? null : null,
+      deliveryPaymentStatus: method === "delivery" ? deliveryPaymentStatus ?? null : null,
     })
     .returning();
 
@@ -162,6 +233,7 @@ router.post("/sales", requirePermission("sales"), async (req, res): Promise<void
       productId: item.productId,
       quantity: item.quantity,
       unitPrice: product.price,
+      discount: String((item.discount ?? 0).toFixed(2)),
     });
     await db
       .update(productsTable)

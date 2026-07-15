@@ -361,15 +361,23 @@ export const ListSalesQueryParams = zod.object({
 export const ListSalesResponseItem = zod.object({
   "id": zod.number(),
   "customerName": zod.string().nullish(),
+  "customerPhone": zod.string().nullish(),
   "note": zod.string().nullish(),
+  "subtotal": zod.number(),
+  "cartDiscount": zod.number().optional(),
+  "discountTotal": zod.number(),
   "total": zod.number(),
-  "paymentMethod": zod.enum(['cash', 'card', 'mobile']),
+  "paymentMethod": zod.enum(['cash', 'momo', 'card', 'bank', 'delivery']),
+  "transactionId": zod.string().nullish(),
+  "bankName": zod.string().nullish(),
+  "deliveryPaymentStatus": zod.union([zod.literal('pay_on_delivery'),zod.literal('paid'),zod.literal(null)]).nullish(),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "productName": zod.string().nullish(),
   "productPhotoUrl": zod.string().nullish(),
   "quantity": zod.number().min(1),
-  "unitPrice": zod.number()
+  "unitPrice": zod.number(),
+  "discount": zod.number().optional()
 })),
   "createdAt": zod.string()
 })
@@ -379,16 +387,27 @@ export const ListSalesResponse = zod.array(ListSalesResponseItem)
 /**
  * @summary Create a new sale (checkout)
  */
+export const createSaleBodyPaymentMethodDefault = `cash`;
+export const createSaleBodyCartDiscountMin = 0;
+
+
+export const createSaleBodyItemsItemDiscountMin = 0;
 
 
 
 export const CreateSaleBody = zod.object({
   "customerName": zod.string().optional(),
+  "customerPhone": zod.string().optional(),
   "note": zod.string().optional(),
-  "paymentMethod": zod.enum(['cash', 'card', 'mobile']).optional(),
+  "paymentMethod": zod.enum(['cash', 'momo', 'card', 'bank', 'delivery']).default(createSaleBodyPaymentMethodDefault),
+  "transactionId": zod.string().optional(),
+  "bankName": zod.string().optional(),
+  "deliveryPaymentStatus": zod.enum(['pay_on_delivery', 'paid']).optional(),
+  "cartDiscount": zod.number().min(createSaleBodyCartDiscountMin).optional(),
   "items": zod.array(zod.object({
   "productId": zod.number(),
-  "quantity": zod.number().min(1)
+  "quantity": zod.number().min(1),
+  "discount": zod.number().min(createSaleBodyItemsItemDiscountMin).optional()
 }))
 })
 
@@ -398,15 +417,23 @@ export const CreateSaleBody = zod.object({
 export const CreateSaleResponse = zod.object({
   "id": zod.number(),
   "customerName": zod.string().nullish(),
+  "customerPhone": zod.string().nullish(),
   "note": zod.string().nullish(),
+  "subtotal": zod.number(),
+  "cartDiscount": zod.number().optional(),
+  "discountTotal": zod.number(),
   "total": zod.number(),
-  "paymentMethod": zod.enum(['cash', 'card', 'mobile']),
+  "paymentMethod": zod.enum(['cash', 'momo', 'card', 'bank', 'delivery']),
+  "transactionId": zod.string().nullish(),
+  "bankName": zod.string().nullish(),
+  "deliveryPaymentStatus": zod.union([zod.literal('pay_on_delivery'),zod.literal('paid'),zod.literal(null)]).nullish(),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "productName": zod.string().nullish(),
   "productPhotoUrl": zod.string().nullish(),
   "quantity": zod.number().min(1),
-  "unitPrice": zod.number()
+  "unitPrice": zod.number(),
+  "discount": zod.number().optional()
 })),
   "createdAt": zod.string()
 })
@@ -425,15 +452,23 @@ export const GetSaleParams = zod.object({
 export const GetSaleResponse = zod.object({
   "id": zod.number(),
   "customerName": zod.string().nullish(),
+  "customerPhone": zod.string().nullish(),
   "note": zod.string().nullish(),
+  "subtotal": zod.number(),
+  "cartDiscount": zod.number().optional(),
+  "discountTotal": zod.number(),
   "total": zod.number(),
-  "paymentMethod": zod.enum(['cash', 'card', 'mobile']),
+  "paymentMethod": zod.enum(['cash', 'momo', 'card', 'bank', 'delivery']),
+  "transactionId": zod.string().nullish(),
+  "bankName": zod.string().nullish(),
+  "deliveryPaymentStatus": zod.union([zod.literal('pay_on_delivery'),zod.literal('paid'),zod.literal(null)]).nullish(),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "productName": zod.string().nullish(),
   "productPhotoUrl": zod.string().nullish(),
   "quantity": zod.number().min(1),
-  "unitPrice": zod.number()
+  "unitPrice": zod.number(),
+  "discount": zod.number().optional()
 })),
   "createdAt": zod.string()
 })

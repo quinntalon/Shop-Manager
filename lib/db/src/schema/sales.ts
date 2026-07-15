@@ -5,9 +5,15 @@ import { z } from "zod/v4";
 export const salesTable = pgTable("sales", {
   id: serial("id").primaryKey(),
   customerName: text("customer_name"),
+  customerPhone: text("customer_phone"),
   note: text("note"),
+  subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull().default("0"),
+  cartDiscount: numeric("cart_discount", { precision: 10, scale: 2 }).notNull().default("0"),
   total: numeric("total", { precision: 10, scale: 2 }).notNull().default("0"),
   paymentMethod: text("payment_method").notNull().default("cash"),
+  transactionId: text("transaction_id"),
+  bankName: text("bank_name"),
+  deliveryPaymentStatus: text("delivery_payment_status"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -17,6 +23,7 @@ export const saleItemsTable = pgTable("sale_items", {
   productId: integer("product_id").notNull(),
   quantity: integer("quantity").notNull(),
   unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
+  discount: numeric("discount", { precision: 10, scale: 2 }).notNull().default("0"),
 });
 
 export const insertSaleSchema = createInsertSchema(salesTable).omit({ id: true, createdAt: true });

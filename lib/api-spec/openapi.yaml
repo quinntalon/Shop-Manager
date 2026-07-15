@@ -635,6 +635,8 @@ components:
           minimum: 1
         unitPrice:
           type: number
+        discount:
+          type: number
 
     SaleInput:
       type: object
@@ -642,12 +644,24 @@ components:
       properties:
         customerName:
           type: string
+        customerPhone:
+          type: string
         note:
           type: string
         paymentMethod:
           type: string
-          enum: [cash, card, mobile]
+          enum: [cash, momo, card, bank, delivery]
           default: cash
+        transactionId:
+          type: string
+        bankName:
+          type: string
+        deliveryPaymentStatus:
+          type: string
+          enum: [pay_on_delivery, paid]
+        cartDiscount:
+          type: number
+          minimum: 0
         items:
           type: array
           items:
@@ -662,22 +676,40 @@ components:
         quantity:
           type: integer
           minimum: 1
+        discount:
+          type: number
+          minimum: 0
 
     Sale:
       type: object
-      required: [id, total, items, createdAt, paymentMethod]
+      required: [id, subtotal, discountTotal, total, items, createdAt, paymentMethod]
       properties:
         id:
           type: integer
         customerName:
           type: ["string", "null"]
+        customerPhone:
+          type: ["string", "null"]
         note:
           type: ["string", "null"]
+        subtotal:
+          type: number
+        cartDiscount:
+          type: number
+        discountTotal:
+          type: number
         total:
           type: number
         paymentMethod:
           type: string
-          enum: [cash, card, mobile]
+          enum: [cash, momo, card, bank, delivery]
+        transactionId:
+          type: ["string", "null"]
+        bankName:
+          type: ["string", "null"]
+        deliveryPaymentStatus:
+          type: ["string", "null"]
+          enum: [pay_on_delivery, paid, null]
         items:
           type: array
           items:
