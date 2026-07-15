@@ -48,6 +48,21 @@ Nexus POS is a shop sales & inventory management system: a web dashboard (Shop M
 - `lib/api-client-react` — Generated TanStack Query hooks
 - `lib/api-zod` — Generated Zod schemas
 
+## Vercel Deployment
+
+The project is configured for one-click Vercel deployment (`vercel.json` at root):
+
+- **Frontend** — Vite builds `artifacts/shop` to `artifacts/shop/dist/public`, served as static assets
+- **API** — `api/index.ts` re-exports the Express app; Vercel deploys it as a single serverless function
+- **Routing** — `/api/*` is rewritten to the serverless function; all other paths fall back to `index.html` for SPA routing
+
+**Deploy steps:**
+1. Import the repo into Vercel (it auto-detects `vercel.json` — no framework override needed)
+2. Add the required env vars in Vercel's dashboard: `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`, `DATABASE_URL`, and optionally the Cloudinary vars
+3. Deploy — the build command is `pnpm --filter @workspace/shop run build`
+
+`PORT` and `BASE_PATH` are **not** required for builds; they default to `5000` and `/` respectively.
+
 ## Architecture decisions
 
 - Auth is handled entirely by Clerk — the frontend uses `@clerk/react`, the API uses `@clerk/express` middleware
