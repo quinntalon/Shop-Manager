@@ -315,7 +315,7 @@ export default function Inventory() {
                       <img
                         src={product.photoUrl}
                         alt={product.name}
-                        className="h-9 w-9 rounded-md object-contain border bg-muted/30"
+                        className="h-9 w-9 rounded-md object-cover border"
                       />
                     ) : (
                       <div className="h-9 w-9 rounded-md bg-muted flex items-center justify-center">
