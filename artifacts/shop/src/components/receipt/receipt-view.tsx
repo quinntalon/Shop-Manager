@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { ReceiptTemplateConfig, ReceiptElementId, Sale } from "@workspace/api-client-react";
 import { ImagePlus } from "lucide-react";
+import type { CustomBlock, ExtendedConfig } from "@/pages/settings/receipt-editor";
 
 export const SAMPLE_SALE: Sale = {
   id: 1042,
@@ -44,13 +45,209 @@ function isVisible(config: ReceiptTemplateConfig, elementId: ReceiptElementId): 
   return config.elements.find((e) => e.id === elementId)?.visible ?? true;
 }
 
-function orderedElementIds(config: ReceiptTemplateConfig): ReceiptElementId[] {
-  return [...config.elements].sort((a, b) => a.order - b.order).map((e) => e.id);
-}
-
 function formatMoney(n: number | string | null | undefined): string {
   return `$${Number(n ?? 0).toFixed(2)}`;
 }
+
+// ─── Unified ordered items ────────────────────────────────────────────────────
+
+type RenderItem =
+  | { kind: "fixed"; id: ReceiptElementId; order: number }
+  | { kind: "custom"; block: CustomBlock; order: number };
+
+function getOrderedItems(config: ReceiptTemplateConfig): RenderItem[] {
+  const ext = config as ExtendedConfig;
+  const items: RenderItem[] = [
+    ...config.elements.map((el) => ({
+      kind: "fixed" as const,
+      id: el.id,
+      order: el.order,
+    })),
+    ...(ext.customBlocks ?? []).map((block) => ({
+      kind: "custom" as const,
+      block,
+      order: block.order,
+    })),
+  ];
+  return items.sort((a, b) => a.order - b.order);
+}
+
+// ─── Custom block renderers ───────────────────────────────────────────────────
+
+function renderCustomBlock(block: CustomBlock, config: ReceiptTemplateConfig, sale: Sale): React.ReactNode {
+  if (!block.visible) return null;
+
+  const blockTextStyle: CSSProperties = {
+    textAlign: block.align,
+    fontWeight: block.bold ? 700 : 400,
+    fontSize: FONT_SIZE_PX[block.fontSize],
+    color: block.color || config.textColor,
+  };
+
+  const justifyMap: Record<string, string> = {
+    left: "flex-start",
+    center: "center",
+    right: "flex-end",
+  };
+
+  switch (block.type) {
+    case "divider":
+      return (
+        <div key={block.id} style={{ padding: "2px 0" }}>
+          <hr
+            style={{
+              border: "none",
+              borderTop: `1px solid ${block.color || config.textColor}`,
+              margin: 0,
+            }}
+          />
+        </div>
+      );
+
+    case "textBlock":
+      return (
+        <div key={block.id} style={blockTextStyle}>
+          {block.text || (
+            <span style={{ opacity: 0.4, fontStyle: "italic" }}>Custom text</span>
+          )}
+        </div>
+      );
+
+    case "image":
+      return block.imageUrl ? (
+        <div
+          key={block.id}
+          style={{ display: "flex", justifyContent: justifyMap[block.align] ?? "center" }}
+        >
+          <img
+            src={block.imageUrl}
+            alt=""
+            style={{ height: block.imageHeight ?? 48, objectFit: "contain" }}
+          />
+        </div>
+      ) : (
+        <div
+          key={block.id}
+          style={{
+            border: `1px dashed ${config.textColor}55`,
+            padding: "6px",
+            textAlign: "center",
+            fontSize: FONT_SIZE_PX.xs,
+            color: `${config.textColor}60`,
+            borderRadius: 2,
+          }}
+        >
+          Image (no URL set)
+        </div>
+      );
+
+    case "spacer":
+      return <div key={block.id} style={{ height: block.height ?? 16 }} />;
+
+    case "qrCode": {
+      const value =
+        block.dataField === "custom"
+          ? block.customValue || "Custom value"
+          : `SALE #${sale.id}`;
+      const c = block.color || config.textColor;
+      return (
+        <div
+          key={block.id}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: justifyMap[block.align] ?? "center",
+            gap: 3,
+          }}
+        >
+          {/* QR code placeholder */}
+          <svg
+            width="64"
+            height="64"
+            viewBox="0 0 10 10"
+            style={{ color: c }}
+            aria-label="QR code"
+          >
+            {/* top-left finder */}
+            <rect x="0" y="0" width="4" height="4" fill="currentColor" rx="0.4" />
+            <rect x="1" y="1" width="2" height="2" fill="white" />
+            {/* top-right finder */}
+            <rect x="6" y="0" width="4" height="4" fill="currentColor" rx="0.4" />
+            <rect x="7" y="1" width="2" height="2" fill="white" />
+            {/* bottom-left finder */}
+            <rect x="0" y="6" width="4" height="4" fill="currentColor" rx="0.4" />
+            <rect x="1" y="7" width="2" height="2" fill="white" />
+            {/* data modules */}
+            <rect x="5" y="5" width="1" height="1" fill="currentColor" />
+            <rect x="7" y="5" width="1" height="1" fill="currentColor" />
+            <rect x="9" y="5" width="1" height="1" fill="currentColor" />
+            <rect x="5" y="7" width="2" height="1" fill="currentColor" />
+            <rect x="8" y="7" width="2" height="1" fill="currentColor" />
+            <rect x="5" y="9" width="1" height="1" fill="currentColor" />
+            <rect x="7" y="9" width="1" height="1" fill="currentColor" />
+            <rect x="9" y="9" width="1" height="1" fill="currentColor" />
+            <rect x="5" y="6" width="1" height="1" fill="currentColor" />
+          </svg>
+          <div style={{ fontSize: FONT_SIZE_PX.xs, color: `${c}99` }}>{value}</div>
+        </div>
+      );
+    }
+
+    case "barcode": {
+      const value =
+        block.dataField === "custom"
+          ? block.customValue || "Custom value"
+          : `SALE-${sale.id}`;
+      const c = block.color || config.textColor;
+      // Deterministic bar pattern based on string
+      const pattern = Array.from({ length: 22 }, (_, i) => {
+        const charCode = value.charCodeAt(i % value.length) || 0;
+        return (charCode + i) % 3 === 0 ? 2 : 1;
+      });
+      return (
+        <div
+          key={block.id}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: justifyMap[block.align] ?? "center",
+            gap: 3,
+          }}
+        >
+          <div
+            style={{
+              width: 96,
+              height: 36,
+              display: "flex",
+              alignItems: "stretch",
+              gap: "1px",
+              padding: "2px 0",
+            }}
+            aria-label="Barcode"
+          >
+            {pattern.map((w, i) => (
+              <div
+                key={i}
+                style={{
+                  flex: w,
+                  backgroundColor: i % 2 === 0 ? c : "transparent",
+                }}
+              />
+            ))}
+          </div>
+          <div style={{ fontSize: FONT_SIZE_PX.xs, color: `${c}99`, letterSpacing: 1 }}>
+            {value}
+          </div>
+        </div>
+      );
+    }
+
+    default:
+      return null;
+  }
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 interface ReceiptViewProps {
   config: ReceiptTemplateConfig;
@@ -62,13 +259,20 @@ export function ReceiptView({ config, sale, className }: ReceiptViewProps) {
   const width = PAPER_WIDTH_PX[config.paperSize] ?? PAPER_WIDTH_PX["80mm"];
   const gap = config.spacing;
 
-  function renderElement(id: ReceiptElementId) {
+  function renderFixed(id: ReceiptElementId): React.ReactNode {
     if (!isVisible(config, id)) return null;
     switch (id) {
       case "logo":
         return config.showLogo && config.logoUrl ? (
-          <div key={id} style={{ display: "flex", justifyContent: textStyle(config, id).textAlign as string }}>
-            <img src={config.logoUrl} alt="Logo" style={{ height: 48, width: 48, objectFit: "contain" }} />
+          <div
+            key={id}
+            style={{ display: "flex", justifyContent: textStyle(config, id).textAlign as string }}
+          >
+            <img
+              src={config.logoUrl}
+              alt="Logo"
+              style={{ height: 48, width: 48, objectFit: "contain" }}
+            />
           </div>
         ) : null;
 
@@ -76,8 +280,16 @@ export function ReceiptView({ config, sale, className }: ReceiptViewProps) {
         return (
           <div key={id} style={textStyle(config, id)}>
             <div>{config.storeName}</div>
-            {config.storeAddress && <div style={{ fontWeight: 400, fontSize: FONT_SIZE_PX.sm }}>{config.storeAddress}</div>}
-            {config.storePhone && <div style={{ fontWeight: 400, fontSize: FONT_SIZE_PX.sm }}>{config.storePhone}</div>}
+            {config.storeAddress && (
+              <div style={{ fontWeight: 400, fontSize: FONT_SIZE_PX.sm }}>
+                {config.storeAddress}
+              </div>
+            )}
+            {config.storePhone && (
+              <div style={{ fontWeight: 400, fontSize: FONT_SIZE_PX.sm }}>
+                {config.storePhone}
+              </div>
+            )}
           </div>
         );
 
@@ -87,7 +299,11 @@ export function ReceiptView({ config, sale, className }: ReceiptViewProps) {
             <div>Sale #{sale.id}</div>
             <div>
               {new Date(sale.createdAt).toLocaleString(undefined, {
-                month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit",
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
               })}
             </div>
           </div>
@@ -116,10 +332,14 @@ export function ReceiptView({ config, sale, className }: ReceiptViewProps) {
               <tbody>
                 {sale.items.map((item, idx) => (
                   <tr key={idx}>
-                    <td style={{ padding: "2px 0" }}>{item.productName ?? `Product #${item.productId}`}</td>
+                    <td style={{ padding: "2px 0" }}>
+                      {item.productName ?? `Product #${item.productId}`}
+                    </td>
                     <td style={{ textAlign: "right", padding: "2px 0" }}>{item.quantity}</td>
                     <td style={{ textAlign: "right", padding: "2px 0" }}>
-                      {formatMoney(Number(item.unitPrice) * item.quantity - Number(item.discount ?? 0))}
+                      {formatMoney(
+                        Number(item.unitPrice) * item.quantity - Number(item.discount ?? 0)
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -145,17 +365,28 @@ export function ReceiptView({ config, sale, className }: ReceiptViewProps) {
 
       case "paymentDetails": {
         const label =
-          sale.paymentMethod === "momo" ? "Momo" :
-          sale.paymentMethod === "card" ? "Card" :
-          sale.paymentMethod === "bank" ? "Bank" :
-          sale.paymentMethod === "delivery" ? "Delivery" : "Cash";
+          sale.paymentMethod === "momo"
+            ? "Momo"
+            : sale.paymentMethod === "card"
+            ? "Card"
+            : sale.paymentMethod === "bank"
+            ? "Bank"
+            : sale.paymentMethod === "delivery"
+            ? "Delivery"
+            : "Cash";
         return (
           <div key={id} style={textStyle(config, id)}>
             <div>Payment: {label}</div>
-            {sale.paymentMethod === "momo" && sale.transactionId && <div>Txn: {sale.transactionId}</div>}
-            {sale.paymentMethod === "bank" && sale.bankName && <div>{sale.bankName}</div>}
+            {sale.paymentMethod === "momo" && sale.transactionId && (
+              <div>Txn: {sale.transactionId}</div>
+            )}
+            {sale.paymentMethod === "bank" && sale.bankName && (
+              <div>{sale.bankName}</div>
+            )}
             {sale.paymentMethod === "delivery" && sale.deliveryPaymentStatus && (
-              <div>{sale.deliveryPaymentStatus === "paid" ? "Paid" : "Pay on Delivery"}</div>
+              <div>
+                {sale.deliveryPaymentStatus === "paid" ? "Paid" : "Pay on Delivery"}
+              </div>
             )}
           </div>
         );
@@ -172,6 +403,8 @@ export function ReceiptView({ config, sale, className }: ReceiptViewProps) {
         return null;
     }
   }
+
+  const orderedItems = getOrderedItems(config);
 
   return (
     <div
@@ -191,7 +424,11 @@ export function ReceiptView({ config, sale, className }: ReceiptViewProps) {
       }}
       data-testid="receipt-preview"
     >
-      {orderedElementIds(config).map(renderElement)}
+      {orderedItems.map((item) =>
+        item.kind === "fixed"
+          ? renderFixed(item.id)
+          : renderCustomBlock(item.block, config, sale)
+      )}
     </div>
   );
 }
