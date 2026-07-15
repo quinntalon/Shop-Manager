@@ -19,6 +19,10 @@
     "overrides": {
       "react": "19.1.0",
       "react-dom": "19.1.0"
-    }
+    },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --out-dir dist",
+    "start": "node dist/index.mjs"
   }
 }
+  }
