@@ -1,4 +1,4 @@
-import app from "./app";
+import { buildApp } from "./app";
 import { logger } from "./lib/logger";
 
 const rawPort = process.env["PORT"];
@@ -15,11 +15,14 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-app.listen(port, (err) => {
-  if (err) {
-    logger.error({ err }, "Error listening on port");
-    process.exit(1);
-  }
+const app = await buildApp();
 
+try {
+  // Bind to 0.0.0.0 so the server is reachable in containerised environments
+  // (Replit preview, Cloud Run, etc.)
+  await app.listen({ port, host: "0.0.0.0" });
   logger.info({ port }, "Server listening");
-});
+} catch (err) {
+  logger.error({ err }, "Error listening on port");
+  process.exit(1);
+}

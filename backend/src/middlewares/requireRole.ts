@@ -1,5 +1,5 @@
-import type { Request, Response, NextFunction } from "express";
-import { getAuth } from "@clerk/express";
+import type { FastifyRequest, FastifyReply } from "fastify";
+import { getAuth } from "@clerk/fastify";
 import { eq } from "drizzle-orm";
 import { db, userRolesTable } from "@workspace/db";
 import type { UserRoleType } from "@workspace/db";
@@ -19,10 +19,10 @@ export const ROLE_PERMISSIONS: Record<UserRoleType, Permission[]> = {
 };
 
 export function requirePermission(...permissions: Permission[]) {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const { userId } = getAuth(req);
     if (!userId) {
-      res.status(401).json({ error: "Unauthorized" });
+      reply.code(401).send({ error: "Unauthorized" });
       return;
     }
     const [row] = await db
@@ -30,23 +30,22 @@ export function requirePermission(...permissions: Permission[]) {
       .from(userRolesTable)
       .where(eq(userRolesTable.clerkUserId, userId));
     if (!row || !row.role) {
-      res.status(403).json({ error: "No role assigned. Contact an admin." });
+      reply.code(403).send({ error: "No role assigned. Contact an admin." });
       return;
     }
     const userPerms = ROLE_PERMISSIONS[row.role] ?? [];
     if (!permissions.every((p) => userPerms.includes(p))) {
-      res.status(403).json({ error: "Insufficient permissions." });
+      reply.code(403).send({ error: "Insufficient permissions." });
       return;
     }
-    next();
   };
 }
 
 export function requireAnyRole() {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const { userId } = getAuth(req);
     if (!userId) {
-      res.status(401).json({ error: "Unauthorized" });
+      reply.code(401).send({ error: "Unauthorized" });
       return;
     }
     const [row] = await db
@@ -54,9 +53,8 @@ export function requireAnyRole() {
       .from(userRolesTable)
       .where(eq(userRolesTable.clerkUserId, userId));
     if (!row || !row.role) {
-      res.status(403).json({ error: "No role assigned. Contact an admin." });
+      reply.code(403).send({ error: "No role assigned. Contact an admin." });
       return;
     }
-    next();
   };
 }
