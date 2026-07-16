@@ -1,24 +1,24 @@
-import { Router, type IRouter } from "express";
-import healthRouter from "./health";
-import storageRouter from "./storage";
-import categoriesRouter from "./categories";
-import productsRouter from "./products";
-import salesRouter from "./sales";
-import dashboardRouter from "./dashboard";
-import usersRouter from "./users";
-import settingsRouter from "./settings";
-import receiptTemplatesRouter from "./receiptTemplates";
+import type { FastifyPluginAsync } from "fastify";
+import healthRoutes from "./health";
+import storageRoutes from "./storage";
+import categoriesRoutes from "./categories";
+import productsRoutes from "./products";
+import salesRoutes from "./sales";
+import dashboardRoutes from "./dashboard";
+import usersRoutes from "./users";
+import settingsRoutes from "./settings";
+import receiptTemplatesRoutes from "./receiptTemplates";
 
-const router: IRouter = Router();
-
-router.use(healthRouter);
-router.use(storageRouter);
-router.use(usersRouter);
-router.use(settingsRouter);
-router.use(receiptTemplatesRouter);
-router.use(categoriesRouter);
-router.use(productsRouter);
-router.use(salesRouter);
-router.use(dashboardRouter);
+const router: FastifyPluginAsync = async (fastify) => {
+  await fastify.register(healthRoutes);
+  await fastify.register(storageRoutes);
+  await fastify.register(usersRoutes);
+  await fastify.register(settingsRoutes);
+  await fastify.register(receiptTemplatesRoutes);
+  await fastify.register(categoriesRoutes);
+  await fastify.register(productsRoutes);
+  await fastify.register(salesRoutes);
+  await fastify.register(dashboardRoutes);
+};
 
 export default router;

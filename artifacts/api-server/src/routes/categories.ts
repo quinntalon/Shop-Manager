@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import type { FastifyPluginAsync } from "fastify";
 import { eq } from "drizzle-orm";
 import { db, categoriesTable } from "@workspace/db";
 import {
@@ -9,67 +9,77 @@ import {
 } from "@workspace/api-zod";
 import { requireAnyRole, requirePermission } from "../middlewares/requireRole";
 
-const router: IRouter = Router();
+const categoriesRoutes: FastifyPluginAsync = async (fastify) => {
+  fastify.get(
+    "/categories",
+    { preHandler: [requireAnyRole()] },
+    async () => {
+      const categories = await db
+        .select()
+        .from(categoriesTable)
+        .orderBy(categoriesTable.name);
+      return categories;
+    },
+  );
 
-router.get("/categories", requireAnyRole(), async (_req, res): Promise<void> => {
-  const categories = await db
-    .select()
-    .from(categoriesTable)
-    .orderBy(categoriesTable.name);
-  res.json(categories);
-});
+  fastify.post(
+    "/categories",
+    { preHandler: [requirePermission("categories")] },
+    async (request, reply) => {
+      const parsed = CreateCategoryBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.message });
+      }
+      const [category] = await db
+        .insert(categoriesTable)
+        .values(parsed.data)
+        .returning();
+      return reply.code(201).send(category);
+    },
+  );
 
-router.post("/categories", requirePermission("categories"), async (req, res): Promise<void> => {
-  const parsed = CreateCategoryBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const [category] = await db
-    .insert(categoriesTable)
-    .values(parsed.data)
-    .returning();
-  res.status(201).json(category);
-});
+  fastify.patch(
+    "/categories/:id",
+    { preHandler: [requirePermission("categories")] },
+    async (request, reply) => {
+      const params = UpdateCategoryParams.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: params.error.message });
+      }
+      const parsed = UpdateCategoryBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.message });
+      }
+      const [category] = await db
+        .update(categoriesTable)
+        .set(parsed.data)
+        .where(eq(categoriesTable.id, params.data.id))
+        .returning();
+      if (!category) {
+        return reply.code(404).send({ error: "Category not found" });
+      }
+      return category;
+    },
+  );
 
-router.patch("/categories/:id", requirePermission("categories"), async (req, res): Promise<void> => {
-  const params = UpdateCategoryParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = UpdateCategoryBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const [category] = await db
-    .update(categoriesTable)
-    .set(parsed.data)
-    .where(eq(categoriesTable.id, params.data.id))
-    .returning();
-  if (!category) {
-    res.status(404).json({ error: "Category not found" });
-    return;
-  }
-  res.json(category);
-});
+  fastify.delete(
+    "/categories/:id",
+    { preHandler: [requirePermission("categories")] },
+    async (request, reply) => {
+      const params = DeleteCategoryParams.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: params.error.message });
+      }
+      const [category] = await db
+        .delete(categoriesTable)
+        .where(eq(categoriesTable.id, params.data.id))
+        .returning();
+      if (!category) {
+        return reply.code(404).send({ error: "Category not found" });
+      }
+      return reply.code(204).send();
+    },
+  );
+};
 
-router.delete("/categories/:id", requirePermission("categories"), async (req, res): Promise<void> => {
-  const params = DeleteCategoryParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const [category] = await db
-    .delete(categoriesTable)
-    .where(eq(categoriesTable.id, params.data.id))
-    .returning();
-  if (!category) {
-    res.status(404).json({ error: "Category not found" });
-    return;
-  }
-  res.sendStatus(204);
-});
-
-export default router;
+export default categoriesRoutes;

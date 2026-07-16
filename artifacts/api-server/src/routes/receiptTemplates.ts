@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import type { FastifyPluginAsync } from "fastify";
 import { eq, asc } from "drizzle-orm";
 import {
   db,
@@ -16,171 +16,191 @@ import {
 } from "@workspace/api-zod";
 import { requireAnyRole, requirePermission } from "../middlewares/requireRole";
 
-const router: IRouter = Router();
+const receiptTemplatesRoutes: FastifyPluginAsync = async (fastify) => {
+  fastify.get(
+    "/receipt-templates",
+    { preHandler: [requireAnyRole()] },
+    async () => {
+      const templates = await db
+        .select()
+        .from(receiptTemplatesTable)
+        .orderBy(asc(receiptTemplatesTable.createdAt));
+      return templates;
+    },
+  );
 
-router.get("/receipt-templates", requireAnyRole(), async (_req, res): Promise<void> => {
-  const templates = await db
-    .select()
-    .from(receiptTemplatesTable)
-    .orderBy(asc(receiptTemplatesTable.createdAt));
-  res.json(templates);
-});
+  fastify.get(
+    "/receipt-templates/default",
+    { preHandler: [requireAnyRole()] },
+    async () => {
+      const [existingDefault] = await db
+        .select()
+        .from(receiptTemplatesTable)
+        .where(eq(receiptTemplatesTable.isDefault, true));
+      if (existingDefault) {
+        return existingDefault;
+      }
 
-router.get("/receipt-templates/default", requireAnyRole(), async (_req, res): Promise<void> => {
-  const [existingDefault] = await db
-    .select()
-    .from(receiptTemplatesTable)
-    .where(eq(receiptTemplatesTable.isDefault, true));
-  if (existingDefault) {
-    res.json(existingDefault);
-    return;
-  }
+      const [anyTemplate] = await db
+        .select()
+        .from(receiptTemplatesTable)
+        .orderBy(asc(receiptTemplatesTable.createdAt));
+      if (anyTemplate) {
+        return anyTemplate;
+      }
 
-  const [anyTemplate] = await db
-    .select()
-    .from(receiptTemplatesTable)
-    .orderBy(asc(receiptTemplatesTable.createdAt));
-  if (anyTemplate) {
-    res.json(anyTemplate);
-    return;
-  }
+      // No templates exist yet — return a synthetic built-in default (not persisted).
+      return {
+        id: 0,
+        name: "Default",
+        isDefault: true,
+        config: DEFAULT_RECEIPT_CONFIG,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    },
+  );
 
-  // No templates exist yet — return a synthetic built-in default (not persisted).
-  res.json({
-    id: 0,
-    name: "Default",
-    isDefault: true,
-    config: DEFAULT_RECEIPT_CONFIG,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-});
+  fastify.post(
+    "/receipt-templates",
+    { preHandler: [requirePermission("settings")] },
+    async (request, reply) => {
+      const parsed = CreateReceiptTemplateBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.message });
+      }
+      const config = receiptTemplateConfigSchema.parse(parsed.data.config);
 
-router.post("/receipt-templates", requirePermission("settings"), async (req, res): Promise<void> => {
-  const parsed = CreateReceiptTemplateBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const config = receiptTemplateConfigSchema.parse(parsed.data.config);
+      const existingTemplates = await db
+        .select({ id: receiptTemplatesTable.id })
+        .from(receiptTemplatesTable)
+        .limit(1);
+      const makeDefault = existingTemplates.length === 0;
 
-  const existingTemplates = await db.select({ id: receiptTemplatesTable.id }).from(receiptTemplatesTable).limit(1);
-  const makeDefault = existingTemplates.length === 0;
+      const [template] = await db
+        .insert(receiptTemplatesTable)
+        .values({ name: parsed.data.name, config, isDefault: makeDefault })
+        .returning();
+      return reply.code(201).send(template);
+    },
+  );
 
-  const [template] = await db
-    .insert(receiptTemplatesTable)
-    .values({ name: parsed.data.name, config, isDefault: makeDefault })
-    .returning();
-  res.status(201).json(template);
-});
+  fastify.get(
+    "/receipt-templates/:id",
+    { preHandler: [requireAnyRole()] },
+    async (request, reply) => {
+      const params = GetReceiptTemplateParams.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: params.error.message });
+      }
+      const [template] = await db
+        .select()
+        .from(receiptTemplatesTable)
+        .where(eq(receiptTemplatesTable.id, params.data.id));
+      if (!template) {
+        return reply.code(404).send({ error: "Receipt template not found" });
+      }
+      return template;
+    },
+  );
 
-router.get("/receipt-templates/:id", requireAnyRole(), async (req, res): Promise<void> => {
-  const params = GetReceiptTemplateParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const [template] = await db
-    .select()
-    .from(receiptTemplatesTable)
-    .where(eq(receiptTemplatesTable.id, params.data.id));
-  if (!template) {
-    res.status(404).json({ error: "Receipt template not found" });
-    return;
-  }
-  res.json(template);
-});
+  fastify.patch(
+    "/receipt-templates/:id",
+    { preHandler: [requirePermission("settings")] },
+    async (request, reply) => {
+      const params = UpdateReceiptTemplateParams.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: params.error.message });
+      }
+      const parsed = UpdateReceiptTemplateBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.message });
+      }
+      const config = receiptTemplateConfigSchema.parse(parsed.data.config);
 
-router.patch("/receipt-templates/:id", requirePermission("settings"), async (req, res): Promise<void> => {
-  const params = UpdateReceiptTemplateParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
-  const parsed = UpdateReceiptTemplateBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
-  const config = receiptTemplateConfigSchema.parse(parsed.data.config);
+      const [template] = await db
+        .update(receiptTemplatesTable)
+        .set({ name: parsed.data.name, config, updatedAt: new Date() })
+        .where(eq(receiptTemplatesTable.id, params.data.id))
+        .returning();
+      if (!template) {
+        return reply.code(404).send({ error: "Receipt template not found" });
+      }
+      return template;
+    },
+  );
 
-  const [template] = await db
-    .update(receiptTemplatesTable)
-    .set({ name: parsed.data.name, config, updatedAt: new Date() })
-    .where(eq(receiptTemplatesTable.id, params.data.id))
-    .returning();
-  if (!template) {
-    res.status(404).json({ error: "Receipt template not found" });
-    return;
-  }
-  res.json(template);
-});
+  fastify.delete(
+    "/receipt-templates/:id",
+    { preHandler: [requirePermission("settings")] },
+    async (request, reply) => {
+      const params = DeleteReceiptTemplateParams.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: params.error.message });
+      }
 
-router.delete("/receipt-templates/:id", requirePermission("settings"), async (req, res): Promise<void> => {
-  const params = DeleteReceiptTemplateParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
+      const [target] = await db
+        .select()
+        .from(receiptTemplatesTable)
+        .where(eq(receiptTemplatesTable.id, params.data.id));
+      if (!target) {
+        return reply.code(404).send({ error: "Receipt template not found" });
+      }
 
-  const [target] = await db
-    .select()
-    .from(receiptTemplatesTable)
-    .where(eq(receiptTemplatesTable.id, params.data.id));
-  if (!target) {
-    res.status(404).json({ error: "Receipt template not found" });
-    return;
-  }
+      const [deleted] = await db
+        .delete(receiptTemplatesTable)
+        .where(eq(receiptTemplatesTable.id, params.data.id))
+        .returning();
 
-  const [deleted] = await db
-    .delete(receiptTemplatesTable)
-    .where(eq(receiptTemplatesTable.id, params.data.id))
-    .returning();
+      if (deleted?.isDefault) {
+        const [nextTemplate] = await db
+          .select()
+          .from(receiptTemplatesTable)
+          .orderBy(asc(receiptTemplatesTable.createdAt))
+          .limit(1);
+        if (nextTemplate) {
+          await db
+            .update(receiptTemplatesTable)
+            .set({ isDefault: true })
+            .where(eq(receiptTemplatesTable.id, nextTemplate.id));
+        }
+      }
 
-  if (deleted?.isDefault) {
-    const [nextTemplate] = await db
-      .select()
-      .from(receiptTemplatesTable)
-      .orderBy(asc(receiptTemplatesTable.createdAt))
-      .limit(1);
-    if (nextTemplate) {
+      return reply.code(204).send();
+    },
+  );
+
+  fastify.post(
+    "/receipt-templates/:id/set-default",
+    { preHandler: [requirePermission("settings")] },
+    async (request, reply) => {
+      const params = SetDefaultReceiptTemplateParams.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: params.error.message });
+      }
+
+      const [target] = await db
+        .select()
+        .from(receiptTemplatesTable)
+        .where(eq(receiptTemplatesTable.id, params.data.id));
+      if (!target) {
+        return reply.code(404).send({ error: "Receipt template not found" });
+      }
+
       await db
         .update(receiptTemplatesTable)
+        .set({ isDefault: false })
+        .where(eq(receiptTemplatesTable.isDefault, true));
+
+      const [template] = await db
+        .update(receiptTemplatesTable)
         .set({ isDefault: true })
-        .where(eq(receiptTemplatesTable.id, nextTemplate.id));
-    }
-  }
+        .where(eq(receiptTemplatesTable.id, params.data.id))
+        .returning();
 
-  res.sendStatus(204);
-});
+      return template;
+    },
+  );
+};
 
-router.post(
-  "/receipt-templates/:id/set-default",
-  requirePermission("settings"),
-  async (req, res): Promise<void> => {
-    const params = SetDefaultReceiptTemplateParams.safeParse(req.params);
-    if (!params.success) {
-      res.status(400).json({ error: params.error.message });
-      return;
-    }
-
-    const [target] = await db
-      .select()
-      .from(receiptTemplatesTable)
-      .where(eq(receiptTemplatesTable.id, params.data.id));
-    if (!target) {
-      res.status(404).json({ error: "Receipt template not found" });
-      return;
-    }
-
-    await db.update(receiptTemplatesTable).set({ isDefault: false }).where(eq(receiptTemplatesTable.isDefault, true));
-    const [template] = await db
-      .update(receiptTemplatesTable)
-      .set({ isDefault: true })
-      .where(eq(receiptTemplatesTable.id, params.data.id))
-      .returning();
-    res.json(template);
-  }
-);
-
-export default router;
+export default receiptTemplatesRoutes;

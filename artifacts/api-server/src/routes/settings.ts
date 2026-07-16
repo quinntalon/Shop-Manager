@@ -1,10 +1,8 @@
-import { Router, type IRouter } from "express";
+import type { FastifyPluginAsync } from "fastify";
 import { eq } from "drizzle-orm";
 import { db, settingsTable, THEME_MODES } from "@workspace/db";
 import { requirePermission } from "../middlewares/requireRole";
 import { z } from "zod/v4";
-
-const router: IRouter = Router();
 
 const SETTINGS_ID = 1;
 
@@ -36,31 +34,32 @@ async function getOrCreateSettings() {
   return row;
 }
 
-router.get("/settings", async (_req, res): Promise<void> => {
-  const settings = await getOrCreateSettings();
-  res.json(settings);
-});
+const settingsRoutes: FastifyPluginAsync = async (fastify) => {
+  fastify.get("/settings", async () => {
+    const settings = await getOrCreateSettings();
+    return settings;
+  });
 
-router.patch(
-  "/settings",
-  requirePermission("settings"),
-  async (req, res): Promise<void> => {
-    const parsed = SettingsUpdateBody.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ error: parsed.error.message });
-      return;
-    }
+  fastify.patch(
+    "/settings",
+    { preHandler: [requirePermission("settings")] },
+    async (request, reply) => {
+      const parsed = SettingsUpdateBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.message });
+      }
 
-    await getOrCreateSettings();
+      await getOrCreateSettings();
 
-    const [row] = await db
-      .update(settingsTable)
-      .set({ ...parsed.data, updatedAt: new Date() })
-      .where(eq(settingsTable.id, SETTINGS_ID))
-      .returning();
+      const [row] = await db
+        .update(settingsTable)
+        .set({ ...parsed.data, updatedAt: new Date() })
+        .where(eq(settingsTable.id, SETTINGS_ID))
+        .returning();
 
-    res.json(row);
-  }
-);
+      return row;
+    },
+  );
+};
 
-export default router;
+export default settingsRoutes;

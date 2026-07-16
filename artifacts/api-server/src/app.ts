@@ -1,53 +1,39 @@
-import express, { type Express } from "express";
-import cors from "cors";
-import pinoHttp from "pino-http";
-import { clerkMiddleware } from "@clerk/express";
-import { publishableKeyFromHost } from "@clerk/shared/keys";
-import {
-  CLERK_PROXY_PATH,
-  clerkProxyMiddleware,
-  getClerkProxyHost,
-} from "./middlewares/clerkProxyMiddleware";
+import Fastify from "fastify";
+import cors from "@fastify/cors";
+import multipart from "@fastify/multipart";
+import { clerkPlugin } from "@clerk/fastify";
+import { clerkProxyPlugin } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes";
 import { logger } from "./lib/logger";
 
-const app: Express = express();
+export async function buildApp() {
+  const app = Fastify({
+    // Re-use the existing pino logger instance so log config (level, redact,
+    // pretty-print in dev) is applied consistently.
+    loggerInstance: logger,
+  });
 
-app.use(
-  pinoHttp({
-    logger,
-    serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
-      },
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  }),
-);
+  // Clerk proxy must be registered first — its content-type parser for raw
+  // Buffer bodies must not be overridden by later plugins on those routes.
+  await app.register(clerkProxyPlugin);
 
-app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
+  // CORS — mirrors the previous Express cors({ credentials: true, origin: true })
+  await app.register(cors, { credentials: true, origin: true });
 
-app.use(cors({ credentials: true, origin: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+  // Multipart — used by the storage/upload route (replaces multer)
+  await app.register(multipart, {
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  });
 
-app.use(
-  clerkMiddleware((req) => ({
-    publishableKey: publishableKeyFromHost(
-      getClerkProxyHost(req) ?? "",
-      process.env.CLERK_PUBLISHABLE_KEY,
-    ),
-  })),
-);
+  // Clerk authentication middleware
+  // Reads CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY from the environment
+  // automatically; no need to pass them explicitly.
+  await app.register(clerkPlugin);
 
-app.use("/api", router);
+  // All API routes under /api
+  await app.register(router, { prefix: "/api" });
 
-export default app;
+  return app;
+}
+
+export default buildApp;

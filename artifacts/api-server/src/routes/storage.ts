@@ -1,21 +1,6 @@
-import { Router, type IRouter, type Request, type Response } from "express";
-import multer from "multer";
+import type { FastifyPluginAsync } from "fastify";
 import { uploadImage } from "../lib/cloudinary";
 import { requirePermission } from "../middlewares/requireRole";
-
-const router: IRouter = Router();
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
-  fileFilter: (_req, file, cb) => {
-    if (!file.mimetype.startsWith("image/")) {
-      cb(new Error("Only image files are allowed"));
-      return;
-    }
-    cb(null, true);
-  },
-});
 
 /**
  * POST /storage/upload
@@ -25,24 +10,32 @@ const upload = multer({
  *
  * Response: { url: string }
  */
-router.post(
-  "/storage/upload",
-  requirePermission("inventory"),
-  upload.single("file"),
-  async (req: Request, res: Response): Promise<void> => {
-    if (!req.file) {
-      res.status(400).json({ error: "No file provided. Send a multipart/form-data request with a 'file' field." });
-      return;
-    }
+const storageRoutes: FastifyPluginAsync = async (fastify) => {
+  fastify.post(
+    "/storage/upload",
+    { preHandler: [requirePermission("inventory")] },
+    async (request, reply) => {
+      const data = await request.file();
+      if (!data) {
+        return reply.code(400).send({
+          error:
+            "No file provided. Send a multipart/form-data request with a 'file' field.",
+        });
+      }
+      if (!data.mimetype.startsWith("image/")) {
+        return reply.code(400).send({ error: "Only image files are allowed" });
+      }
 
-    try {
-      const url = await uploadImage(req.file.buffer);
-      res.json({ url });
-    } catch (error) {
-      req.log.error({ err: error }, "Cloudinary upload failed");
-      res.status(500).json({ error: "Image upload failed" });
-    }
-  }
-);
+      try {
+        const buffer = await data.toBuffer();
+        const url = await uploadImage(buffer);
+        return { url };
+      } catch (error) {
+        request.log.error({ err: error }, "Cloudinary upload failed");
+        return reply.code(500).send({ error: "Image upload failed" });
+      }
+    },
+  );
+};
 
-export default router;
+export default storageRoutes;
