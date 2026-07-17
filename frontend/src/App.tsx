@@ -165,9 +165,24 @@ function RequirePermission({
 }
 
 function AppRoutes() {
-  const { isLoading, isPending } = useRole();
+  const { isLoading, isPending, isError } = useRole();
 
-  if (isLoading) return null;
+  if (isLoading) return (
+    <div className="flex min-h-[100dvh] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  );
+  if (isError) return (
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-background px-4 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+        <ShieldAlert className="h-8 w-8 text-destructive" />
+      </div>
+      <h1 className="text-xl font-bold">Could not connect to server</h1>
+      <p className="max-w-sm text-sm text-muted-foreground">
+        The API server isn't responding. Make sure <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">CLERK_SECRET_KEY</code> is set in Replit Secrets and restart the API Server workflow.
+      </p>
+    </div>
+  );
   if (isPending) return <PendingAccess />;
 
   return (
