@@ -1,27 +1,6 @@
 import type { CSSProperties } from "react";
-import type { ReceiptTemplateConfig, ReceiptElementId, Sale } from "@workspace/api-client-react";
-import { ImagePlus } from "lucide-react";
+import type { ReceiptTemplateConfig, ReceiptElementId, ReceiptElementStyle, Sale, SaleItem } from "@workspace/api-client-react";
 import type { CustomBlock, ExtendedConfig } from "@/pages/settings/receipt-editor";
-
-export const SAMPLE_SALE: Sale = {
-  id: 1042,
-  customerName: "Ama Owusu",
-  customerPhone: "024 123 4567",
-  note: "Gift wrap please",
-  paymentMethod: "momo",
-  transactionId: "MP240715.1234.A56789",
-  bankName: null,
-  deliveryPaymentStatus: null,
-  subtotal: 84.5,
-  cartDiscount: 4.5,
-  discountTotal: 9.5,
-  total: 75,
-  createdAt: new Date().toISOString(),
-  items: [
-    { productId: 1, productName: "Kente Print Tote Bag", productPhotoUrl: null, quantity: 2, unitPrice: 25, discount: 5 },
-    { productId: 2, productName: "Shea Butter Lotion", productPhotoUrl: null, quantity: 3, unitPrice: 11.5, discount: 0 },
-  ],
-} as unknown as Sale;
 
 const FONT_SIZE_PX: Record<string, number> = { xs: 10, sm: 11, base: 13, lg: 16, xl: 20 };
 const FONT_FAMILY_CSS: Record<string, string> = {
@@ -32,7 +11,7 @@ const FONT_FAMILY_CSS: Record<string, string> = {
 const PAPER_WIDTH_PX: Record<string, number> = { "58mm": 219, "80mm": 302 };
 
 function textStyle(config: ReceiptTemplateConfig, elementId: ReceiptElementId): CSSProperties {
-  const el = config.elements.find((e) => e.id === elementId);
+  const el = config.elements.find((e: ReceiptElementStyle) => e.id === elementId);
   return {
     textAlign: el?.align ?? "left",
     fontWeight: el?.bold ? 700 : 400,
@@ -42,7 +21,7 @@ function textStyle(config: ReceiptTemplateConfig, elementId: ReceiptElementId): 
 }
 
 function isVisible(config: ReceiptTemplateConfig, elementId: ReceiptElementId): boolean {
-  return config.elements.find((e) => e.id === elementId)?.visible ?? true;
+  return config.elements.find((e: ReceiptElementStyle) => e.id === elementId)?.visible ?? true;
 }
 
 function formatMoney(n: number | string | null | undefined): string {
@@ -58,12 +37,12 @@ type RenderItem =
 function getOrderedItems(config: ReceiptTemplateConfig): RenderItem[] {
   const ext = config as ExtendedConfig;
   const items: RenderItem[] = [
-    ...config.elements.map((el) => ({
+    ...config.elements.map((el: ReceiptElementStyle) => ({
       kind: "fixed" as const,
       id: el.id,
       order: el.order,
     })),
-    ...(ext.customBlocks ?? []).map((block) => ({
+    ...(ext.customBlocks ?? []).map((block: CustomBlock) => ({
       kind: "custom" as const,
       block,
       order: block.order,
@@ -262,19 +241,44 @@ export function ReceiptView({ config, sale, className }: ReceiptViewProps) {
   function renderFixed(id: ReceiptElementId): React.ReactNode {
     if (!isVisible(config, id)) return null;
     switch (id) {
-      case "logo":
-        return config.showLogo && config.logoUrl ? (
-          <div
-            key={id}
-            style={{ display: "flex", justifyContent: textStyle(config, id).textAlign as string }}
-          >
-            <img
-              src={config.logoUrl}
-              alt="Logo"
-              style={{ height: 48, width: 48, objectFit: "contain" }}
-            />
+      case "logo": {
+        const alignMap: Record<string, string> = {
+          left: "flex-start",
+          center: "center",
+          right: "flex-end",
+        };
+        const logoAlign = alignMap[textStyle(config, id).textAlign as string] ?? "center";
+        if (!config.showLogo) return null;
+        return (
+          <div key={id} style={{ display: "flex", justifyContent: logoAlign }}>
+            {config.logoUrl ? (
+              <img
+                src={config.logoUrl}
+                alt="Logo"
+                style={{ height: 48, width: 48, objectFit: "contain" }}
+              />
+            ) : (
+              <div
+                style={{
+                  height: 48,
+                  width: 48,
+                  border: `1px dashed ${config.textColor}55`,
+                  borderRadius: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 9,
+                  color: `${config.textColor}60`,
+                  textAlign: "center",
+                  lineHeight: 1.2,
+                }}
+              >
+                Logo
+              </div>
+            )}
           </div>
-        ) : null;
+        );
+      }
 
       case "storeInfo":
         return (
@@ -330,7 +334,7 @@ export function ReceiptView({ config, sale, className }: ReceiptViewProps) {
                 </tr>
               </thead>
               <tbody>
-                {sale.items.map((item, idx) => (
+                {sale.items.map((item: SaleItem, idx: number) => (
                   <tr key={idx}>
                     <td style={{ padding: "2px 0" }}>
                       {item.productName ?? `Product #${item.productId}`}
@@ -433,6 +437,3 @@ export function ReceiptView({ config, sale, className }: ReceiptViewProps) {
   );
 }
 
-export function ReceiptPlaceholderIcon() {
-  return <ImagePlus className="h-4 w-4" />;
-}

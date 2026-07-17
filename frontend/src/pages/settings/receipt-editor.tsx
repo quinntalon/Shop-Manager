@@ -56,7 +56,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { ReceiptView, SAMPLE_SALE } from "@/components/receipt/receipt-view";
+import { ReceiptView } from "@/components/receipt/receipt-view";
+import { SAMPLE_SALE } from "@/components/receipt/sample-sale";
 
 // ─── Custom block types ────────────────────────────────────────────────────────
 
