@@ -24,15 +24,7 @@ function logoUrl(url: string | null | undefined): string | null {
   return url;
 }
 
-const COLOR_PRESETS: { name: string; value: string }[] = [
-  { name: "Blue", value: "221 83% 53%" },
-  { name: "Violet", value: "262 80% 60%" },
-  { name: "Teal", value: "190 90% 40%" },
-  { name: "Green", value: "142 71% 40%" },
-  { name: "Orange", value: "25 95% 53%" },
-  { name: "Rose", value: "347 77% 50%" },
-  { name: "Slate", value: "215 25% 35%" },
-];
+import { COLOR_PRESETS } from "@/components/theme-toggle";
 
 function hslStringToHex(hsl: string): string {
   const parts = hsl.trim().split(/\s+/);

@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { useRole, type Permission } from "@/hooks/use-role";
 import { useSettings } from "@/hooks/use-settings";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface LayoutProps {
   children: ReactNode;
@@ -112,6 +113,7 @@ export default function Layout({ children }: LayoutProps) {
               {ROLE_LABELS[role] ?? role}
             </Badge>
           )}
+          <ThemeToggle />
           <button
             type="button"
             onClick={() => signOut({ redirectUrl: basePath || "/" })}
