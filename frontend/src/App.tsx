@@ -22,7 +22,7 @@ import SettingsPage from "@/pages/settings";
 import ReceiptEditorPage from "@/pages/settings/receipt-editor";
 import { useRole, type Permission } from "@/hooks/use-role";
 import { useSettings, applyTheme } from "@/hooks/use-settings";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, LogOut } from "lucide-react";
 
 const queryClient = new QueryClient();
 
@@ -110,8 +110,9 @@ function SignUpPage() {
       <button
         type="button"
         onClick={() => signOut({ redirectUrl: `${basePath}/sign-in` })}
-        className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+        className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm transition-all hover:border-primary/40 hover:bg-muted hover:text-foreground active:scale-95"
       >
+        <LogOut className="h-4 w-4" />
         Sign out
       </button>
     </div>
@@ -152,8 +153,9 @@ function PendingAccess() {
       <button
         type="button"
         onClick={() => signOut({ redirectUrl: `${basePath}/sign-in` })}
-        className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+        className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm transition-all hover:border-primary/40 hover:bg-muted hover:text-foreground active:scale-95"
       >
+        <LogOut className="h-4 w-4" />
         Sign out
       </button>
     </div>
