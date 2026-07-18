@@ -103,9 +103,17 @@ function SignInPage() {
 }
 
 function SignUpPage() {
+  const { signOut } = useClerk();
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-background px-4">
       <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+      <button
+        type="button"
+        onClick={() => signOut({ redirectUrl: `${basePath}/sign-in` })}
+        className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+      >
+        Sign out
+      </button>
     </div>
   );
 }
