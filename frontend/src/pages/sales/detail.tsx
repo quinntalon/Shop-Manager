@@ -162,16 +162,16 @@ export default function SaleDetail() {
                     {item.quantity}
                   </Badge>
                 </td>
-                <td className="px-5 py-3 text-right">${Number(item.unitPrice).toFixed(2)}</td>
+                <td className="px-5 py-3 text-right">₵{Number(item.unitPrice).toFixed(2)}</td>
                 <td className="px-5 py-3 text-right">
                   {(item.discount ?? 0) > 0 ? (
-                    <span className="text-destructive">-${Number(item.discount).toFixed(2)}</span>
+                    <span className="text-destructive">-₵{Number(item.discount).toFixed(2)}</span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
                 <td className="px-5 py-3 text-right font-semibold">
-                  ${(Number(item.unitPrice) * item.quantity - Number(item.discount ?? 0)).toFixed(2)}
+                  ₵{(Number(item.unitPrice) * item.quantity - Number(item.discount ?? 0)).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -181,11 +181,11 @@ export default function SaleDetail() {
         <div className="p-5 border-t flex justify-end">
           <div className="text-right space-y-1">
             <p className="text-sm text-muted-foreground">{sale.items.length} item{sale.items.length !== 1 ? "s" : ""}</p>
-            <p className="text-sm text-muted-foreground">Subtotal: ${Number(sale.subtotal).toFixed(2)}</p>
+            <p className="text-sm text-muted-foreground">Subtotal: ₵{Number(sale.subtotal).toFixed(2)}</p>
             {sale.discountTotal > 0 && (
-              <p className="text-sm text-destructive">Discount: -${Number(sale.discountTotal).toFixed(2)}</p>
+              <p className="text-sm text-destructive">Discount: -₵{Number(sale.discountTotal).toFixed(2)}</p>
             )}
-            <p className="text-2xl font-bold">Total: ${Number(sale.total).toFixed(2)}</p>
+            <p className="text-2xl font-bold">Total: ₵{Number(sale.total).toFixed(2)}</p>
           </div>
         </div>
       </div>

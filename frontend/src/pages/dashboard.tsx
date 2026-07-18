@@ -45,13 +45,13 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard 
           title="Today's Revenue" 
-          value={summary ? `$${summary.todayRevenue.toFixed(2)}` : null} 
+          value={summary ? `₵${summary.todayRevenue.toFixed(2)}` : null} 
           icon={DollarSign} 
           loading={loadingSummary} 
         />
         <MetricCard 
           title="This Week" 
-          value={summary ? `$${summary.weekRevenue.toFixed(2)}` : null} 
+          value={summary ? `₵${summary.weekRevenue.toFixed(2)}` : null} 
           icon={TrendingUp} 
           loading={loadingSummary} 
         />
@@ -96,12 +96,12 @@ export default function Dashboard() {
                       fontSize={12} 
                       tickLine={false} 
                       axisLine={false} 
-                      tickFormatter={(value) => `$${value}`}
+                      tickFormatter={(value) => `₵${value}`}
                     />
                     <Tooltip 
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                       itemStyle={{ color: 'hsl(var(--foreground))' }}
-                      formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                      formatter={(value: number) => [`₵${value.toFixed(2)}`, 'Revenue']}
                       labelFormatter={(label) => new Date(label).toLocaleDateString()}
                     />
                     <Line 
@@ -140,7 +140,7 @@ export default function Dashboard() {
                       <p className="text-sm font-medium leading-none">{product.productName}</p>
                       <p className="text-xs text-muted-foreground">{product.totalQuantity} sold</p>
                     </div>
-                    <div className="font-medium">${product.totalRevenue.toFixed(2)}</div>
+                    <div className="font-medium">₵{product.totalRevenue.toFixed(2)}</div>
                   </div>
                 ))}
               </div>

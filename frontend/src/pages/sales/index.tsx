@@ -68,7 +68,7 @@ export default function Sales() {
                   <td className="px-4 py-3">
                     <Badge variant="secondary">{sale.items.length} item{sale.items.length !== 1 ? "s" : ""}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold">${Number(sale.total).toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right font-semibold">₵{Number(sale.total).toFixed(2)}</td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(sale.createdAt).toLocaleString(undefined, {
                       month: "short", day: "numeric", year: "numeric",

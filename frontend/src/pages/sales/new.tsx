@@ -62,7 +62,7 @@ export default function NewSale() {
         queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetSalesByDayQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetTopProductsQueryKey() });
-        toast({ title: `Sale #${sale.id} created`, description: `Total: $${Number(sale.total).toFixed(2)}` });
+        toast({ title: `Sale #${sale.id} created`, description: `Total: ₵${Number(sale.total).toFixed(2)}` });
         navigate(`/sales/${sale.id}?print=1`);
       },
       onError: (e: unknown) => {
@@ -216,7 +216,7 @@ export default function NewSale() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right font-semibold">${Number(product.price).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-semibold">₵{Number(product.price).toFixed(2)}</td>
                         <td className="px-4 py-3 text-right">
                           <span className={outOfStock ? "text-destructive font-semibold" : "text-muted-foreground"}>
                             {product.stock}
@@ -274,7 +274,7 @@ export default function NewSale() {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{item.product.name}</p>
-                          <p className="text-xs text-muted-foreground">${Number(item.product.price).toFixed(2)} each</p>
+                          <p className="text-xs text-muted-foreground">₵{Number(item.product.price).toFixed(2)} each</p>
                         </div>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, -1)}>
@@ -286,7 +286,7 @@ export default function NewSale() {
                           </Button>
                         </div>
                         <span className="w-16 text-right font-semibold">
-                          ${lineNet.toFixed(2)}
+                          ₵{lineNet.toFixed(2)}
                         </span>
                         <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => removeFromCart(item.product.id)}>
                           <Trash2 className="h-3 w-3" />
@@ -306,7 +306,7 @@ export default function NewSale() {
                           className="h-7 text-xs w-24"
                         />
                         {item.discount > 0 && (
-                          <span className="text-xs text-destructive font-medium">-${item.discount.toFixed(2)}</span>
+                          <span className="text-xs text-destructive font-medium">-₵{item.discount.toFixed(2)}</span>
                         )}
                       </div>
                     </div>
@@ -315,23 +315,23 @@ export default function NewSale() {
                 <div className="pt-1 space-y-1 text-sm">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>₵{subtotal.toFixed(2)}</span>
                   </div>
                   {itemDiscountTotal > 0 && (
                     <div className="flex justify-between text-destructive">
                       <span>Item discounts</span>
-                      <span>-${itemDiscountTotal.toFixed(2)}</span>
+                      <span>-₵{itemDiscountTotal.toFixed(2)}</span>
                     </div>
                   )}
                   {appliedCartDiscount > 0 && (
                     <div className="flex justify-between text-destructive">
                       <span>Cart discount</span>
-                      <span>-${appliedCartDiscount.toFixed(2)}</span>
+                      <span>-₵{appliedCartDiscount.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="border-t pt-2 flex justify-between font-bold text-base">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>₵{total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -355,7 +355,7 @@ export default function NewSale() {
                 placeholder="0.00"
                 className="h-8 text-sm"
               />
-              <p className="text-xs text-muted-foreground">Fixed amount off the entire cart (max ${maxCartDiscount.toFixed(2)}).</p>
+              <p className="text-xs text-muted-foreground">Fixed amount off the entire cart (max ₵{maxCartDiscount.toFixed(2)}).</p>
             </div>
           )}
 

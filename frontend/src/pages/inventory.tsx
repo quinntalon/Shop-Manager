@@ -342,7 +342,7 @@ export default function Inventory() {
                       <span className="text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium">${Number(product.price).toFixed(2)}</td>
+                  <td className="px-4 py-3 text-right font-medium">₵{Number(product.price).toFixed(2)}</td>
                   <td className="px-4 py-3 text-right">
                     <span className={`font-semibold ${isLowStock(product) ? "text-destructive" : ""}`}>
                       {product.stock}
