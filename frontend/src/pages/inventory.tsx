@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useRole } from "@/hooks/use-role";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useListProducts,
@@ -86,6 +87,8 @@ const EMPTY_FORM: FormState = {
 export default function Inventory() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { role } = useRole();
+  const isAdmin = role === "admin";
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -252,10 +255,12 @@ export default function Inventory() {
           <h1 className="text-3xl font-bold tracking-tight">Inventory</h1>
           <p className="text-muted-foreground mt-1">Manage your products and stock levels.</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Product
-        </Button>
+        {isAdmin && (
+          <Button onClick={openCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
+        )}
       </div>
 
       <div className="flex gap-3 flex-wrap">
@@ -291,7 +296,7 @@ export default function Inventory() {
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Category</th>
               <th className="text-right px-4 py-3 font-medium text-muted-foreground">Price</th>
               <th className="text-right px-4 py-3 font-medium text-muted-foreground">Stock</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
+              {isAdmin && <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -346,29 +351,31 @@ export default function Inventory() {
                       <Badge variant="destructive" className="ml-2 text-xs">Low</Badge>
                     )}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => { setStockTarget(product); setStockDelta(""); }}
-                        title="Adjust stock"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(product)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => setDeleteTarget(product)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
+                  {isAdmin && (
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { setStockTarget(product); setStockDelta(""); }}
+                          title="Adjust stock"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(product)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setDeleteTarget(product)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}
