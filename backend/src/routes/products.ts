@@ -22,6 +22,7 @@ function buildProduct(row: {
   price: string;
   costPrice: string | null;
   stock: number;
+  warehouseStock: number;
   reorderLevel: number;
   categoryId: number | null;
   createdAt: Date;
@@ -36,6 +37,7 @@ function buildProduct(row: {
     price: parseFloat(row.price),
     costPrice: row.costPrice != null ? parseFloat(row.costPrice) : null,
     stock: row.stock,
+    warehouseStock: row.warehouseStock,
     reorderLevel: row.reorderLevel,
     categoryId: row.categoryId,
     categoryName: row.categoryName ?? null,
@@ -74,6 +76,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           price: productsTable.price,
           costPrice: productsTable.costPrice,
           stock: productsTable.stock,
+          warehouseStock: productsTable.warehouseStock,
           reorderLevel: productsTable.reorderLevel,
           categoryId: productsTable.categoryId,
           createdAt: productsTable.createdAt,
@@ -122,6 +125,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           price: productsTable.price,
           costPrice: productsTable.costPrice,
           stock: productsTable.stock,
+          warehouseStock: productsTable.warehouseStock,
           reorderLevel: productsTable.reorderLevel,
           categoryId: productsTable.categoryId,
           createdAt: productsTable.createdAt,
@@ -153,6 +157,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           price: productsTable.price,
           costPrice: productsTable.costPrice,
           stock: productsTable.stock,
+          warehouseStock: productsTable.warehouseStock,
           reorderLevel: productsTable.reorderLevel,
           categoryId: productsTable.categoryId,
           createdAt: productsTable.createdAt,
@@ -220,6 +225,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           price: productsTable.price,
           costPrice: productsTable.costPrice,
           stock: productsTable.stock,
+          warehouseStock: productsTable.warehouseStock,
           reorderLevel: productsTable.reorderLevel,
           categoryId: productsTable.categoryId,
           createdAt: productsTable.createdAt,
@@ -290,6 +296,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           price: productsTable.price,
           costPrice: productsTable.costPrice,
           stock: productsTable.stock,
+          warehouseStock: productsTable.warehouseStock,
           reorderLevel: productsTable.reorderLevel,
           categoryId: productsTable.categoryId,
           createdAt: productsTable.createdAt,

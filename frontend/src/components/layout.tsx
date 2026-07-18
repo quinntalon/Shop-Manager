@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   ChevronLeft,
+  ArrowRightLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRole, type Permission } from "@/hooks/use-role";
@@ -207,6 +208,7 @@ export default function Layout({ children }: LayoutProps) {
   const allNavItems: { href: string; label: string; icon: typeof LayoutDashboard; permission: Permission }[] = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard" },
     { href: "/inventory", label: "Inventory", icon: Package, permission: "inventory" },
+    { href: "/stock-transfers", label: "Stock Transfers", icon: ArrowRightLeft, permission: "inventory" },
     { href: "/sales", label: "Sales", icon: ShoppingCart, permission: "sales" },
     { href: "/customers", label: "Customers", icon: BookUser, permission: "customers" },
     { href: "/reports", label: "Reports", icon: BarChart2, permission: "reports" },

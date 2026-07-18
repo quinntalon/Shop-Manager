@@ -1,4 +1,5 @@
 export * from "./generated/api";
+export * from "./stockTransfers";
 // Selective type re-exports — omit names that conflict with Zod schema exports above
 export type {
   AppUser,

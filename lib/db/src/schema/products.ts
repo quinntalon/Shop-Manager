@@ -10,6 +10,7 @@ export const productsTable = pgTable("products", {
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   costPrice: numeric("cost_price", { precision: 10, scale: 2 }),
   stock: integer("stock").notNull().default(0),
+  warehouseStock: integer("warehouse_stock").notNull().default(0),
   reorderLevel: integer("reorder_level").notNull().default(5),
   categoryId: integer("category_id"),
   photoUrl: text("photo_url"),

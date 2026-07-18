@@ -4,3 +4,4 @@ export * from "./sales";
 export * from "./userRoles";
 export * from "./settings";
 export * from "./receiptTemplates";
+export * from "./stockTransfers";

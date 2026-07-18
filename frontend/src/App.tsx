@@ -20,6 +20,7 @@ import CustomersPage from "@/pages/customers";
 import ReportsPage from "@/pages/reports";
 import SettingsPage from "@/pages/settings";
 import ReceiptEditorPage from "@/pages/settings/receipt-editor";
+import StockTransfers from "@/pages/stock-transfers";
 import { useRole, type Permission } from "@/hooks/use-role";
 import { useSettings, applyTheme } from "@/hooks/use-settings";
 import { ShieldAlert, LogOut } from "lucide-react";
@@ -262,6 +263,11 @@ function AppRoutes() {
           <Route path="/settings/receipt-editor">
             <RequirePermission permission="settings">
               <ReceiptEditorPage />
+            </RequirePermission>
+          </Route>
+          <Route path="/stock-transfers">
+            <RequirePermission permission="inventory">
+              <StockTransfers />
             </RequirePermission>
           </Route>
           <Route component={NotFound} />
