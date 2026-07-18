@@ -109,7 +109,8 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           price: String(parsed.data.price),
           costPrice:
             parsed.data.costPrice != null ? String(parsed.data.costPrice) : null,
-          stock: parsed.data.stock,
+          stock: parsed.data.stock ?? 0,
+          warehouseStock: parsed.data.warehouseStock ?? 0,
           reorderLevel: parsed.data.reorderLevel ?? 5,
           categoryId: parsed.data.categoryId ?? null,
         })

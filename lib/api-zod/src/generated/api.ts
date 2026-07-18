@@ -515,7 +515,8 @@ export const CreateProductBody = zod.object({
   "photoUrl": zod.string().optional(),
   "price": zod.number().min(createProductBodyPriceMin),
   "costPrice": zod.number().min(createProductBodyCostPriceMin).optional(),
-  "stock": zod.number().min(createProductBodyStockMin),
+  "stock": zod.number().min(createProductBodyStockMin).optional(),
+  "warehouseStock": zod.number().min(0).optional(),
   "reorderLevel": zod.number().min(createProductBodyReorderLevelMin).optional(),
   "categoryId": zod.number().optional()
 })

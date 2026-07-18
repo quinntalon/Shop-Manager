@@ -4,7 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useListProducts,
   useListCategories,
-  useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
   useAdjustStock,
@@ -12,7 +11,7 @@ import {
   getGetProductQueryKey,
 } from "@workspace/api-client-react";
 import { useUpload } from "@workspace/object-storage-web";
-import type { Product, ProductInput, ProductUpdate } from "@workspace/api-client-react";
+import type { Product, ProductUpdate } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,44 +41,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Pencil, Trash2, Minus, ImagePlus, X } from "lucide-react";
+import { Search, Pencil, Trash2, Minus, ImagePlus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-const BASE_URL = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 function photoUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   return url;
 }
 
-function generateSku(name: string): string {
-  const words = name.trim().toUpperCase().replace(/[^A-Z0-9 ]/g, "").split(/\s+/).filter(Boolean);
-  let prefix = "";
-  if (words.length === 0) return "";
-  if (words.length === 1) {
-    prefix = words[0].slice(0, 3).padEnd(3, "X");
-  } else {
-    prefix = words.slice(0, 3).map((w) => w[0]).join("").padEnd(3, "X");
-  }
-  const num = String(Math.floor(Math.random() * 900) + 100);
-  return `${prefix}-${num}`;
-}
-
-type FormState = Omit<ProductInput, "stock" | "price" | "costPrice" | "reorderLevel"> & {
-  stock: string;
+type EditFormState = {
+  name: string;
+  sku: string;
+  description: string;
+  photoUrl: string;
   price: string;
   costPrice: string;
   reorderLevel: string;
+  categoryId: number | undefined;
 };
 
-const EMPTY_FORM: FormState = {
+const EMPTY_EDIT_FORM: EditFormState = {
   name: "",
   sku: "",
   description: "",
   photoUrl: "",
   price: "",
   costPrice: "",
-  stock: "",
   reorderLevel: "5",
   categoryId: undefined,
 };
@@ -93,9 +80,9 @@ export default function Inventory() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [form, setForm] = useState<EditFormState>(EMPTY_EDIT_FORM);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
@@ -121,22 +108,11 @@ export default function Inventory() {
     onError: (err) => toast({ title: "Upload failed", description: String(err), variant: "destructive" }),
   });
 
-  const createMutation = useCreateProduct({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
-        setIsDialogOpen(false);
-        toast({ title: "Product created" });
-      },
-      onError: (e: unknown) => toast({ title: "Error", description: String(e), variant: "destructive" }),
-    },
-  });
-
   const updateMutation = useUpdateProduct({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
-        setIsDialogOpen(false);
+        setIsEditOpen(false);
         setEditingProduct(null);
         toast({ title: "Product updated" });
       },
@@ -168,13 +144,6 @@ export default function Inventory() {
     },
   });
 
-  function openCreate() {
-    setEditingProduct(null);
-    setForm(EMPTY_FORM);
-    setPhotoPreview(null);
-    setIsDialogOpen(true);
-  }
-
   function openEdit(product: Product) {
     setEditingProduct(product);
     setForm({
@@ -184,48 +153,26 @@ export default function Inventory() {
       photoUrl: product.photoUrl ?? "",
       price: String(product.price),
       costPrice: product.costPrice != null ? String(product.costPrice) : "",
-      stock: String(product.stock),
       reorderLevel: String(product.reorderLevel),
       categoryId: product.categoryId ?? undefined,
     });
     setPhotoPreview(photoUrl(product.photoUrl));
-    setIsDialogOpen(true);
-  }
-
-  function handleNameChange(name: string) {
-    const updated: FormState = { ...form, name };
-    if (!editingProduct && (!form.sku || form.sku === generateSkuFromPrev(form.name))) {
-      updated.sku = name.trim() ? generateSku(name) : "";
-    }
-    setForm(updated);
-  }
-
-  function generateSkuFromPrev(prevName: string) {
-    const words = prevName.trim().toUpperCase().replace(/[^A-Z0-9 ]/g, "").split(/\s+/).filter(Boolean);
-    if (words.length === 0) return "";
-    let prefix = "";
-    if (words.length === 1) prefix = words[0].slice(0, 3).padEnd(3, "X");
-    else prefix = words.slice(0, 3).map((w) => w[0]).join("").padEnd(3, "X");
-    return `${prefix}-`;
+    setIsEditOpen(true);
   }
 
   function handleSubmit() {
-    const data = {
+    if (!editingProduct) return;
+    const data: ProductUpdate = {
       name: form.name,
       sku: form.sku,
       description: form.description || undefined,
       photoUrl: form.photoUrl || undefined,
       price: parseFloat(form.price),
       costPrice: form.costPrice ? parseFloat(form.costPrice) : undefined,
-      stock: parseInt(form.stock, 10),
       reorderLevel: parseInt(form.reorderLevel, 10) || 5,
       categoryId: form.categoryId,
     };
-    if (editingProduct) {
-      updateMutation.mutate({ id: editingProduct.id, data: data as ProductUpdate });
-    } else {
-      createMutation.mutate({ data: data as ProductInput });
-    }
+    updateMutation.mutate({ id: editingProduct.id, data });
   }
 
   function handleAdjustStock() {
@@ -255,12 +202,6 @@ export default function Inventory() {
           <h1 className="text-3xl font-bold tracking-tight">Inventory</h1>
           <p className="text-muted-foreground mt-1">Manage your products and stock levels.</p>
         </div>
-        {isAdmin && (
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Product
-          </Button>
-        )}
       </div>
 
       <div className="flex gap-3 flex-wrap">
@@ -295,7 +236,7 @@ export default function Inventory() {
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">SKU</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground">Category</th>
               <th className="text-right px-4 py-3 font-medium text-muted-foreground">Price</th>
-              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Stock</th>
+              <th className="text-right px-4 py-3 font-medium text-muted-foreground">Shop Stock</th>
               {isAdmin && <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>}
             </tr>
           </thead>
@@ -309,7 +250,7 @@ export default function Inventory() {
             ) : products?.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
-                  No products found. Add your first product.
+                  No products found. Add products from the Stock Transfers page.
                 </td>
               </tr>
             ) : (
@@ -358,7 +299,7 @@ export default function Inventory() {
                           variant="ghost"
                           size="icon"
                           onClick={() => { setStockTarget(product); setStockDelta(""); }}
-                          title="Adjust stock"
+                          title="Adjust shop stock"
                         >
                           <Minus className="h-4 w-4" />
                         </Button>
@@ -383,11 +324,11 @@ export default function Inventory() {
         </table>
       </div>
 
-      {/* Product Create/Edit Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      {/* Edit Product Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingProduct ? "Edit Product" : "Add Product"}</DialogTitle>
+            <DialogTitle>Edit Product</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
 
@@ -443,7 +384,7 @@ export default function Inventory() {
                 <Label>Name</Label>
                 <Input
                   value={form.name}
-                  onChange={(e) => handleNameChange(e.target.value)}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Widget Pro"
                 />
               </div>
@@ -462,23 +403,17 @@ export default function Inventory() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Sale Price ($)</Label>
+                <Label>Sale Price (₵)</Label>
                 <Input type="number" min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="9.99" />
               </div>
               <div className="space-y-1.5">
-                <Label>Cost Price ($)</Label>
+                <Label>Cost Price (₵)</Label>
                 <Input type="number" min="0" step="0.01" value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: e.target.value })} placeholder="5.00" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>Stock</Label>
-                <Input type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} placeholder="100" />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Reorder Level</Label>
-                <Input type="number" min="0" value={form.reorderLevel} onChange={(e) => setForm({ ...form, reorderLevel: e.target.value })} placeholder="5" />
-              </div>
+            <div className="space-y-1.5">
+              <Label>Reorder Level</Label>
+              <Input type="number" min="0" value={form.reorderLevel} onChange={(e) => setForm({ ...form, reorderLevel: e.target.value })} placeholder="5" />
             </div>
             <div className="space-y-1.5">
               <Label>Category</Label>
@@ -499,9 +434,9 @@ export default function Inventory() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending || isUploading}>
-              {editingProduct ? "Save Changes" : "Add Product"}
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
+            <Button onClick={handleSubmit} disabled={updateMutation.isPending || isUploading}>
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -511,10 +446,10 @@ export default function Inventory() {
       <Dialog open={!!stockTarget} onOpenChange={(open) => { if (!open) { setStockTarget(null); setStockDelta(""); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Adjust Stock — {stockTarget?.name}</DialogTitle>
+            <DialogTitle>Adjust Shop Stock — {stockTarget?.name}</DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-3">
-            <p className="text-sm text-muted-foreground">Current stock: <strong>{stockTarget?.stock}</strong></p>
+            <p className="text-sm text-muted-foreground">Current shop stock: <strong>{stockTarget?.stock}</strong></p>
             <div className="space-y-1.5">
               <Label>Adjustment (positive to add, negative to remove)</Label>
               <Input
