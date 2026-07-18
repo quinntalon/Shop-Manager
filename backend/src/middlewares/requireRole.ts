@@ -33,7 +33,10 @@ export function requirePermission(...permissions: Permission[]) {
       reply.code(403).send({ error: "No role assigned. Contact an admin." });
       return;
     }
-    const userPerms = ROLE_PERMISSIONS[row.role] ?? [];
+    const userPerms: string[] =
+      row.permissions && row.permissions.length > 0
+        ? row.permissions
+        : (ROLE_PERMISSIONS[row.role] ?? []);
     if (!permissions.every((p) => userPerms.includes(p))) {
       reply.code(403).send({ error: "Insufficient permissions." });
       return;

@@ -8,6 +8,7 @@ import { z } from "zod/v4";
 
 const RoleUpdateBody = z.object({
   role: z.enum(USER_ROLES).nullable(),
+  permissions: z.array(z.string()).nullable().optional(),
 });
 
 const ClerkUserIdParams = z.object({
@@ -73,14 +74,19 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
       .where(eq(userRolesTable.clerkUserId, userId));
 
     const { ROLE_PERMISSIONS } = await import("../middlewares/requireRole");
-    const permissions = existing.role ? (ROLE_PERMISSIONS[existing.role] ?? []) : [];
+    const effectivePermissions: string[] =
+      existing.permissions && existing.permissions.length > 0
+        ? existing.permissions
+        : existing.role
+          ? (ROLE_PERMISSIONS[existing.role] ?? [])
+          : [];
 
     return {
       clerkUserId: userId,
       name: name || existing.name,
       email: email || existing.email,
       role: existing.role,
-      permissions,
+      permissions: effectivePermissions,
     };
   });
 
@@ -109,9 +115,16 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.code(400).send({ error: parsed.error.message });
       }
 
+      const updateData: { role: UserRoleType | null; permissions?: string[] | null } = {
+        role: parsed.data.role as UserRoleType | null,
+      };
+      if ("permissions" in parsed.data) {
+        updateData.permissions = parsed.data.permissions ?? null;
+      }
+
       const [row] = await db
         .update(userRolesTable)
-        .set({ role: parsed.data.role as UserRoleType | null })
+        .set(updateData)
         .where(eq(userRolesTable.clerkUserId, params.data.clerkUserId))
         .returning();
 

@@ -9,4 +9,6 @@
 export interface AppUserRoleUpdate {
   /** @nullable */
   role: string | null;
+  /** Custom permission overrides. null or omitted means reset to role defaults. */
+  permissions?: string[] | null;
 }
