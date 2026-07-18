@@ -138,6 +138,7 @@ function ClerkQueryClientCacheInvalidator() {
 }
 
 function PendingAccess() {
+  const { signOut } = useClerk();
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-background px-4 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
@@ -148,6 +149,13 @@ function PendingAccess() {
         Your account has been created, but an administrator hasn't assigned you a role yet.
         Please check back soon or contact your administrator.
       </p>
+      <button
+        type="button"
+        onClick={() => signOut({ redirectUrl: `${basePath}/sign-in` })}
+        className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+      >
+        Sign out
+      </button>
     </div>
   );
 }
