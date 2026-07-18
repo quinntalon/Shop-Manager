@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useUser, useClerk } from "@clerk/react";
 import {
@@ -13,6 +13,9 @@ import {
   Settings as SettingsIcon,
   BookUser,
   BarChart2,
+  Menu,
+  X,
+  ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRole, type Permission } from "@/hooks/use-role";
@@ -40,63 +43,96 @@ function BrandMark({ logoUrl, businessName }: { logoUrl: string | null; business
   );
 }
 
-export default function Layout({ children }: LayoutProps) {
-  const [location] = useLocation();
-  const { user } = useUser();
-  const { signOut } = useClerk();
-  const { role, can } = useRole();
+function SidebarContent({
+  navItems,
+  location,
+  user,
+  role,
+  basePath,
+  signOut,
+  onNavClick,
+  collapsed,
+  onCollapseToggle,
+}: {
+  navItems: { href: string; label: string; icon: typeof LayoutDashboard; permission: Permission }[];
+  location: string;
+  user: ReturnType<typeof useUser>["user"];
+  role: string | null;
+  basePath: string;
+  signOut: (opts: { redirectUrl: string }) => void;
+  onNavClick?: () => void;
+  collapsed?: boolean;
+  onCollapseToggle?: () => void;
+}) {
   const { settings } = useSettings();
-
-  const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
   const businessName = settings?.businessName || "Nexus POS";
   const logoUrl = settings?.logoUrl ?? null;
 
-  const allNavItems: { href: string; label: string; icon: typeof LayoutDashboard; permission: Permission }[] = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard" },
-    { href: "/inventory", label: "Inventory", icon: Package, permission: "inventory" },
-    { href: "/sales", label: "Sales", icon: ShoppingCart, permission: "sales" },
-    { href: "/customers", label: "Customers", icon: BookUser, permission: "customers" },
-    { href: "/reports", label: "Reports", icon: BarChart2, permission: "reports" },
-    { href: "/categories", label: "Categories", icon: Tags, permission: "categories" },
-    { href: "/users", label: "Users", icon: Users, permission: "users" },
-    { href: "/settings", label: "Settings", icon: SettingsIcon, permission: "settings" },
-  ];
-
-  const navItems = allNavItems.filter((item) => can(item.permission));
-
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
-      <aside className="hidden w-64 flex-col border-r bg-card sm:flex">
-        <div className="flex h-16 items-center gap-2 border-b px-6">
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <div className="flex h-16 items-center justify-between gap-2 border-b px-4">
+        <div className="flex items-center gap-2 min-w-0">
           <BrandMark logoUrl={logoUrl} businessName={businessName} />
-          <span className="text-lg font-bold truncate">{businessName}</span>
+          {!collapsed && (
+            <span className="text-lg font-bold truncate">{businessName}</span>
+          )}
         </div>
-        <nav className="flex-1 space-y-1 p-4">
-          {navItems.map((item) => {
-            const isActive =
-              location === item.href ||
-              (item.href !== "/" && location.startsWith(item.href));
-            return (
-              <Link key={item.href} href={item.href}>
-                <div
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer",
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                  data-testid={`nav-${item.label.toLowerCase()}`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </div>
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="border-t p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+        {onCollapseToggle && (
+          <button
+            type="button"
+            onClick={onCollapseToggle}
+            className="hidden sm:flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <ChevronLeft className={cn("h-4 w-4 transition-transform duration-200", collapsed && "rotate-180")} />
+          </button>
+        )}
+        {onNavClick && (
+          <button
+            type="button"
+            onClick={onNavClick}
+            className="sm:hidden flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+            aria-label="Close sidebar"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
+        {navItems.map((item) => {
+          const isActive =
+            location === item.href ||
+            (item.href !== "/" && location.startsWith(item.href));
+          return (
+            <Link key={item.href} href={item.href}>
+              <div
+                onClick={onNavClick}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer",
+                  collapsed ? "justify-center px-2" : "",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+                data-testid={`nav-${item.label.toLowerCase()}`}
+                title={collapsed ? item.label : undefined}
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </div>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Footer */}
+      <div className="border-t p-3 space-y-2">
+        {!collapsed && (
+          <div className="flex items-center gap-3 px-1">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
               {user?.imageUrl ? (
                 <img src={user.imageUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
               ) : (
@@ -112,37 +148,135 @@ export default function Layout({ children }: LayoutProps) {
               </p>
             </div>
           </div>
-          {role && (
-            <Badge variant="secondary" className="mb-3 w-full justify-center" data-testid="badge-role">
-              {ROLE_LABELS[role] ?? role}
-            </Badge>
+        )}
+
+        {!collapsed && role && (
+          <Badge variant="secondary" className="w-full justify-center" data-testid="badge-role">
+            {ROLE_LABELS[role] ?? role}
+          </Badge>
+        )}
+
+        {!collapsed && <ThemeToggle />}
+
+        <button
+          type="button"
+          onClick={() => signOut({ redirectUrl: basePath || "/" })}
+          className={cn(
+            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+            collapsed && "justify-center px-2"
           )}
-          <ThemeToggle />
-          <button
-            type="button"
-            onClick={() => signOut({ redirectUrl: basePath || "/" })}
-            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </button>
-        </div>
+          title={collapsed ? "Sign out" : undefined}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && "Sign out"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function Layout({ children }: LayoutProps) {
+  const [location] = useLocation();
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  const { role, can } = useRole();
+  const { settings } = useSettings();
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const businessName = settings?.businessName || "Nexus POS";
+  const logoUrl = settings?.logoUrl ?? null;
+
+  // Close mobile drawer when route changes
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location]);
+
+  // Lock body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
+  const allNavItems: { href: string; label: string; icon: typeof LayoutDashboard; permission: Permission }[] = [
+    { href: "/", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard" },
+    { href: "/inventory", label: "Inventory", icon: Package, permission: "inventory" },
+    { href: "/sales", label: "Sales", icon: ShoppingCart, permission: "sales" },
+    { href: "/customers", label: "Customers", icon: BookUser, permission: "customers" },
+    { href: "/reports", label: "Reports", icon: BarChart2, permission: "reports" },
+    { href: "/categories", label: "Categories", icon: Tags, permission: "categories" },
+    { href: "/users", label: "Users", icon: Users, permission: "users" },
+    { href: "/settings", label: "Settings", icon: SettingsIcon, permission: "settings" },
+  ];
+
+  const navItems = allNavItems.filter((item) => can(item.permission));
+
+  const sharedProps = { navItems, location, user, role, basePath, signOut };
+
+  return (
+    <div className="flex h-screen w-full overflow-hidden bg-background">
+
+      {/* ── Desktop sidebar ─────────────────────────────────────────── */}
+      <aside
+        className={cn(
+          "hidden sm:flex flex-col border-r bg-card transition-all duration-300 ease-in-out shrink-0",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        <SidebarContent
+          {...sharedProps}
+          collapsed={collapsed}
+          onCollapseToggle={() => setCollapsed((v) => !v)}
+        />
       </aside>
+
+      {/* ── Mobile overlay backdrop ──────────────────────────────────── */}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 sm:hidden",
+          mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setMobileOpen(false)}
+        aria-hidden="true"
+      />
+
+      {/* ── Mobile slide-in sidebar ──────────────────────────────────── */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-72 flex flex-col border-r bg-card shadow-2xl transition-transform duration-300 ease-in-out sm:hidden",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <SidebarContent
+          {...sharedProps}
+          onNavClick={() => setMobileOpen(false)}
+        />
+      </aside>
+
+      {/* ── Main content ─────────────────────────────────────────────── */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="flex h-16 items-center justify-between border-b bg-card px-6 sm:hidden">
-          <div className="flex items-center gap-2">
-            <BrandMark logoUrl={logoUrl} businessName={businessName} />
-            <span className="text-lg font-bold truncate">{businessName}</span>
-          </div>
+        {/* Mobile top bar */}
+        <header className="flex h-14 items-center gap-3 border-b bg-card px-4 sm:hidden">
           <button
             type="button"
-            onClick={() => signOut({ redirectUrl: basePath || "/" })}
-            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            onClick={() => setMobileOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            aria-label="Open menu"
           >
-            <LogOut className="h-4 w-4" />
-            Sign out
+            <Menu className="h-5 w-5" />
           </button>
+          <div className="flex items-center gap-2 min-w-0">
+            <BrandMark logoUrl={logoUrl} businessName={businessName} />
+            <span className="text-base font-bold truncate">{businessName}</span>
+          </div>
         </header>
+
         <div className="flex-1 overflow-auto p-4 md:p-8">{children}</div>
       </main>
     </div>
