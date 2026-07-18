@@ -12,6 +12,8 @@ export const ALL_PERMISSIONS = [
   "categories",
   "users",
   "settings",
+  "customers",
+  "reports",
 ] as const;
 export type PermissionType = typeof ALL_PERMISSIONS[number];
 

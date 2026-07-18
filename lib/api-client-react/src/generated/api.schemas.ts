@@ -370,6 +370,45 @@ export interface ReceiptTemplateInput {
   config: ReceiptTemplateConfig;
 }
 
+export interface Customer {
+  name: string;
+  /** @nullable */
+  phone?: string | null;
+  totalOrders: number;
+  totalSpent: number;
+  lastOrderAt: string;
+}
+
+export interface CustomerPurchase {
+  id: number;
+  total: number;
+  subtotal: number;
+  cartDiscount: number;
+  paymentMethod: string;
+  /** @nullable */
+  note?: string | null;
+  createdAt: string;
+}
+
+export interface RevenueEntry {
+  period: string;
+  revenue: number;
+  count: number;
+}
+
+export interface PaymentMethodStat {
+  method: string;
+  count: number;
+  revenue: number;
+}
+
+export interface ReportSummary {
+  totalRevenue: number;
+  totalSales: number;
+  avgOrderValue: number;
+  uniqueCustomers: number;
+}
+
 export type ListProductsParams = {
 categoryId?: number;
 search?: string;

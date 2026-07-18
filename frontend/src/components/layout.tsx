@@ -11,6 +11,8 @@ import {
   User,
   Users,
   Settings as SettingsIcon,
+  BookUser,
+  BarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRole, type Permission } from "@/hooks/use-role";
@@ -53,6 +55,8 @@ export default function Layout({ children }: LayoutProps) {
     { href: "/", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard" },
     { href: "/inventory", label: "Inventory", icon: Package, permission: "inventory" },
     { href: "/sales", label: "Sales", icon: ShoppingCart, permission: "sales" },
+    { href: "/customers", label: "Customers", icon: BookUser, permission: "customers" },
+    { href: "/reports", label: "Reports", icon: BarChart2, permission: "reports" },
     { href: "/categories", label: "Categories", icon: Tags, permission: "categories" },
     { href: "/users", label: "Users", icon: Users, permission: "users" },
     { href: "/settings", label: "Settings", icon: SettingsIcon, permission: "settings" },

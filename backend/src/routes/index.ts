@@ -8,6 +8,8 @@ import dashboardRoutes from "./dashboard";
 import usersRoutes from "./users";
 import settingsRoutes from "./settings";
 import receiptTemplatesRoutes from "./receiptTemplates";
+import customersRoutes from "./customers";
+import reportsRoutes from "./reports";
 
 const router: FastifyPluginAsync = async (fastify) => {
   await fastify.register(healthRoutes);
@@ -19,6 +21,8 @@ const router: FastifyPluginAsync = async (fastify) => {
   await fastify.register(productsRoutes);
   await fastify.register(salesRoutes);
   await fastify.register(dashboardRoutes);
+  await fastify.register(customersRoutes);
+  await fastify.register(reportsRoutes);
 };
 
 export default router;

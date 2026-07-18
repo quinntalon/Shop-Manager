@@ -10,11 +10,13 @@ export type Permission =
   | "sales"
   | "categories"
   | "users"
-  | "settings";
+  | "settings"
+  | "customers"
+  | "reports";
 
 export const ROLE_PERMISSIONS: Record<UserRoleType, Permission[]> = {
-  admin: ["dashboard", "inventory", "sales", "categories", "users", "settings"],
-  salesperson: ["dashboard", "sales"],
+  admin: ["dashboard", "inventory", "sales", "categories", "users", "settings", "customers", "reports"],
+  salesperson: ["dashboard", "sales", "customers", "reports"],
   cashier: ["sales"],
 };
 

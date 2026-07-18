@@ -16,6 +16,8 @@ import SaleDetail from "@/pages/sales/detail";
 import NewSale from "@/pages/sales/new";
 import Categories from "@/pages/categories";
 import UsersPage from "@/pages/users";
+import CustomersPage from "@/pages/customers";
+import ReportsPage from "@/pages/reports";
 import SettingsPage from "@/pages/settings";
 import ReceiptEditorPage from "@/pages/settings/receipt-editor";
 import { useRole, type Permission } from "@/hooks/use-role";
@@ -217,6 +219,16 @@ function AppRoutes() {
           <Route path="/categories">
             <RequirePermission permission="categories">
               <Categories />
+            </RequirePermission>
+          </Route>
+          <Route path="/customers">
+            <RequirePermission permission="customers">
+              <CustomersPage />
+            </RequirePermission>
+          </Route>
+          <Route path="/reports">
+            <RequirePermission permission="reports">
+              <ReportsPage />
             </RequirePermission>
           </Route>
           <Route path="/users">

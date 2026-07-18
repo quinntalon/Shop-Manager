@@ -1,6 +1,6 @@
 import { useGetMyRole } from "@workspace/api-client-react";
 
-export type Permission = "dashboard" | "inventory" | "sales" | "categories" | "users" | "settings";
+export type Permission = "dashboard" | "inventory" | "sales" | "categories" | "users" | "settings" | "customers" | "reports";
 
 export function useRole() {
   const { data, isLoading, isError } = useGetMyRole();
