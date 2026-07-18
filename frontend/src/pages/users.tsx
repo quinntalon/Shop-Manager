@@ -34,7 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Users as UsersIcon, Trash2, ShieldCheck, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { Users as UsersIcon, Trash2, ShieldCheck, SlidersHorizontal, RotateCcw, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRole } from "@/hooks/use-role";
 import { cn } from "@/lib/utils";
@@ -45,20 +45,25 @@ const ROLE_LABELS: Record<string, string> = {
   cashier: "Cashier",
 };
 
-type Permission = "dashboard" | "inventory" | "sales" | "categories" | "users" | "settings";
+type Permission = "dashboard" | "inventory" | "sales" | "categories" | "users" | "settings" | "customers" | "reports";
+
+// Permissions that only admins can hold — cannot be granted to salesperson/cashier
+const ADMIN_ONLY_PERMISSIONS = new Set<Permission>(["inventory", "categories", "reports"]);
 
 const ALL_PERMISSIONS: { id: Permission; label: string; description: string }[] = [
   { id: "dashboard",  label: "Dashboard",  description: "View sales summaries and charts" },
-  { id: "inventory",  label: "Inventory",  description: "Manage products and stock levels" },
   { id: "sales",      label: "Sales",      description: "Create and view sales transactions" },
-  { id: "categories", label: "Categories", description: "Manage product categories" },
+  { id: "customers",  label: "Customers",  description: "View customer history and purchase records" },
+  { id: "inventory",  label: "Inventory",  description: "Add and manage products and stock levels" },
+  { id: "categories", label: "Categories", description: "Add and manage product categories" },
+  { id: "reports",    label: "Reports",    description: "View revenue reports and analytics" },
   { id: "users",      label: "Users",      description: "Manage user accounts and roles" },
   { id: "settings",   label: "Settings",   description: "Edit branding, theme and receipt templates" },
 ];
 
 const ROLE_DEFAULTS: Record<string, Permission[]> = {
-  admin:       ["dashboard", "inventory", "sales", "categories", "users", "settings"],
-  salesperson: ["dashboard", "sales"],
+  admin:       ["dashboard", "inventory", "sales", "categories", "users", "settings", "customers", "reports"],
+  salesperson: ["dashboard", "sales", "customers"],
   cashier:     ["sales"],
 };
 
@@ -179,24 +184,39 @@ function PermissionDialog({ user, open, onClose, onSave, isSaving }: PermissionD
             {ALL_PERMISSIONS.map((perm) => {
               const checked = selected.has(perm.id);
               const isDefault = currentDefaults.has(perm.id);
+              const isAdminOnly = ADMIN_ONLY_PERMISSIONS.has(perm.id);
+              const locked = isAdminOnly && user.role !== "admin";
 
               return (
                 <label
                   key={perm.id}
                   className={cn(
-                    "flex cursor-pointer items-start gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-muted/60",
-                    checked && "bg-primary/5"
+                    "flex items-start gap-3 rounded-md px-3 py-2.5 transition-colors",
+                    locked
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer hover:bg-muted/60",
+                    checked && !locked && "bg-primary/5"
                   )}
                 >
-                  <Checkbox
-                    checked={checked}
-                    onCheckedChange={() => toggle(perm.id)}
-                    className="mt-0.5"
-                  />
+                  {locked ? (
+                    <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                  ) : (
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={() => toggle(perm.id)}
+                      className="mt-0.5"
+                      disabled={locked}
+                    />
+                  )}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-medium">{perm.label}</span>
-                      {!isCustomMode && isDefault && (
+                      {locked && (
+                        <span className="text-[10px] font-medium text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                          Admin only
+                        </span>
+                      )}
+                      {!locked && !isCustomMode && isDefault && (
                         <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                           default
                         </span>

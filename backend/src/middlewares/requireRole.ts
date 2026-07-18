@@ -16,7 +16,7 @@ export type Permission =
 
 export const ROLE_PERMISSIONS: Record<UserRoleType, Permission[]> = {
   admin: ["dashboard", "inventory", "sales", "categories", "users", "settings", "customers", "reports"],
-  salesperson: ["dashboard", "sales", "customers", "reports"],
+  salesperson: ["dashboard", "sales", "customers"],
   cashier: ["sales"],
 };
 
