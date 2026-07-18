@@ -3,8 +3,8 @@ import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import { clerkPlugin } from "@clerk/fastify";
 import { clerkProxyPlugin } from "./middlewares/clerkProxyMiddleware";
-import router from "./routes/index.js";
-import { logger } from "./lib/logger.js";
+import router from "./routes/";
+import { logger } from "./lib/logger";
 
 export async function buildApp() {
   const app = Fastify({
