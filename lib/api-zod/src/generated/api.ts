@@ -711,6 +711,7 @@ export const CreateSaleBody = zod.object({
   "bankName": zod.string().optional(),
   "deliveryPaymentStatus": zod.enum(['pay_on_delivery', 'paid']).optional(),
   "cartDiscount": zod.number().min(createSaleBodyCartDiscountMin).optional(),
+  "pointsRedeemed": zod.number().int().min(0).optional(),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "quantity": zod.number().min(1),

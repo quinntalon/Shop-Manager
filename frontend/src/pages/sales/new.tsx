@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,13 +10,15 @@ import {
   getGetSalesByDayQueryKey,
   getGetTopProductsQueryKey,
 } from "@workspace/api-client-react";
+import { fetchLoyaltyAccount, getLoyaltyAccountQueryKey } from "@workspace/api-client-react";
 import type { Product, SaleInput } from "@workspace/api-client-react";
+import { useSettings } from "@/hooks/use-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Search, Plus, Minus, Trash2, ShoppingCart, ImagePlus, Banknote, CreditCard, Smartphone, Landmark, Truck, Tag } from "lucide-react";
+import { ArrowLeft, Search, Plus, Minus, Trash2, ShoppingCart, ImagePlus, Banknote, CreditCard, Smartphone, Landmark, Truck, Tag, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 function photoUrl(url: string | null | undefined): string | null {
@@ -42,6 +44,10 @@ export default function NewSale() {
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { settings } = useSettings();
+  const loyaltyEnabled = settings?.loyaltyEnabled ?? false;
+  const loyaltyRedemptionRate = settings?.loyaltyRedemptionRate ?? 100;
+  const loyaltyPointsPerCedi = settings?.loyaltyPointsPerCedi ?? 1;
 
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -53,6 +59,12 @@ export default function NewSale() {
   const [bankName, setBankName] = useState("");
   const [deliveryPaymentStatus, setDeliveryPaymentStatus] = useState<DeliveryPaymentStatus>("pay_on_delivery");
   const [cartDiscount, setCartDiscount] = useState("");
+
+  // Loyalty state
+  const [loyaltyBalance, setLoyaltyBalance] = useState<number | null>(null);
+  const [loyaltyLoading, setLoyaltyLoading] = useState(false);
+  const [pointsToRedeem, setPointsToRedeem] = useState("");
+  const [redeemInputOpen, setRedeemInputOpen] = useState(false);
 
   const { data: products, isLoading } = useListProducts(
     { search: search || undefined },
@@ -67,6 +79,9 @@ export default function NewSale() {
         queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetSalesByDayQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetTopProductsQueryKey() });
+        if (customerPhone) {
+          queryClient.invalidateQueries({ queryKey: getLoyaltyAccountQueryKey(customerPhone) });
+        }
         navigate(`/sales/${sale.id}?print=1`);
       },
       onError: (e: unknown) => {
@@ -75,6 +90,28 @@ export default function NewSale() {
       },
     },
   });
+
+  // Fetch loyalty balance when phone is entered and loyalty is enabled
+  useEffect(() => {
+    if (!loyaltyEnabled || !customerPhone.trim()) {
+      setLoyaltyBalance(null);
+      setPointsToRedeem("");
+      setRedeemInputOpen(false);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      setLoyaltyLoading(true);
+      try {
+        const account = await fetchLoyaltyAccount(customerPhone.trim());
+        setLoyaltyBalance(account.balance);
+      } catch {
+        setLoyaltyBalance(0);
+      } finally {
+        setLoyaltyLoading(false);
+      }
+    }, 600);
+    return () => clearTimeout(timeout);
+  }, [loyaltyEnabled, customerPhone]);
 
   function addToCart(product: Product) {
     setCart((prev) => {
@@ -132,7 +169,16 @@ export default function NewSale() {
   const appliedCartDiscount = Number.isNaN(rawCartDiscount)
     ? 0
     : Math.min(Math.max(rawCartDiscount, 0), maxCartDiscount);
-  const discountTotal = itemDiscountTotal + appliedCartDiscount;
+
+  // Points redemption
+  const parsedPoints = pointsToRedeem === "" ? 0 : Math.max(0, Math.floor(Number(pointsToRedeem) || 0));
+  const maxRedeemable = Math.min(loyaltyBalance ?? 0, parsedPoints > 0 ? parsedPoints : (loyaltyBalance ?? 0));
+  const redeemDiscount = Math.floor(parsedPoints / loyaltyRedemptionRate);
+  const maxRedeemDiscount = Math.floor((loyaltyBalance ?? 0) / loyaltyRedemptionRate);
+  const afterManualDiscounts = Math.max(subtotal - itemDiscountTotal - appliedCartDiscount, 0);
+  const appliedRedeemDiscount = Math.min(redeemDiscount, afterManualDiscounts);
+
+  const discountTotal = itemDiscountTotal + appliedCartDiscount + appliedRedeemDiscount;
   const total = Math.max(subtotal - discountTotal, 0);
 
   function handleCheckout() {
@@ -146,8 +192,8 @@ export default function NewSale() {
       bankName: paymentMethod === "bank" ? bankName || undefined : undefined,
       deliveryPaymentStatus: paymentMethod === "delivery" ? deliveryPaymentStatus : undefined,
       cartDiscount: appliedCartDiscount || undefined,
+      pointsRedeemed: parsedPoints > 0 ? parsedPoints : undefined,
       items: cart.map((c) => {
-        // Monetary discount for this line = product % discount × qty + any manual item discount
         const productDiscAmt = (Number(c.product.price) - effectivePrice(c.product)) * c.quantity;
         const totalDiscount = productDiscAmt + c.discount;
         return { productId: c.product.id, quantity: c.quantity, discount: totalDiscount || undefined };
@@ -352,6 +398,15 @@ export default function NewSale() {
                       <span>-₵{appliedCartDiscount.toFixed(2)}</span>
                     </div>
                   )}
+                  {appliedRedeemDiscount > 0 && (
+                    <div className="flex justify-between text-yellow-600">
+                      <span className="flex items-center gap-1">
+                        <Star className="h-3 w-3 fill-yellow-500" />
+                        Points redeemed ({parsedPoints} pts)
+                      </span>
+                      <span>-₵{appliedRedeemDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="border-t pt-2 flex justify-between font-bold text-base">
                     <span>Total</span>
                     <span>₵{total.toFixed(2)}</span>
@@ -450,6 +505,82 @@ export default function NewSale() {
               <Label className="text-xs">Telephone</Label>
               <Input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g. 024 123 4567" className="h-8 text-sm" type="tel" />
             </div>
+
+            {/* Loyalty balance */}
+            {loyaltyEnabled && customerPhone.trim() && (
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950/30 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-yellow-700 dark:text-yellow-400">
+                    <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+                    Loyalty Points
+                  </span>
+                  {loyaltyLoading ? (
+                    <Skeleton className="h-5 w-16" />
+                  ) : (
+                    <span className="text-sm font-bold text-yellow-700 dark:text-yellow-400">
+                      {loyaltyBalance ?? 0} pts
+                    </span>
+                  )}
+                </div>
+                {!loyaltyLoading && (loyaltyBalance ?? 0) > 0 && (
+                  <>
+                    <p className="text-xs text-yellow-600 dark:text-yellow-500">
+                      Worth up to ₵{maxRedeemDiscount.toFixed(2)} off ({loyaltyRedemptionRate} pts = ₵1)
+                    </p>
+                    {!redeemInputOpen ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs w-full border-yellow-400 text-yellow-700 hover:bg-yellow-100 dark:border-yellow-700 dark:text-yellow-400"
+                        onClick={() => setRedeemInputOpen(true)}
+                      >
+                        <Star className="h-3 w-3 mr-1 fill-yellow-500" />
+                        Redeem points
+                      </Button>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Input
+                            type="number"
+                            min={0}
+                            max={loyaltyBalance ?? 0}
+                            step={loyaltyRedemptionRate}
+                            value={pointsToRedeem}
+                            onChange={(e) => setPointsToRedeem(e.target.value)}
+                            placeholder={`e.g. ${loyaltyRedemptionRate}`}
+                            className="h-7 text-xs"
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-xs px-2 shrink-0"
+                            onClick={() => { setPointsToRedeem(""); setRedeemInputOpen(false); }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                        {parsedPoints > 0 && (
+                          <p className="text-xs text-yellow-600 dark:text-yellow-500">
+                            {parsedPoints} pts = ₵{redeemDiscount.toFixed(2)} off
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+                {!loyaltyLoading && loyaltyBalance === 0 && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-500">
+                    No points yet — earns {loyaltyPointsPerCedi} pt{loyaltyPointsPerCedi !== 1 ? "s" : ""} per ₵1 on this purchase.
+                  </p>
+                )}
+                {!loyaltyLoading && loyaltyBalance !== null && loyaltyBalance > 0 && !redeemInputOpen && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-500">
+                    Earns {loyaltyPointsPerCedi} pt{loyaltyPointsPerCedi !== 1 ? "s" : ""} per ₵1 on this purchase.
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label className="text-xs">Note</Label>
               <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Order note..." className="h-8 text-sm" />
@@ -467,7 +598,7 @@ export default function NewSale() {
             }
             onClick={handleCheckout}
           >
-            {createSaleMutation.isPending ? "Processing..." : `Checkout — ${total.toFixed(2)}`}
+            {createSaleMutation.isPending ? "Processing..." : `Checkout — ₵${total.toFixed(2)}`}
           </Button>
         </div>
       </div>

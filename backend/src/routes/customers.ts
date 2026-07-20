@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { desc, sql, and, isNotNull, or, ilike, eq } from "drizzle-orm";
-import { db, salesTable } from "@workspace/db";
+import { db, salesTable, loyaltyTransactionsTable } from "@workspace/db";
 import { requirePermission } from "../middlewares/requireRole";
 import { z } from "zod/v4";
 
@@ -46,12 +46,29 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
         .limit(limit)
         .offset(offset);
 
+      // Fetch loyalty balances for customers who have a phone number
+      const phones = rows.map((r) => r.phone).filter(Boolean) as string[];
+      const balanceMap = new Map<string, number>();
+      if (phones.length > 0) {
+        const balances = await db
+          .select({
+            phone: loyaltyTransactionsTable.customerPhone,
+            balance: sql<number>`coalesce(sum(${loyaltyTransactionsTable.points}), 0)::int`,
+          })
+          .from(loyaltyTransactionsTable)
+          .groupBy(loyaltyTransactionsTable.customerPhone);
+        for (const b of balances) {
+          balanceMap.set(b.phone, b.balance);
+        }
+      }
+
       return rows.map((r) => ({
         name: r.name!,
         phone: r.phone ?? null,
         totalOrders: r.totalOrders,
         totalSpent: Number(r.totalSpent),
         lastOrderAt: r.lastOrderAt,
+        loyaltyPoints: r.phone ? (balanceMap.get(r.phone) ?? 0) : undefined,
       }));
     },
   );

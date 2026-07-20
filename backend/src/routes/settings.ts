@@ -11,6 +11,9 @@ const SettingsUpdateBody = z.object({
   logoUrl: z.string().nullable().optional(),
   themeMode: z.enum(THEME_MODES).optional(),
   primaryColor: z.string().min(1).max(40).optional(),
+  loyaltyEnabled: z.boolean().optional(),
+  loyaltyPointsPerCedi: z.number().int().min(1).max(100).optional(),
+  loyaltyRedemptionRate: z.number().int().min(1).max(10000).optional(),
 });
 
 async function getOrCreateSettings() {

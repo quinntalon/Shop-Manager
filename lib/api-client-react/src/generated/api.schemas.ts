@@ -132,6 +132,8 @@ export interface SaleInput {
   deliveryPaymentStatus?: SaleInputDeliveryPaymentStatus;
   /** @minimum 0 */
   cartDiscount?: number;
+  /** Points to redeem for a discount on this sale */
+  pointsRedeemed?: number;
   items: SaleItemInput[];
 }
 
@@ -256,6 +258,9 @@ export interface Settings {
   logoUrl?: string | null;
   themeMode: SettingsThemeMode;
   primaryColor: string;
+  loyaltyEnabled: boolean;
+  loyaltyPointsPerCedi: number;
+  loyaltyRedemptionRate: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -274,6 +279,9 @@ export interface SettingsUpdate {
   logoUrl?: string | null;
   themeMode?: SettingsUpdateThemeMode;
   primaryColor?: string;
+  loyaltyEnabled?: boolean;
+  loyaltyPointsPerCedi?: number;
+  loyaltyRedemptionRate?: number;
 }
 
 export type ReceiptElementId = typeof ReceiptElementId[keyof typeof ReceiptElementId];
@@ -377,6 +385,29 @@ export interface Customer {
   totalOrders: number;
   totalSpent: number;
   lastOrderAt: string;
+  loyaltyPoints?: number;
+}
+
+export interface LoyaltyTransaction {
+  id: number;
+  points: number;
+  type: string;
+  saleId?: number | null;
+  note?: string | null;
+  createdAt: string;
+}
+
+export interface LoyaltyAccount {
+  phone: string;
+  balance: number;
+  transactions: LoyaltyTransaction[];
+}
+
+export interface LoyaltyAdjustInput {
+  customerPhone: string;
+  customerName?: string;
+  points: number;
+  note?: string;
 }
 
 export interface CustomerPurchase {

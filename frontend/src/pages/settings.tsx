@@ -13,9 +13,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { ImagePlus, Moon, Receipt, SlidersHorizontal, Store, Sun, X } from "lucide-react";
+import { ImagePlus, Moon, Receipt, SlidersHorizontal, Store, Sun, X, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 const BASE_URL = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -77,6 +78,9 @@ export default function SettingsPage() {
   const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
   const [primaryColor, setPrimaryColor] = useState("221 83% 53%");
   const [logoPath, setLogoPath] = useState<string | null>(null);
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(false);
+  const [loyaltyPointsPerCedi, setLoyaltyPointsPerCedi] = useState(1);
+  const [loyaltyRedemptionRate, setLoyaltyRedemptionRate] = useState(100);
 
   useEffect(() => {
     if (settings) {
@@ -84,6 +88,9 @@ export default function SettingsPage() {
       setThemeMode(settings.themeMode as "light" | "dark");
       setPrimaryColor(settings.primaryColor);
       setLogoPath(settings.logoUrl ?? null);
+      setLoyaltyEnabled(settings.loyaltyEnabled ?? false);
+      setLoyaltyPointsPerCedi(settings.loyaltyPointsPerCedi ?? 1);
+      setLoyaltyRedemptionRate(settings.loyaltyRedemptionRate ?? 100);
     }
   }, [settings]);
 
@@ -140,6 +147,9 @@ export default function SettingsPage() {
         logoUrl: logoPath,
         themeMode,
         primaryColor,
+        loyaltyEnabled,
+        loyaltyPointsPerCedi: Math.max(1, loyaltyPointsPerCedi),
+        loyaltyRedemptionRate: Math.max(1, loyaltyRedemptionRate),
       },
     });
   };
@@ -305,6 +315,70 @@ export default function SettingsPage() {
               </label>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="h-4 w-4 text-yellow-500" />
+                Loyalty Programme
+              </CardTitle>
+              <CardDescription>Reward customers with points on every purchase.</CardDescription>
+            </div>
+            <Switch
+              checked={loyaltyEnabled}
+              onCheckedChange={setLoyaltyEnabled}
+              data-testid="switch-loyalty"
+            />
+          </div>
+        </CardHeader>
+        <CardContent className={cn("space-y-5", !loyaltyEnabled && "opacity-50 pointer-events-none")}>
+          <div className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
+            Example: earn <strong>{loyaltyPointsPerCedi}</strong> pt{loyaltyPointsPerCedi !== 1 ? "s" : ""} per ₵1 spent ·
+            {" "}<strong>{loyaltyRedemptionRate}</strong> pts = ₵1 off ·
+            {" "}₵100 purchase earns <strong>{loyaltyPointsPerCedi * 100}</strong> pts
+            {" "}(≈ ₵{((loyaltyPointsPerCedi * 100) / loyaltyRedemptionRate).toFixed(2)} value)
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Points earned per ₵1 spent</Label>
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                value={loyaltyPointsPerCedi}
+                onChange={(e) => setLoyaltyPointsPerCedi(Math.max(1, Number(e.target.value) || 1))}
+                data-testid="input-points-per-cedi"
+              />
+              <p className="text-xs text-muted-foreground">How many points a customer earns per ₵1 paid.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Points needed for ₵1 off</Label>
+              <Input
+                type="number"
+                min={1}
+                max={10000}
+                value={loyaltyRedemptionRate}
+                onChange={(e) => setLoyaltyRedemptionRate(Math.max(1, Number(e.target.value) || 1))}
+                data-testid="input-redemption-rate"
+              />
+              <p className="text-xs text-muted-foreground">How many points equal ₵1 of discount.</p>
+            </div>
+          </div>
+
+          {loyaltyEnabled && (
+            <div className="flex items-center gap-2 text-sm text-green-600">
+              <Badge variant="outline" className="border-green-500 text-green-600 gap-1">
+                <Star className="h-3 w-3 fill-green-500" />
+                Active
+              </Badge>
+              Customers earn points when a sale includes their phone number.
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
-import { desc, eq, inArray } from "drizzle-orm";
-import { db, salesTable, saleItemsTable, productsTable } from "@workspace/db";
+import { desc, eq, inArray, sql } from "drizzle-orm";
+import { db, salesTable, saleItemsTable, productsTable, loyaltyTransactionsTable, settingsTable } from "@workspace/db";
+import { getLoyaltyBalance } from "./loyalty";
 import {
   ListSalesQueryParams,
   CreateSaleBody,
@@ -165,8 +166,10 @@ const salesRoutes: FastifyPluginAsync = async (fastify) => {
         bankName,
         deliveryPaymentStatus,
         cartDiscount,
+        pointsRedeemed: rawPointsRedeemed,
       } = parsed.data;
 
+      const pointsRedeemed = rawPointsRedeemed ?? 0;
       const method = (paymentMethod ?? "cash") as PaymentMethod;
 
       if (method === "momo" && !transactionId?.trim()) {
@@ -221,11 +224,46 @@ const salesRoutes: FastifyPluginAsync = async (fastify) => {
         itemDiscountTotal += item.discount ?? 0;
       }
 
+      // ── Loyalty: validate and calculate redemption discount ──────────────────
+      let redeemDiscountAmount = 0;
+      let loyaltyConfig: { loyaltyEnabled: boolean; loyaltyPointsPerCedi: number; loyaltyRedemptionRate: number } | null = null;
+
+      if (pointsRedeemed > 0 || customerPhone) {
+        const [settingsRow] = await db
+          .select({
+            loyaltyEnabled: settingsTable.loyaltyEnabled,
+            loyaltyPointsPerCedi: settingsTable.loyaltyPointsPerCedi,
+            loyaltyRedemptionRate: settingsTable.loyaltyRedemptionRate,
+          })
+          .from(settingsTable)
+          .where(eq(settingsTable.id, 1));
+        loyaltyConfig = settingsRow ?? null;
+      }
+
+      if (pointsRedeemed > 0) {
+        if (!loyaltyConfig?.loyaltyEnabled) {
+          return reply.code(400).send({ error: "Loyalty program is not enabled" });
+        }
+        if (!customerPhone) {
+          return reply.code(400).send({ error: "Customer phone is required to redeem loyalty points" });
+        }
+        const balance = await getLoyaltyBalance(customerPhone);
+        if (balance < pointsRedeemed) {
+          return reply.code(422).send({ error: `Insufficient loyalty points. Balance: ${balance}` });
+        }
+        redeemDiscountAmount = Math.floor(pointsRedeemed / loyaltyConfig.loyaltyRedemptionRate);
+      }
+
+      // ── Totals ────────────────────────────────────────────────────────────────
       const cartDiscountAmount = Math.min(
         cartDiscount ?? 0,
         Math.max(subtotal - itemDiscountTotal, 0),
       );
-      const total = Math.max(subtotal - itemDiscountTotal - cartDiscountAmount, 0);
+      const preRedeemSubtotal = Math.max(subtotal - itemDiscountTotal - cartDiscountAmount, 0);
+      const appliedRedeemDiscount = Math.min(redeemDiscountAmount, preRedeemSubtotal);
+      const total = Math.max(preRedeemSubtotal - appliedRedeemDiscount, 0);
+      // Store redemption discount folded into cartDiscount so the DB total is correct
+      const storedCartDiscount = cartDiscountAmount + appliedRedeemDiscount;
 
       const [sale] = await db
         .insert(salesTable)
@@ -234,7 +272,7 @@ const salesRoutes: FastifyPluginAsync = async (fastify) => {
           customerPhone: customerPhone ?? null,
           note: note ?? null,
           subtotal: String(subtotal.toFixed(2)),
-          cartDiscount: String(cartDiscountAmount.toFixed(2)),
+          cartDiscount: String(storedCartDiscount.toFixed(2)),
           total: String(total.toFixed(2)),
           paymentMethod: method,
           transactionId: method === "momo" ? (transactionId ?? null) : null,
@@ -257,6 +295,33 @@ const salesRoutes: FastifyPluginAsync = async (fastify) => {
           .update(productsTable)
           .set({ stock: product.stock - item.quantity })
           .where(eq(productsTable.id, item.productId));
+      }
+
+      // ── Loyalty transactions ──────────────────────────────────────────────────
+      if (loyaltyConfig?.loyaltyEnabled && customerPhone) {
+        // Deduct redeemed points first
+        if (pointsRedeemed > 0) {
+          await db.insert(loyaltyTransactionsTable).values({
+            customerPhone,
+            customerName: customerName ?? null,
+            points: -pointsRedeemed,
+            type: "redeemed",
+            saleId: sale.id,
+            note: `Redeemed on sale #${sale.id}`,
+          });
+        }
+        // Earn points on the final amount paid
+        const earnedPoints = Math.floor(total * loyaltyConfig.loyaltyPointsPerCedi);
+        if (earnedPoints > 0) {
+          await db.insert(loyaltyTransactionsTable).values({
+            customerPhone,
+            customerName: customerName ?? null,
+            points: earnedPoints,
+            type: "earned",
+            saleId: sale.id,
+            note: `Earned on sale #${sale.id}`,
+          });
+        }
       }
 
       const fullSale = await buildSaleResponse(sale.id);
