@@ -24,6 +24,11 @@ function photoUrl(url: string | null | undefined): string | null {
   return url;
 }
 
+function effectivePrice(product: Product): number {
+  const disc = (product as Product & { discountPercent?: number }).discountPercent ?? 0;
+  return disc > 0 ? Number(product.price) * (1 - disc / 100) : Number(product.price);
+}
+
 type PaymentMethod = "cash" | "momo" | "card" | "bank" | "delivery";
 type DeliveryPaymentStatus = "pay_on_delivery" | "paid";
 
@@ -113,7 +118,7 @@ export default function NewSale() {
   function updateItemDiscount(productId: number, value: string) {
     setCart((prev) => prev.map((c) => {
       if (c.product.id !== productId) return c;
-      const lineTotal = Number(c.product.price) * c.quantity;
+      const lineTotal = effectivePrice(c.product) * c.quantity;
       let discount = value === "" ? 0 : Number(value);
       if (Number.isNaN(discount) || discount < 0) discount = 0;
       if (discount > lineTotal) discount = lineTotal;
@@ -121,7 +126,7 @@ export default function NewSale() {
     }));
   }
 
-  const subtotal = cart.reduce((sum, item) => sum + Number(item.product.price) * item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + effectivePrice(item.product) * item.quantity, 0);
   const itemDiscountTotal = cart.reduce((sum, item) => sum + item.discount, 0);
   const rawCartDiscount = cartDiscount === "" ? 0 : Number(cartDiscount);
   const maxCartDiscount = Math.max(subtotal - itemDiscountTotal, 0);
@@ -216,7 +221,21 @@ export default function NewSale() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right font-semibold">₵{Number(product.price).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-semibold">
+                          {(() => {
+                            const disc = (product as Product & { discountPercent?: number }).discountPercent ?? 0;
+                            const ep = effectivePrice(product);
+                            return disc > 0 ? (
+                              <div className="flex flex-col items-end gap-0.5">
+                                <span className="line-through text-xs text-muted-foreground font-normal">₵{Number(product.price).toFixed(2)}</span>
+                                <span className="text-green-600">₵{ep.toFixed(2)}</span>
+                                <span className="text-xs text-green-600 font-normal">{disc}% off</span>
+                              </div>
+                            ) : (
+                              <span>₵{ep.toFixed(2)}</span>
+                            );
+                          })()}
+                        </td>
                         <td className="px-4 py-3 text-right">
                           <span className={outOfStock ? "text-destructive font-semibold" : "text-muted-foreground"}>
                             {product.stock}
@@ -256,7 +275,7 @@ export default function NewSale() {
             ) : (
               <div className="space-y-3">
                 {cart.map((item) => {
-                  const lineTotal = Number(item.product.price) * item.quantity;
+                  const lineTotal = effectivePrice(item.product) * item.quantity;
                   const lineNet = lineTotal - item.discount;
                   return (
                     <div key={item.product.id} className="space-y-1.5 pb-2 border-b last:border-0">
@@ -274,7 +293,7 @@ export default function NewSale() {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{item.product.name}</p>
-                          <p className="text-xs text-muted-foreground">₵{Number(item.product.price).toFixed(2)} each</p>
+                          <p className="text-xs text-muted-foreground">₵{effectivePrice(item.product).toFixed(2)} each</p>
                         </div>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => updateQty(item.product.id, -1)}>
