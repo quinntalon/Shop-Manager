@@ -146,7 +146,12 @@ export default function NewSale() {
       bankName: paymentMethod === "bank" ? bankName || undefined : undefined,
       deliveryPaymentStatus: paymentMethod === "delivery" ? deliveryPaymentStatus : undefined,
       cartDiscount: appliedCartDiscount || undefined,
-      items: cart.map((c) => ({ productId: c.product.id, quantity: c.quantity, discount: c.discount || undefined })),
+      items: cart.map((c) => {
+        // Monetary discount for this line = product % discount × qty + any manual item discount
+        const productDiscAmt = (Number(c.product.price) - effectivePrice(c.product)) * c.quantity;
+        const totalDiscount = productDiscAmt + c.discount;
+        return { productId: c.product.id, quantity: c.quantity, discount: totalDiscount || undefined };
+      }),
     };
     createSaleMutation.mutate({ data });
   }
