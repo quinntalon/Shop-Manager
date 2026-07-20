@@ -67,7 +67,6 @@ export default function NewSale() {
         queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetSalesByDayQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetTopProductsQueryKey() });
-        toast({ title: `Sale #${sale.id} created`, description: `Total: ₵${Number(sale.total).toFixed(2)}` });
         navigate(`/sales/${sale.id}?print=1`);
       },
       onError: (e: unknown) => {
