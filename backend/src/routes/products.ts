@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { eq, ilike, lte, and, type SQL } from "drizzle-orm";
+import { eq, ilike, lte, and, inArray, type SQL, sql } from "drizzle-orm";
 import { db, productsTable, categoriesTable } from "@workspace/db";
 import {
   ListProductsQueryParams,
@@ -10,6 +10,8 @@ import {
   DeleteProductParams,
   AdjustStockParams,
   AdjustStockBody,
+  BulkDiscountBody,
+  AddWarehouseStockBody,
 } from "@workspace/api-zod";
 import { requireAnyRole, requirePermission } from "../middlewares/requireRole";
 
@@ -23,6 +25,7 @@ function buildProduct(row: {
   costPrice: string | null;
   stock: number;
   warehouseStock: number;
+  discountPercent: number;
   reorderLevel: number;
   categoryId: number | null;
   createdAt: Date;
@@ -38,12 +41,30 @@ function buildProduct(row: {
     costPrice: row.costPrice != null ? parseFloat(row.costPrice) : null,
     stock: row.stock,
     warehouseStock: row.warehouseStock,
+    discountPercent: row.discountPercent,
     reorderLevel: row.reorderLevel,
     categoryId: row.categoryId,
     categoryName: row.categoryName ?? null,
     createdAt: row.createdAt.toISOString(),
   };
 }
+
+const PRODUCT_SELECT = {
+  id: productsTable.id,
+  name: productsTable.name,
+  sku: productsTable.sku,
+  description: productsTable.description,
+  photoUrl: productsTable.photoUrl,
+  price: productsTable.price,
+  costPrice: productsTable.costPrice,
+  stock: productsTable.stock,
+  warehouseStock: productsTable.warehouseStock,
+  discountPercent: productsTable.discountPercent,
+  reorderLevel: productsTable.reorderLevel,
+  categoryId: productsTable.categoryId,
+  createdAt: productsTable.createdAt,
+  categoryName: categoriesTable.name,
+} as const;
 
 const productsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get(
@@ -62,26 +83,12 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       if (query.data.search) {
         conditions.push(ilike(productsTable.name, `%${query.data.search}%`));
       }
-      if (query.data.lowStock === true) {
+      if (query.data.lowStock) {
         conditions.push(lte(productsTable.stock, productsTable.reorderLevel));
       }
 
       const rows = await db
-        .select({
-          id: productsTable.id,
-          name: productsTable.name,
-          sku: productsTable.sku,
-          description: productsTable.description,
-          photoUrl: productsTable.photoUrl,
-          price: productsTable.price,
-          costPrice: productsTable.costPrice,
-          stock: productsTable.stock,
-          warehouseStock: productsTable.warehouseStock,
-          reorderLevel: productsTable.reorderLevel,
-          categoryId: productsTable.categoryId,
-          createdAt: productsTable.createdAt,
-          categoryName: categoriesTable.name,
-        })
+        .select(PRODUCT_SELECT)
         .from(productsTable)
         .leftJoin(categoriesTable, eq(productsTable.categoryId, categoriesTable.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -111,27 +118,14 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
             parsed.data.costPrice != null ? String(parsed.data.costPrice) : null,
           stock: parsed.data.stock ?? 0,
           warehouseStock: parsed.data.warehouseStock ?? 0,
+          discountPercent: parsed.data.discountPercent ?? 0,
           reorderLevel: parsed.data.reorderLevel ?? 5,
           categoryId: parsed.data.categoryId ?? null,
         })
         .returning();
 
       const [row] = await db
-        .select({
-          id: productsTable.id,
-          name: productsTable.name,
-          sku: productsTable.sku,
-          description: productsTable.description,
-          photoUrl: productsTable.photoUrl,
-          price: productsTable.price,
-          costPrice: productsTable.costPrice,
-          stock: productsTable.stock,
-          warehouseStock: productsTable.warehouseStock,
-          reorderLevel: productsTable.reorderLevel,
-          categoryId: productsTable.categoryId,
-          createdAt: productsTable.createdAt,
-          categoryName: categoriesTable.name,
-        })
+        .select(PRODUCT_SELECT)
         .from(productsTable)
         .leftJoin(categoriesTable, eq(productsTable.categoryId, categoriesTable.id))
         .where(eq(productsTable.id, product.id));
@@ -149,21 +143,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.code(400).send({ error: params.error.message });
       }
       const [row] = await db
-        .select({
-          id: productsTable.id,
-          name: productsTable.name,
-          sku: productsTable.sku,
-          description: productsTable.description,
-          photoUrl: productsTable.photoUrl,
-          price: productsTable.price,
-          costPrice: productsTable.costPrice,
-          stock: productsTable.stock,
-          warehouseStock: productsTable.warehouseStock,
-          reorderLevel: productsTable.reorderLevel,
-          categoryId: productsTable.categoryId,
-          createdAt: productsTable.createdAt,
-          categoryName: categoriesTable.name,
-        })
+        .select(PRODUCT_SELECT)
         .from(productsTable)
         .leftJoin(categoriesTable, eq(productsTable.categoryId, categoriesTable.id))
         .where(eq(productsTable.id, params.data.id));
@@ -201,6 +181,8 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         updates.costPrice =
           parsed.data.costPrice != null ? String(parsed.data.costPrice) : null;
       if (parsed.data.stock !== undefined) updates.stock = parsed.data.stock;
+      if (parsed.data.discountPercent !== undefined)
+        updates.discountPercent = parsed.data.discountPercent;
       if (parsed.data.reorderLevel !== undefined)
         updates.reorderLevel = parsed.data.reorderLevel;
       if (parsed.data.categoryId !== undefined)
@@ -217,21 +199,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const [row] = await db
-        .select({
-          id: productsTable.id,
-          name: productsTable.name,
-          sku: productsTable.sku,
-          description: productsTable.description,
-          photoUrl: productsTable.photoUrl,
-          price: productsTable.price,
-          costPrice: productsTable.costPrice,
-          stock: productsTable.stock,
-          warehouseStock: productsTable.warehouseStock,
-          reorderLevel: productsTable.reorderLevel,
-          categoryId: productsTable.categoryId,
-          createdAt: productsTable.createdAt,
-          categoryName: categoriesTable.name,
-        })
+        .select(PRODUCT_SELECT)
         .from(productsTable)
         .leftJoin(categoriesTable, eq(productsTable.categoryId, categoriesTable.id))
         .where(eq(productsTable.id, params.data.id));
@@ -288,26 +256,75 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         .where(eq(productsTable.id, params.data.id));
 
       const [row] = await db
-        .select({
-          id: productsTable.id,
-          name: productsTable.name,
-          sku: productsTable.sku,
-          description: productsTable.description,
-          photoUrl: productsTable.photoUrl,
-          price: productsTable.price,
-          costPrice: productsTable.costPrice,
-          stock: productsTable.stock,
-          warehouseStock: productsTable.warehouseStock,
-          reorderLevel: productsTable.reorderLevel,
-          categoryId: productsTable.categoryId,
-          createdAt: productsTable.createdAt,
-          categoryName: categoriesTable.name,
-        })
+        .select(PRODUCT_SELECT)
         .from(productsTable)
         .leftJoin(categoriesTable, eq(productsTable.categoryId, categoriesTable.id))
         .where(eq(productsTable.id, params.data.id));
 
       return buildProduct(row);
+    },
+  );
+
+  // Add stock to warehouse for an existing product (receiving new goods)
+  fastify.post(
+    "/products/:id/add-warehouse-stock",
+    { preHandler: [requirePermission("inventory")] },
+    async (request, reply) => {
+      const params = AdjustStockParams.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: params.error.message });
+      }
+      const parsed = AddWarehouseStockBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.message });
+      }
+
+      const [current] = await db
+        .select({ id: productsTable.id })
+        .from(productsTable)
+        .where(eq(productsTable.id, params.data.id));
+
+      if (!current) {
+        return reply.code(404).send({ error: "Product not found" });
+      }
+
+      await db
+        .update(productsTable)
+        .set({ warehouseStock: sql`${productsTable.warehouseStock} + ${parsed.data.quantity}` })
+        .where(eq(productsTable.id, params.data.id));
+
+      const [row] = await db
+        .select(PRODUCT_SELECT)
+        .from(productsTable)
+        .leftJoin(categoriesTable, eq(productsTable.categoryId, categoriesTable.id))
+        .where(eq(productsTable.id, params.data.id));
+
+      return buildProduct(row);
+    },
+  );
+
+  // Apply a percentage discount to all or specific products
+  fastify.post(
+    "/products/bulk-discount",
+    { preHandler: [requirePermission("inventory")] },
+    async (request, reply) => {
+      const parsed = BulkDiscountBody.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.message });
+      }
+
+      const { discountPercent, productIds } = parsed.data;
+
+      if (productIds && productIds.length > 0) {
+        await db
+          .update(productsTable)
+          .set({ discountPercent })
+          .where(inArray(productsTable.id, productIds));
+      } else {
+        await db.update(productsTable).set({ discountPercent });
+      }
+
+      return reply.code(200).send({ ok: true, discountPercent });
     },
   );
 };
