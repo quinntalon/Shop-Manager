@@ -200,7 +200,7 @@ function AppRoutes() {
       </div>
       <h1 className="text-xl font-bold">Could not connect to server</h1>
       <p className="max-w-sm text-sm text-muted-foreground">
-        The API server isn't responding. Make sure <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">CLERK_SECRET_KEY</code> is set in Replit Secrets and restart the API Server workflow.
+        The API server isn't responding. Make sure <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">CLERK_SECRET_KEY</code> is set in your environment variables and the API server is running.
       </p>
     </div>
   );

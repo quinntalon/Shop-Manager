@@ -29,7 +29,7 @@ export const listCustomers = (params?: ListCustomersParams): Promise<Customer[]>
 
 export function useListCustomers(
   params?: ListCustomersParams,
-  options?: { query?: UseQueryOptions<Customer[], Error> },
+  options?: { query?: Omit<UseQueryOptions<Customer[], Error>, 'queryKey' | 'queryFn'> },
 ) {
   return useQuery<Customer[], Error>({
     queryKey: getListCustomersQueryKey(params),
@@ -48,7 +48,7 @@ export const getCustomerPurchases = (name: string): Promise<CustomerPurchase[]> 
 
 export function useGetCustomerPurchases(
   name: string,
-  options?: { query?: UseQueryOptions<CustomerPurchase[], Error> },
+  options?: { query?: Omit<UseQueryOptions<CustomerPurchase[], Error>, 'queryKey' | 'queryFn'> },
 ) {
   return useQuery<CustomerPurchase[], Error>({
     queryKey: getCustomerPurchasesQueryKey(name),

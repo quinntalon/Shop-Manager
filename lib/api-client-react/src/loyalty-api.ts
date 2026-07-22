@@ -29,7 +29,7 @@ export const adjustLoyaltyPoints = (data: LoyaltyAdjustInput): Promise<{ transac
 
 export function useGetLoyaltyAccount(
   phone: string,
-  options?: { query?: UseQueryOptions<LoyaltyAccount, Error> },
+  options?: { query?: Omit<UseQueryOptions<LoyaltyAccount, Error>, 'queryKey' | 'queryFn'> },
 ) {
   return useQuery<LoyaltyAccount, Error>({
     queryKey: getLoyaltyAccountQueryKey(phone),
@@ -41,7 +41,7 @@ export function useGetLoyaltyAccount(
 
 export function useGetLoyaltySale(
   saleId: number,
-  options?: { query?: UseQueryOptions<LoyaltyTransaction[], Error> },
+  options?: { query?: Omit<UseQueryOptions<LoyaltyTransaction[], Error>, 'queryKey' | 'queryFn'> },
 ) {
   return useQuery<LoyaltyTransaction[], Error>({
     queryKey: getLoyaltySaleQueryKey(saleId),
