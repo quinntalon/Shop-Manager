@@ -1,10 +1,5 @@
 {
   "version": 2,
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @workspace/api-server run build:vercel && pnpm --filter @workspace/shop run build",
-  "outputDirectory": "frontend/dist/public",
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index" },
-    { "source": "/:path*", "destination": "/index.html" }
-  ]
+  "buildCommand": "node build.vercel.mjs"
 }
