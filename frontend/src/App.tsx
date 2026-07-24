@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk } from "@clerk/react";
+import { ClerkProvider, SignIn, SignUp, Show, useClerk, ClerkLoading, ClerkLoaded } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { shadcn } from "@clerk/themes";
 import { Switch, Route, Redirect, useLocation, Router as WouterRouter } from "wouter";
@@ -27,10 +27,15 @@ import { ShieldAlert, LogOut } from "lucide-react";
 
 const queryClient = new QueryClient();
 
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-);
+let clerkPubKey: string | undefined;
+try {
+  clerkPubKey = publishableKeyFromHost(
+    window.location.hostname,
+    import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+  );
+} catch {
+  clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+}
 
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
@@ -290,12 +295,19 @@ function AppRoutes() {
 function HomeRedirect() {
   return (
     <>
-      <Show when="signed-in">
-        <AppRoutes />
-      </Show>
-      <Show when="signed-out">
-        <Redirect to="/sign-in" />
-      </Show>
+      <ClerkLoading>
+        <div className="flex min-h-[100dvh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </ClerkLoading>
+      <ClerkLoaded>
+        <Show when="signed-in">
+          <AppRoutes />
+        </Show>
+        <Show when="signed-out">
+          <Redirect to="/sign-in" />
+        </Show>
+      </ClerkLoaded>
     </>
   );
 }
@@ -324,7 +336,7 @@ function ClerkProviderWithRoutes() {
 
   return (
     <ClerkProvider
-      publishableKey={clerkPubKey}
+      publishableKey={clerkPubKey as string}
       proxyUrl={clerkProxyUrl}
       appearance={{
         ...clerkAppearance,
