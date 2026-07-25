@@ -1,0 +1,1 @@
+- [Vercel connector setup](vercel-connector.md) — the Vercel catalog connector must be enabled in Workspace Settings before account authorization can be proposed.

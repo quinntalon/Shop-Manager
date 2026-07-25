@@ -57,6 +57,32 @@ pnpm run build
 pnpm --filter @workspace/api-spec run codegen
 ```
 
+## Vercel Deployment
+
+The repository includes a Vercel Build Output API configuration. From the repository
+root, Vercel uses:
+
+- Install command: `pnpm install`
+- Build command: `node build.vercel.mjs`
+
+Configure these environment variables in the Vercel project for the relevant
+environments before deploying:
+
+- `DATABASE_URL`
+- `CLERK_SECRET_KEY`
+- `CLERK_PUBLISHABLE_KEY`
+- `VITE_CLERK_PUBLISHABLE_KEY`
+- `SESSION_SECRET`
+
+The Cloudinary variables are also required for image uploads:
+`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`.
+The database must be reachable from Vercel's serverless runtime; Replit's
+runtime-managed development database URL should not be copied blindly into an
+external Vercel project.
+
+The API health endpoint is `/api/healthz`. The frontend is served as a static SPA,
+while `/api/*` is routed to the bundled Fastify serverless function.
+
 ## Project Layout
 
 ```
