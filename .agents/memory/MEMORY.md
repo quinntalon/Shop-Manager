@@ -1,1 +1,2 @@
 - [Vercel connector setup](vercel-connector.md) — the Vercel catalog connector must be enabled in Workspace Settings before account authorization can be proposed.
+- [Vercel runtime adapter](vercel-runtime.md) — Build Output API functions need Fastify injection, not direct Node response emission.

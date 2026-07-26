@@ -71,7 +71,8 @@ environments before deploying:
 - `DATABASE_URL`
 - `CLERK_SECRET_KEY`
 - `CLERK_PUBLISHABLE_KEY`
-- `VITE_CLERK_PUBLISHABLE_KEY`
+- `VITE_CLERK_PUBLISHABLE_KEY` (required during the frontend build; the build
+  also accepts `CLERK_PUBLISHABLE_KEY` as a public-key fallback)
 - `SESSION_SECRET`
 
 The Cloudinary variables are also required for image uploads:
@@ -82,6 +83,9 @@ external Vercel project.
 
 The API health endpoint is `/api/healthz`. The frontend is served as a static SPA,
 while `/api/*` is routed to the bundled Fastify serverless function.
+After changing any Vercel environment variable, create a new deployment and
+disable the build cache for that deployment so the frontend bundle is rebuilt
+with the new public Clerk key.
 
 ## Project Layout
 
