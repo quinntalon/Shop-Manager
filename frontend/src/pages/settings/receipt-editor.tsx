@@ -53,6 +53,12 @@ import {
   MoveVertical,
   QrCode,
   Barcode,
+  Copy,
+  Download,
+  Upload,
+  RotateCcw,
+  ChevronDown,
+  Hash,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -90,8 +96,52 @@ export interface CustomBlock {
   customValue?: string;
 }
 
-export type ExtendedConfig = ReceiptTemplateConfig & {
+// ─── Footer rows ──────────────────────────────────────────────────────────────
+
+export type FooterRowType = "text" | "image" | "divider" | "spacer";
+
+export interface FooterRow {
+  id: string;
+  type: FooterRowType;
+  content?: string; // text / template vars
+  imageUrl?: string;
+  imageHeight?: number;
+  align: "left" | "center" | "right";
+  bold: boolean;
+  fontSize: "xs" | "sm" | "base" | "lg" | "xl";
+  color: string | null;
+}
+
+// ─── Item columns ─────────────────────────────────────────────────────────────
+
+export type ItemColumnKey =
+  | "name"
+  | "sku"
+  | "qty"
+  | "unitPrice"
+  | "discount"
+  | "lineTotal";
+
+export interface ItemColumn {
+  id: string;
+  key: ItemColumnKey;
+  label: string;
+  visible: boolean;
+  align: "left" | "center" | "right";
+  order: number;
+}
+
+// ─── Extended config ──────────────────────────────────────────────────────────
+
+export type ExtendedConfig = Omit<ReceiptTemplateConfig, "paperSize"> & {
+  paperSize: "58mm" | "80mm" | "A4";
   customBlocks: CustomBlock[];
+  footerRows: FooterRow[];
+  itemColumns: ItemColumn[];
+  logoSize?: number;
+  borderStyle?: "none" | "solid" | "dashed";
+  borderColor?: string;
+  borderRadius?: number;
 };
 
 type DragSource =
@@ -107,7 +157,7 @@ type UnifiedItem =
   | { kind: "fixed"; el: ReceiptElementStyle }
   | { kind: "custom"; block: CustomBlock };
 
-// ─── Palette definition ────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const PALETTE_ITEMS: {
   type: CustomBlockType;
@@ -116,14 +166,12 @@ const PALETTE_ITEMS: {
   description: string;
 }[] = [
   { type: "divider", label: "Divider", icon: Minus, description: "Horizontal rule" },
-  { type: "textBlock", label: "Text Block", icon: Type, description: "Custom text" },
+  { type: "textBlock", label: "Text Block", icon: Type, description: "Custom text / template vars" },
   { type: "image", label: "Image", icon: ImageIcon, description: "Image by URL" },
   { type: "spacer", label: "Spacer", icon: MoveVertical, description: "Empty space" },
   { type: "qrCode", label: "QR Code", icon: QrCode, description: "QR from sale ID" },
   { type: "barcode", label: "Barcode", icon: Barcode, description: "Barcode from sale ID" },
 ];
-
-// ─── Static data ───────────────────────────────────────────────────────────────
 
 const DEFAULT_ELEMENTS: ReceiptElementStyle[] = [
   { id: "logo", visible: true, order: 0, align: "center", bold: false, fontSize: "base", color: null },
@@ -136,6 +184,15 @@ const DEFAULT_ELEMENTS: ReceiptElementStyle[] = [
   { id: "footer", visible: true, order: 7, align: "center", bold: false, fontSize: "sm", color: null },
 ];
 
+export const DEFAULT_ITEM_COLUMNS: ItemColumn[] = [
+  { id: "name",      key: "name",      label: "Item",    visible: true,  align: "left",  order: 0 },
+  { id: "qty",       key: "qty",       label: "Qty",     visible: true,  align: "right", order: 1 },
+  { id: "lineTotal", key: "lineTotal", label: "Total",   visible: true,  align: "right", order: 2 },
+  { id: "sku",       key: "sku",       label: "SKU",     visible: false, align: "left",  order: 3 },
+  { id: "unitPrice", key: "unitPrice", label: "Price",   visible: false, align: "right", order: 4 },
+  { id: "discount",  key: "discount",  label: "Disc",    visible: false, align: "right", order: 5 },
+];
+
 const DEFAULT_CONFIG: ExtendedConfig = {
   paperSize: "80mm",
   fontFamily: "sans",
@@ -146,12 +203,18 @@ const DEFAULT_CONFIG: ExtendedConfig = {
   backgroundColor: "#ffffff",
   showLogo: true,
   logoUrl: null,
+  logoSize: 48,
   storeName: "Nexus POS",
   storeAddress: "",
   storePhone: "",
   footerText: "Thank you for your purchase!",
   elements: DEFAULT_ELEMENTS,
   customBlocks: [],
+  footerRows: [],
+  itemColumns: DEFAULT_ITEM_COLUMNS,
+  borderStyle: "none",
+  borderColor: "#e2e8f0",
+  borderRadius: 0,
 };
 
 const ELEMENT_LABELS: Record<ReceiptElementId, string> = {
@@ -174,11 +237,42 @@ const CUSTOM_BLOCK_LABELS: Record<CustomBlockType, string> = {
   barcode: "Barcode",
 };
 
+export const TEMPLATE_VARIABLES = [
+  { key: "{{store_name}}",    label: "Store Name" },
+  { key: "{{store_address}}", label: "Store Address" },
+  { key: "{{store_phone}}",   label: "Store Phone" },
+  { key: "{{receipt_number}}",label: "Receipt #" },
+  { key: "{{date}}",          label: "Date" },
+  { key: "{{time}}",          label: "Time" },
+  { key: "{{customer_name}}", label: "Customer Name" },
+  { key: "{{customer_phone}}",label: "Customer Phone" },
+  { key: "{{payment_method}}",label: "Payment Method" },
+  { key: "{{transaction_id}}",label: "Transaction ID" },
+  { key: "{{subtotal}}",      label: "Subtotal" },
+  { key: "{{discount}}",      label: "Discount" },
+  { key: "{{total}}",         label: "Grand Total" },
+];
+
+// ─── Extended element style (adds fields beyond the generated TS type) ─────────
+
+export type ExtendedElementStyle = ReceiptElementStyle & {
+  backgroundColor?: string | null;
+  paddingTop?: number;
+  paddingBottom?: number;
+};
+
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
-function cloneConfig(config: ReceiptTemplateConfig): ExtendedConfig {
+// Accepts both the generated ReceiptTemplateConfig and our ExtendedConfig
+function cloneConfig(config: ReceiptTemplateConfig | Partial<ExtendedConfig>): ExtendedConfig {
   const c = JSON.parse(JSON.stringify(config)) as ExtendedConfig;
   if (!c.customBlocks) c.customBlocks = [];
+  if (!c.footerRows) c.footerRows = [];
+  if (!c.itemColumns || c.itemColumns.length === 0) c.itemColumns = DEFAULT_ITEM_COLUMNS;
+  if (!c.logoSize) c.logoSize = 48;
+  if (!c.borderStyle) c.borderStyle = "none";
+  if (!c.borderColor) c.borderColor = "#e2e8f0";
+  if (c.borderRadius === undefined) c.borderRadius = 0;
   return c;
 }
 
@@ -216,6 +310,7 @@ export default function ReceiptEditorPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const importJsonRef = useRef<HTMLInputElement>(null);
 
   const { data: templates, isLoading } = useListReceiptTemplates({
     query: { queryKey: getListReceiptTemplatesQueryKey() },
@@ -228,6 +323,8 @@ export default function ReceiptEditorPage() {
   const [dragSource, setDragSource] = useState<DragSource | null>(null);
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [showVarPicker, setShowVarPicker] = useState(false);
+  const [footerVarPickerId, setFooterVarPickerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!templates || templates.length === 0 || selectedId !== null) return;
@@ -361,6 +458,80 @@ export default function ReceiptEditorPage() {
     setDirty(true);
   }
 
+  // ── Footer row helpers ─────────────────────────────────────────────────────
+
+  function addFooterRow(type: FooterRowType) {
+    const newRow: FooterRow = {
+      id: crypto.randomUUID(),
+      type,
+      content: type === "text" ? "Thank you for your purchase!" : undefined,
+      imageUrl: type === "image" ? "" : undefined,
+      imageHeight: type === "image" ? 40 : undefined,
+      align: "center",
+      bold: false,
+      fontSize: "sm",
+      color: null,
+    };
+    setConfig((prev: ExtendedConfig) => ({
+      ...prev,
+      footerRows: [...(prev.footerRows ?? []), newRow],
+    }));
+    setDirty(true);
+  }
+
+  function updateFooterRow(id: string, patch: Partial<FooterRow>) {
+    setConfig((prev: ExtendedConfig) => ({
+      ...prev,
+      footerRows: (prev.footerRows ?? []).map((r) => (r.id === id ? { ...r, ...patch } : r)),
+    }));
+    setDirty(true);
+  }
+
+  function removeFooterRow(id: string) {
+    setConfig((prev: ExtendedConfig) => ({
+      ...prev,
+      footerRows: (prev.footerRows ?? []).filter((r) => r.id !== id),
+    }));
+    setDirty(true);
+  }
+
+  function reorderFooterRows(fromIndex: number, toIndex: number) {
+    setConfig((prev: ExtendedConfig) => {
+      const rows = [...(prev.footerRows ?? [])];
+      const [moved] = rows.splice(fromIndex, 1);
+      rows.splice(toIndex, 0, moved);
+      return { ...prev, footerRows: rows };
+    });
+    setDirty(true);
+  }
+
+  // ── Item column helpers ────────────────────────────────────────────────────
+
+  function updateItemColumn(id: string, patch: Partial<ItemColumn>) {
+    setConfig((prev: ExtendedConfig) => ({
+      ...prev,
+      itemColumns: (prev.itemColumns ?? DEFAULT_ITEM_COLUMNS).map((c) =>
+        c.id === id ? { ...c, ...patch } : c
+      ),
+    }));
+    setDirty(true);
+  }
+
+  function reorderItemColumns(fromIndex: number, toIndex: number) {
+    setConfig((prev: ExtendedConfig) => {
+      const cols = [...(prev.itemColumns ?? DEFAULT_ITEM_COLUMNS)].sort(
+        (a, b) => a.order - b.order
+      );
+      const [moved] = cols.splice(fromIndex, 1);
+      cols.splice(toIndex, 0, moved);
+      return {
+        ...prev,
+        itemColumns: cols.map((c, i) => ({ ...c, order: i })),
+      };
+    });
+    setDirty(true);
+  }
+
   // ── Upload ─────────────────────────────────────────────────────────────────
 
   const { uploadFile, isUploading } = useUpload({
@@ -424,10 +595,63 @@ export default function ReceiptEditorPage() {
       return;
     }
     if (selectedId === null) {
-      createMutation.mutate({ data: { name: name.trim(), config } });
+      createMutation.mutate({ data: { name: name.trim(), config: config as unknown as ReceiptTemplateConfig } });
     } else {
-      updateMutation.mutate({ id: selectedId, data: { name: name.trim(), config } });
+      updateMutation.mutate({ id: selectedId, data: { name: name.trim(), config: config as unknown as ReceiptTemplateConfig } });
     }
+  }
+
+  function handleDuplicate() {
+    const newName = `${name} (copy)`;
+    createMutation.mutate({
+      data: { name: newName, config: config as unknown as ReceiptTemplateConfig },
+    });
+  }
+
+  function handleExportJSON() {
+    const blob = new Blob([JSON.stringify({ name, config }, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `receipt-template-${name.replace(/\s+/g, "-").toLowerCase()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImportJSON(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string) as {
+          name?: string;
+          config?: ReceiptTemplateConfig;
+        };
+        if (data.config) {
+          if (data.name) setName(data.name);
+          setConfig(cloneConfig(data.config));
+          setSelectedId(null);
+          setDirty(true);
+          toast({ title: "Layout imported" });
+        } else {
+          toast({ title: "Invalid layout file", variant: "destructive" });
+        }
+      } catch {
+        toast({ title: "Could not parse file", variant: "destructive" });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
+
+  function handleResetToDefault() {
+    setConfig(cloneConfig(DEFAULT_CONFIG));
+    setSelectedItem(null);
+    setDirty(true);
+    toast({ title: "Reset to default layout" });
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -455,6 +679,10 @@ export default function ReceiptEditorPage() {
       ? (config.customBlocks ?? []).find((b: CustomBlock) => b.id === selectedItem.id) ?? null
       : null;
   const currentTemplate = templates?.find((t: ReceiptTemplate) => t.id === selectedId) ?? null;
+  const sortedItemColumns = [...(config.itemColumns ?? DEFAULT_ITEM_COLUMNS)].sort(
+    (a, b) => a.order - b.order
+  );
+  const sortedFooterRows = [...(config.footerRows ?? [])];
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -476,7 +704,57 @@ export default function ReceiptEditorPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={handleResetToDefault}
+            title="Reset layout to default"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => importJsonRef.current?.click()}
+            title="Import layout from JSON"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            Import
+          </Button>
+          <input
+            ref={importJsonRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={handleImportJSON}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={handleExportJSON}
+            title="Export layout as JSON"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export
+          </Button>
+          {selectedId !== null && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              disabled={createMutation.isPending}
+              onClick={handleDuplicate}
+              title="Duplicate this template"
+            >
+              <Copy className="h-3.5 w-3.5" />
+              Duplicate
+            </Button>
+          )}
           {currentTemplate && !currentTemplate.isDefault && (
             <Button
               variant="outline"
@@ -486,7 +764,7 @@ export default function ReceiptEditorPage() {
               onClick={() => setDefaultMutation.mutate({ id: currentTemplate.id })}
             >
               <Star className="h-3.5 w-3.5" />
-              Set as Default
+              Set Default
             </Button>
           )}
           {currentTemplate && (
@@ -571,7 +849,7 @@ export default function ReceiptEditorPage() {
             className="bg-white rounded-sm shadow-md"
             style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.12)" }}
           >
-            <ReceiptView config={config} sale={SAMPLE_SALE} />
+            <ReceiptView config={config as unknown as ReceiptTemplateConfig} sale={SAMPLE_SALE} />
           </div>
         </div>
 
@@ -618,14 +896,6 @@ export default function ReceiptEditorPage() {
               <Input
                 value={config.storePhone ?? ""}
                 onChange={(e) => updateConfig({ storePhone: e.target.value })}
-                className="h-8 text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Footer Text</Label>
-              <Input
-                value={config.footerText}
-                onChange={(e) => updateConfig({ footerText: e.target.value })}
                 className="h-8 text-sm"
               />
             </div>
@@ -680,6 +950,22 @@ export default function ReceiptEditorPage() {
                 onChange={handleFileChange}
               />
             </div>
+            {/* Logo size */}
+            {config.showLogo && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs">Logo Size</Label>
+                  <span className="text-xs text-muted-foreground">{config.logoSize ?? 48}px</span>
+                </div>
+                <Slider
+                  min={24}
+                  max={150}
+                  step={4}
+                  value={[config.logoSize ?? 48]}
+                  onValueChange={([v]) => updateConfig({ logoSize: v })}
+                />
+              </div>
+            )}
           </div>
 
           <Separator />
@@ -694,9 +980,7 @@ export default function ReceiptEditorPage() {
               <Select
                 value={config.paperSize}
                 onValueChange={(v) =>
-                  updateConfig({
-                    paperSize: v as ReceiptTemplateConfig["paperSize"],
-                  })
+                  updateConfig({ paperSize: v as ExtendedConfig["paperSize"] })
                 }
               >
                 <SelectTrigger className="h-8 text-sm">
@@ -705,6 +989,7 @@ export default function ReceiptEditorPage() {
                 <SelectContent>
                   <SelectItem value="58mm">58mm (small)</SelectItem>
                   <SelectItem value="80mm">80mm (standard)</SelectItem>
+                  <SelectItem value="A4">A4 (full page)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -776,21 +1061,75 @@ export default function ReceiptEditorPage() {
                 <Label className="text-xs">{label}</Label>
                 <label
                   className="h-7 w-10 rounded-md border cursor-pointer relative overflow-hidden"
-                  style={{ backgroundColor: config[key] }}
+                  style={{ backgroundColor: config[key] as string }}
                 >
                   <input
                     type="color"
                     className="absolute inset-0 opacity-0 cursor-pointer"
-                    value={config[key]}
+                    value={config[key] as string}
                     onChange={(e) =>
-                      updateConfig({
-                        [key]: e.target.value,
-                      } as Partial<ExtendedConfig>)
+                      updateConfig({ [key]: e.target.value } as Partial<ExtendedConfig>)
                     }
                   />
                 </label>
               </div>
             ))}
+          </div>
+
+          <Separator />
+
+          {/* Border & Shape */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase text-muted-foreground">
+              Border &amp; Shape
+            </h3>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Border Style</Label>
+              <Select
+                value={config.borderStyle ?? "none"}
+                onValueChange={(v) =>
+                  updateConfig({ borderStyle: v as ExtendedConfig["borderStyle"] })
+                }
+              >
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="solid">Solid</SelectItem>
+                  <SelectItem value="dashed">Dashed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {(config.borderStyle ?? "none") !== "none" && (
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Border Color</Label>
+                <label
+                  className="h-7 w-10 rounded-md border cursor-pointer relative overflow-hidden"
+                  style={{ backgroundColor: config.borderColor ?? "#e2e8f0" }}
+                >
+                  <input
+                    type="color"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    value={config.borderColor ?? "#e2e8f0"}
+                    onChange={(e) => updateConfig({ borderColor: e.target.value })}
+                  />
+                </label>
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Rounded Corners</Label>
+                <span className="text-xs text-muted-foreground">{config.borderRadius ?? 0}px</span>
+              </div>
+              <Slider
+                min={0}
+                max={20}
+                step={1}
+                value={[config.borderRadius ?? 0]}
+                onValueChange={([v]) => updateConfig({ borderRadius: v })}
+              />
+            </div>
           </div>
 
           <Separator />
@@ -804,7 +1143,6 @@ export default function ReceiptEditorPage() {
               Drag to reorder. Click a row to style it.
             </p>
 
-            {/* Unified sortable list */}
             <div
               className="space-y-1"
               onDragOver={(e) => e.preventDefault()}
@@ -876,7 +1214,6 @@ export default function ReceiptEditorPage() {
                   >
                     <GripVertical className="h-3.5 w-3.5 text-muted-foreground shrink-0 cursor-grab" />
                     <span className="flex-1 truncate">{label}</span>
-                    {/* visibility toggle */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -895,7 +1232,6 @@ export default function ReceiptEditorPage() {
                         <EyeOff className="h-3.5 w-3.5" />
                       )}
                     </button>
-                    {/* remove button for custom blocks */}
                     {!isFixed && (
                       <button
                         type="button"
@@ -912,7 +1248,6 @@ export default function ReceiptEditorPage() {
                 );
               })}
 
-              {/* Drop zone hint at end */}
               {dragSource?.kind === "palette" && (
                 <div
                   onDragOver={(e) => {
@@ -938,23 +1273,32 @@ export default function ReceiptEditorPage() {
             </div>
 
             {/* Properties panel for selected fixed element */}
-            {activeFixedEl && (
-              <div className="rounded-md border bg-muted/30 p-3 space-y-3 mt-2">
-                <p className="text-xs font-semibold">
-                  {ELEMENT_LABELS[activeFixedEl.id]}
-                </p>
-                <ElementStyleControls
-                  align={activeFixedEl.align}
-                  fontSize={activeFixedEl.fontSize}
-                  bold={activeFixedEl.bold}
-                  onAlignChange={(v) => updateElement(activeFixedEl.id, { align: v })}
-                  onFontSizeChange={(v) =>
-                    updateElement(activeFixedEl.id, { fontSize: v })
-                  }
-                  onBoldChange={(v) => updateElement(activeFixedEl.id, { bold: v })}
-                />
-              </div>
-            )}
+            {activeFixedEl && (() => {
+              const extEl = activeFixedEl as ExtendedElementStyle;
+              return (
+                <div className="rounded-md border bg-muted/30 p-3 space-y-3 mt-2">
+                  <p className="text-xs font-semibold">
+                    {ELEMENT_LABELS[activeFixedEl.id]}
+                  </p>
+                  <ElementStyleControls
+                    align={activeFixedEl.align}
+                    fontSize={activeFixedEl.fontSize}
+                    bold={activeFixedEl.bold}
+                    color={activeFixedEl.color ?? null}
+                    backgroundColor={extEl.backgroundColor ?? null}
+                    paddingTop={extEl.paddingTop ?? 0}
+                    paddingBottom={extEl.paddingBottom ?? 0}
+                    onAlignChange={(v) => updateElement(activeFixedEl.id, { align: v })}
+                    onFontSizeChange={(v) => updateElement(activeFixedEl.id, { fontSize: v })}
+                    onBoldChange={(v) => updateElement(activeFixedEl.id, { bold: v })}
+                    onColorChange={(v) => updateElement(activeFixedEl.id, { color: v })}
+                    onBackgroundColorChange={(v) => updateElement(activeFixedEl.id, { backgroundColor: v } as Partial<ReceiptElementStyle>)}
+                    onPaddingTopChange={(v) => updateElement(activeFixedEl.id, { paddingTop: v } as Partial<ReceiptElementStyle>)}
+                    onPaddingBottomChange={(v) => updateElement(activeFixedEl.id, { paddingBottom: v } as Partial<ReceiptElementStyle>)}
+                  />
+                </div>
+              );
+            })()}
 
             {/* Properties panel for selected custom block */}
             {activeCustomBlock && (
@@ -973,53 +1317,83 @@ export default function ReceiptEditorPage() {
                   </button>
                 </div>
 
-                {/* Shared: alignment, font size, bold (not for divider/spacer) */}
                 {activeCustomBlock.type !== "divider" &&
                   activeCustomBlock.type !== "spacer" && (
                     <ElementStyleControls
                       align={activeCustomBlock.align}
                       fontSize={activeCustomBlock.fontSize}
                       bold={activeCustomBlock.bold}
-                      onAlignChange={(v) =>
-                        updateCustomBlock(activeCustomBlock.id, { align: v })
-                      }
-                      onFontSizeChange={(v) =>
-                        updateCustomBlock(activeCustomBlock.id, { fontSize: v })
-                      }
-                      onBoldChange={(v) =>
-                        updateCustomBlock(activeCustomBlock.id, { bold: v })
-                      }
+                      color={activeCustomBlock.color ?? null}
+                      backgroundColor={null}
+                      paddingTop={0}
+                      paddingBottom={0}
+                      onAlignChange={(v) => updateCustomBlock(activeCustomBlock.id, { align: v })}
+                      onFontSizeChange={(v) => updateCustomBlock(activeCustomBlock.id, { fontSize: v })}
+                      onBoldChange={(v) => updateCustomBlock(activeCustomBlock.id, { bold: v })}
+                      onColorChange={(v) => updateCustomBlock(activeCustomBlock.id, { color: v })}
+                      onBackgroundColorChange={() => {}}
+                      onPaddingTopChange={() => {}}
+                      onPaddingBottomChange={() => {}}
+                      hideBackground
+                      hidePadding
                     />
                   )}
 
-                {/* Alignment for divider */}
                 {activeCustomBlock.type === "divider" && (
                   <div className="space-y-1.5">
                     <Label className="text-xs">Color</Label>
                     <label
                       className="block h-7 w-10 rounded-md border cursor-pointer relative overflow-hidden"
-                      style={{
-                        backgroundColor: activeCustomBlock.color ?? "#0f172a",
-                      }}
+                      style={{ backgroundColor: activeCustomBlock.color ?? "#0f172a" }}
                     >
                       <input
                         type="color"
                         className="absolute inset-0 opacity-0 cursor-pointer"
                         value={activeCustomBlock.color ?? "#0f172a"}
                         onChange={(e) =>
-                          updateCustomBlock(activeCustomBlock.id, {
-                            color: e.target.value,
-                          })
+                          updateCustomBlock(activeCustomBlock.id, { color: e.target.value })
                         }
                       />
                     </label>
                   </div>
                 )}
 
-                {/* Text block: text content */}
+                {/* Text block: content + template variable picker */}
                 {activeCustomBlock.type === "textBlock" && (
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Text Content</Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs">Text Content</Label>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+                          onClick={() => setShowVarPicker((v) => !v)}
+                        >
+                          <Hash className="h-3 w-3" />
+                          Insert variable
+                          <ChevronDown className="h-3 w-3" />
+                        </button>
+                        {showVarPicker && (
+                          <div className="absolute right-0 top-5 z-10 rounded-md border bg-popover shadow-md p-1 w-44 max-h-44 overflow-y-auto">
+                            {TEMPLATE_VARIABLES.map((v) => (
+                              <button
+                                key={v.key}
+                                type="button"
+                                className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted truncate"
+                                onClick={() => {
+                                  updateCustomBlock(activeCustomBlock.id, {
+                                    text: (activeCustomBlock.text ?? "") + v.key,
+                                  });
+                                  setShowVarPicker(false);
+                                }}
+                              >
+                                {v.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     <textarea
                       value={activeCustomBlock.text ?? ""}
                       onChange={(e) =>
@@ -1027,12 +1401,11 @@ export default function ReceiptEditorPage() {
                       }
                       rows={3}
                       className="w-full text-sm rounded-md border border-input bg-background px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-ring"
-                      placeholder="Enter custom text…"
+                      placeholder="Enter text… or insert {{variable}}"
                     />
                   </div>
                 )}
 
-                {/* Image: URL + height */}
                 {activeCustomBlock.type === "image" && (
                   <>
                     <div className="space-y-1.5">
@@ -1040,9 +1413,7 @@ export default function ReceiptEditorPage() {
                       <Input
                         value={activeCustomBlock.imageUrl ?? ""}
                         onChange={(e) =>
-                          updateCustomBlock(activeCustomBlock.id, {
-                            imageUrl: e.target.value,
-                          })
+                          updateCustomBlock(activeCustomBlock.id, { imageUrl: e.target.value })
                         }
                         className="h-8 text-sm"
                         placeholder="https://…"
@@ -1068,7 +1439,6 @@ export default function ReceiptEditorPage() {
                   </>
                 )}
 
-                {/* Spacer: height */}
                 {activeCustomBlock.type === "spacer" && (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
@@ -1089,7 +1459,6 @@ export default function ReceiptEditorPage() {
                   </div>
                 )}
 
-                {/* QR Code / Barcode: data source */}
                 {(activeCustomBlock.type === "qrCode" ||
                   activeCustomBlock.type === "barcode") && (
                   <>
@@ -1172,28 +1541,131 @@ export default function ReceiptEditorPage() {
               ))}
             </div>
           </div>
+
+          <Separator />
+
+          {/* ── Items Table Columns ─────────────────────────────────────────── */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase text-muted-foreground">
+              Items Table Columns
+            </h3>
+            <p className="text-[11px] text-muted-foreground -mt-2">
+              Drag to reorder. Toggle visibility.
+            </p>
+            <div className="space-y-1">
+              {sortedItemColumns.map((col, idx) => (
+                <ItemColumnRow
+                  key={col.id}
+                  col={col}
+                  index={idx}
+                  onToggleVisible={() => updateItemColumn(col.id, { visible: !col.visible })}
+                  onLabelChange={(v) => updateItemColumn(col.id, { label: v })}
+                  onAlignChange={(v) => updateItemColumn(col.id, { align: v })}
+                  onDrop={(toIdx) => reorderItemColumns(idx, toIdx)}
+                />
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* ── Footer Rows ─────────────────────────────────────────────────── */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold uppercase text-muted-foreground">
+                Footer Rows
+              </h3>
+            </div>
+            <p className="text-[11px] text-muted-foreground -mt-2">
+              Rows shown below the receipt. Drag to reorder.{" "}
+              {sortedFooterRows.length === 0 && 'Falls back to "Footer Text" when empty.'}
+            </p>
+
+            {sortedFooterRows.length === 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Footer Text (fallback)</Label>
+                <Input
+                  value={config.footerText}
+                  onChange={(e) => updateConfig({ footerText: e.target.value })}
+                  className="h-8 text-sm"
+                />
+              </div>
+            )}
+
+            <div className="space-y-1">
+              {sortedFooterRows.map((row, idx) => (
+                <FooterRowEditor
+                  key={row.id}
+                  row={row}
+                  index={idx}
+                  showVarPicker={footerVarPickerId === row.id}
+                  onToggleVarPicker={() =>
+                    setFooterVarPickerId((prev) => (prev === row.id ? null : row.id))
+                  }
+                  onUpdate={(patch) => updateFooterRow(row.id, patch)}
+                  onRemove={() => removeFooterRow(row.id)}
+                  onDrop={(toIdx) => reorderFooterRows(idx, toIdx)}
+                />
+              ))}
+            </div>
+
+            {/* Add footer row buttons */}
+            <div className="grid grid-cols-2 gap-1.5">
+              {(["text", "image", "divider", "spacer"] as FooterRowType[]).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => addFooterRow(type)}
+                  className="flex items-center gap-2 rounded-md border border-border bg-muted/20 px-2.5 py-2 text-xs font-medium hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                >
+                  <Plus className="h-3 w-3 shrink-0" />
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Shared style controls sub-component ──────────────────────────────────────
+// ─── Element style controls ────────────────────────────────────────────────────
 
 function ElementStyleControls({
   align,
   fontSize,
   bold,
+  color,
+  backgroundColor,
+  paddingTop,
+  paddingBottom,
   onAlignChange,
   onFontSizeChange,
   onBoldChange,
+  onColorChange,
+  onBackgroundColorChange,
+  onPaddingTopChange,
+  onPaddingBottomChange,
+  hideBackground = false,
+  hidePadding = false,
 }: {
   align: "left" | "center" | "right";
   fontSize: ReceiptElementStyle["fontSize"];
   bold: boolean;
+  color: string | null;
+  backgroundColor: string | null;
+  paddingTop: number;
+  paddingBottom: number;
   onAlignChange: (v: "left" | "center" | "right") => void;
   onFontSizeChange: (v: ReceiptElementStyle["fontSize"]) => void;
   onBoldChange: (v: boolean) => void;
+  onColorChange: (v: string | null) => void;
+  onBackgroundColorChange: (v: string | null) => void;
+  onPaddingTopChange: (v: number) => void;
+  onPaddingBottomChange: (v: number) => void;
+  hideBackground?: boolean;
+  hidePadding?: boolean;
 }) {
   return (
     <>
@@ -1247,6 +1719,355 @@ function ElementStyleControls({
         </Label>
         <Switch checked={bold} onCheckedChange={onBoldChange} />
       </div>
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Text Color</Label>
+        <div className="flex items-center gap-2">
+          {color && (
+            <button
+              type="button"
+              className="text-[10px] text-muted-foreground hover:text-foreground"
+              onClick={() => onColorChange(null)}
+            >
+              reset
+            </button>
+          )}
+          <label
+            className="h-7 w-10 rounded-md border cursor-pointer relative overflow-hidden"
+            style={{ backgroundColor: color ?? "#0f172a" }}
+          >
+            <input
+              type="color"
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              value={color ?? "#0f172a"}
+              onChange={(e) => onColorChange(e.target.value)}
+            />
+          </label>
+        </div>
+      </div>
+      {!hideBackground && (
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Background</Label>
+          <div className="flex items-center gap-2">
+            {backgroundColor && (
+              <button
+                type="button"
+                className="text-[10px] text-muted-foreground hover:text-foreground"
+                onClick={() => onBackgroundColorChange(null)}
+              >
+                reset
+              </button>
+            )}
+            <label
+              className="h-7 w-10 rounded-md border cursor-pointer relative overflow-hidden"
+              style={{ backgroundColor: backgroundColor ?? "#ffffff" }}
+            >
+              <input
+                type="color"
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                value={backgroundColor ?? "#ffffff"}
+                onChange={(e) => onBackgroundColorChange(e.target.value)}
+              />
+            </label>
+          </div>
+        </div>
+      )}
+      {!hidePadding && (
+        <>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Padding Top</Label>
+              <span className="text-xs text-muted-foreground">{paddingTop}px</span>
+            </div>
+            <Slider
+              min={0}
+              max={32}
+              step={2}
+              value={[paddingTop]}
+              onValueChange={([v]) => onPaddingTopChange(v)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Padding Bottom</Label>
+              <span className="text-xs text-muted-foreground">{paddingBottom}px</span>
+            </div>
+            <Slider
+              min={0}
+              max={32}
+              step={2}
+              value={[paddingBottom]}
+              onValueChange={([v]) => onPaddingBottomChange(v)}
+            />
+          </div>
+        </>
+      )}
     </>
+  );
+}
+
+// ─── Item column row ───────────────────────────────────────────────────────────
+
+function ItemColumnRow({
+  col,
+  index,
+  onToggleVisible,
+  onLabelChange,
+  onAlignChange,
+  onDrop,
+}: {
+  col: ItemColumn;
+  index: number;
+  onToggleVisible: () => void;
+  onLabelChange: (v: string) => void;
+  onAlignChange: (v: "left" | "center" | "right") => void;
+  onDrop: (toIndex: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [dragging, setDragging] = useState(false);
+
+  return (
+    <div
+      draggable
+      onDragStart={() => setDragging(true)}
+      onDragEnd={() => { setDragging(false); setDragOver(false); }}
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        onDrop(index);
+      }}
+      className={cn(
+        "flex flex-col gap-1.5 rounded-md border px-2 py-1.5 transition-colors",
+        dragOver && "border-primary bg-primary/5",
+        dragging && "opacity-50",
+        !col.visible && "opacity-50"
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <GripVertical className="h-3.5 w-3.5 text-muted-foreground shrink-0 cursor-grab" />
+        {editing ? (
+          <input
+            autoFocus
+            className="flex-1 text-xs border rounded px-1.5 py-0.5 bg-background"
+            value={col.label}
+            onChange={(e) => onLabelChange(e.target.value)}
+            onBlur={() => setEditing(false)}
+            onKeyDown={(e) => e.key === "Enter" && setEditing(false)}
+          />
+        ) : (
+          <span
+            className="flex-1 text-xs font-medium cursor-text truncate"
+            onDoubleClick={() => setEditing(true)}
+            title="Double-click to rename"
+          >
+            {col.label}
+          </span>
+        )}
+        <div className="flex items-center gap-0.5">
+          {(["left", "center", "right"] as const).map((a) => {
+            const Icon = a === "left" ? AlignLeft : a === "center" ? AlignCenter : AlignRight;
+            return (
+              <button
+                key={a}
+                type="button"
+                onClick={() => onAlignChange(a)}
+                className={cn(
+                  "p-0.5 rounded",
+                  col.align === a ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Icon className="h-3 w-3" />
+              </button>
+            );
+          })}
+        </div>
+        <button type="button" onClick={onToggleVisible} className="text-muted-foreground hover:text-foreground">
+          {col.visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Footer row editor ────────────────────────────────────────────────────────
+
+function FooterRowEditor({
+  row,
+  index,
+  showVarPicker,
+  onToggleVarPicker,
+  onUpdate,
+  onRemove,
+  onDrop,
+}: {
+  row: FooterRow;
+  index: number;
+  showVarPicker: boolean;
+  onToggleVarPicker: () => void;
+  onUpdate: (patch: Partial<FooterRow>) => void;
+  onRemove: () => void;
+  onDrop: (toIndex: number) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const rowLabel =
+    row.type === "text"
+      ? row.content?.slice(0, 24) || "Text row"
+      : row.type === "image"
+      ? "Image row"
+      : row.type === "divider"
+      ? "Divider"
+      : "Spacer";
+
+  return (
+    <div
+      draggable
+      onDragStart={() => {}}
+      onDragEnd={() => setDragOver(false)}
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        onDrop(index);
+      }}
+      className={cn(
+        "rounded-md border transition-colors",
+        dragOver && "border-primary bg-primary/5"
+      )}
+    >
+      {/* Row header */}
+      <div
+        className="flex items-center gap-2 px-2 py-1.5 cursor-pointer"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <GripVertical className="h-3.5 w-3.5 text-muted-foreground shrink-0 cursor-grab" />
+        <span className="flex-1 text-xs truncate">
+          <span className="text-muted-foreground mr-1">[{row.type}]</span>
+          {rowLabel}
+        </span>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          className="text-muted-foreground hover:text-destructive shrink-0"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+        <ChevronDown
+          className={cn(
+            "h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform",
+            expanded && "rotate-180"
+          )}
+        />
+      </div>
+
+      {/* Expanded editor */}
+      {expanded && (
+        <div className="border-t px-3 py-2.5 space-y-2.5">
+          {(row.type === "text") && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Content</Label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+                    onClick={onToggleVarPicker}
+                  >
+                    <Hash className="h-3 w-3" /> Insert var
+                  </button>
+                  {showVarPicker && (
+                    <div className="absolute right-0 top-5 z-10 rounded-md border bg-popover shadow-md p-1 w-44 max-h-44 overflow-y-auto">
+                      {TEMPLATE_VARIABLES.map((v) => (
+                        <button
+                          key={v.key}
+                          type="button"
+                          className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted truncate"
+                          onClick={() => {
+                            onUpdate({ content: (row.content ?? "") + v.key });
+                            onToggleVarPicker();
+                          }}
+                        >
+                          {v.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <textarea
+                value={row.content ?? ""}
+                onChange={(e) => onUpdate({ content: e.target.value })}
+                rows={2}
+                className="w-full text-xs rounded-md border border-input bg-background px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-ring"
+                placeholder="Text or {{variable}}"
+              />
+            </div>
+          )}
+
+          {row.type === "image" && (
+            <>
+              <div className="space-y-1">
+                <Label className="text-xs">Image URL</Label>
+                <Input
+                  value={row.imageUrl ?? ""}
+                  onChange={(e) => onUpdate({ imageUrl: e.target.value })}
+                  className="h-7 text-xs"
+                  placeholder="https://…"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <Label className="text-xs">Height</Label>
+                  <span className="text-[10px] text-muted-foreground">{row.imageHeight ?? 40}px</span>
+                </div>
+                <Slider
+                  min={16}
+                  max={100}
+                  step={4}
+                  value={[row.imageHeight ?? 40]}
+                  onValueChange={([v]) => onUpdate({ imageHeight: v })}
+                />
+              </div>
+            </>
+          )}
+
+          {row.type !== "divider" && row.type !== "spacer" && (
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1">
+                {(["left", "center", "right"] as const).map((a) => {
+                  const Icon = a === "left" ? AlignLeft : a === "center" ? AlignCenter : AlignRight;
+                  return (
+                    <button
+                      key={a}
+                      type="button"
+                      onClick={() => onUpdate({ align: a })}
+                      className={cn(
+                        "flex items-center justify-center rounded border p-1.5 transition-colors",
+                        row.align === a
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground hover:bg-muted"
+                      )}
+                    >
+                      <Icon className="h-3 w-3" />
+                    </button>
+                  );
+                })}
+              </div>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <Switch
+                  checked={row.bold}
+                  onCheckedChange={(v) => onUpdate({ bold: v })}
+                />
+                <span className="text-xs">Bold</span>
+              </label>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
