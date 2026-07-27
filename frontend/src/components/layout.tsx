@@ -70,9 +70,9 @@ function SidebarContent({
   const logoUrl = settings?.logoUrl ?? null;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-y-auto">
       {/* Header */}
-      <div className="flex h-16 items-center justify-between gap-2 border-b px-4">
+      <div className="flex h-16 items-center justify-between gap-2 border-b px-4 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <BrandMark logoUrl={logoUrl} businessName={businessName} />
           {!collapsed && (
@@ -102,7 +102,7 @@ function SidebarContent({
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
+      <nav className="space-y-0.5 p-3">
         {navItems.map((item) => {
           const isActive =
             location === item.href ||
@@ -129,13 +129,15 @@ function SidebarContent({
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="border-t p-3 space-y-2">
+      {/* Profile + actions — sits directly below nav */}
+      <div className="mx-3 mt-1 border-t" />
+      <div className="p-3 space-y-1.5">
+        {/* Avatar + name + email */}
         {!collapsed && (
-          <div className="flex items-center gap-3 px-1">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <div className="flex items-center gap-3 rounded-md px-1 py-2">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
               {user?.imageUrl ? (
-                <img src={user.imageUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+                <img src={user.imageUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
               ) : (
                 <User className="h-4 w-4" />
               )}
@@ -151,14 +153,14 @@ function SidebarContent({
           </div>
         )}
 
+        {/* Role badge */}
         {!collapsed && role && (
           <Badge variant="secondary" className="w-full justify-center" data-testid="badge-role">
             {ROLE_LABELS[role] ?? role}
           </Badge>
         )}
 
-        {!collapsed && <ThemeToggle />}
-
+        {/* Logout */}
         <button
           type="button"
           onClick={() => signOut({ redirectUrl: basePath || "/" })}
@@ -171,6 +173,9 @@ function SidebarContent({
           <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && "Sign out"}
         </button>
+
+        {/* Theme toggle */}
+        {!collapsed && <ThemeToggle />}
       </div>
     </div>
   );
