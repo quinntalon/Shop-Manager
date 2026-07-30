@@ -28,7 +28,6 @@ function buildProduct(row: {
   discountPercent: number;
   reorderLevel: number;
   categoryId: number | null;
-  published: boolean;
   createdAt: Date;
   categoryName?: string | null;
 }) {
@@ -45,7 +44,6 @@ function buildProduct(row: {
     discountPercent: row.discountPercent,
     reorderLevel: row.reorderLevel,
     categoryId: row.categoryId,
-    published: row.published,
     categoryName: row.categoryName ?? null,
     createdAt: row.createdAt.toISOString(),
   };
@@ -64,7 +62,6 @@ const PRODUCT_SELECT = {
   discountPercent: productsTable.discountPercent,
   reorderLevel: productsTable.reorderLevel,
   categoryId: productsTable.categoryId,
-  published: productsTable.published,
   createdAt: productsTable.createdAt,
   categoryName: categoriesTable.name,
 } as const;
@@ -190,9 +187,6 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         updates.reorderLevel = parsed.data.reorderLevel;
       if (parsed.data.categoryId !== undefined)
         updates.categoryId = parsed.data.categoryId;
-      // published is not in the generated OpenAPI schema but accepted here
-      const raw = request.body as Record<string, unknown>;
-      if (typeof raw.published === "boolean") updates.published = raw.published;
 
       const [updated] = await db
         .update(productsTable)
