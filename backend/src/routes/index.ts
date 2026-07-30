@@ -3,6 +3,7 @@ import healthRoutes from "./health";
 import storageRoutes from "./storage";
 import categoriesRoutes from "./categories";
 import productsRoutes from "./products";
+import publicProductsRoutes from "./publicProducts";
 import salesRoutes from "./sales";
 import dashboardRoutes from "./dashboard";
 import usersRoutes from "./users";
@@ -14,6 +15,7 @@ import stockTransfersRoutes from "./stockTransfers";
 import loyaltyRoutes from "./loyalty";
 
 const router: FastifyPluginAsync = async (fastify) => {
+  await fastify.register(publicProductsRoutes);
   await fastify.register(healthRoutes);
   await fastify.register(storageRoutes);
   await fastify.register(usersRoutes);

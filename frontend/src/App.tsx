@@ -9,6 +9,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
 import Layout from "@/components/layout";
+import StoreFront from "@/pages/store";
 import Dashboard from "@/pages/dashboard";
 import Products from "@/pages/inventory";
 import Sales from "@/pages/sales";
@@ -367,6 +368,9 @@ function ClerkProviderWithRoutes() {
         <Switch>
           <Route path="/sign-in/*?" component={SignInPage} />
           <Route path="/sign-up/*?" component={SignUpPage} />
+          <Route path="/store">
+            <StoreFront />
+          </Route>
           <Route component={HomeRedirect} />
         </Switch>
         <Toaster />

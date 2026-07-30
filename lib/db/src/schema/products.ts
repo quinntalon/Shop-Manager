@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, numeric, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, numeric, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -15,6 +15,7 @@ export const productsTable = pgTable("products", {
   reorderLevel: integer("reorder_level").notNull().default(5),
   categoryId: integer("category_id"),
   photoUrl: text("photo_url"),
+  published: boolean("published").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

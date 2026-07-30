@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -70,9 +71,10 @@ import {
   PackagePlus,
   Tag,
   Percent,
+  Globe,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Product, ProductInput } from "@workspace/api-client-react";
+import type { Product, ProductInput, ProductUpdate } from "@workspace/api-client-react";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
@@ -217,6 +219,18 @@ export default function StockTransfers() {
         setAddQtyTarget(null);
         setAddQtyAmount("");
         toast({ title: "Warehouse stock updated" });
+      },
+      onError: (e: unknown) => toast({ title: "Error", description: String(e), variant: "destructive" }),
+    },
+  });
+
+  const togglePublishedMutation = useUpdateProduct({
+    mutation: {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetProductQueryKey(data.id) });
+        const isNowPublished = (data as Product & { published?: boolean }).published;
+        toast({ title: isNowPublished ? "Visible on website" : "Hidden from website" });
       },
       onError: (e: unknown) => toast({ title: "Error", description: String(e), variant: "destructive" }),
     },
@@ -474,6 +488,11 @@ export default function StockTransfers() {
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">
                     <span className="flex items-center justify-end gap-1.5"><Store className="h-3.5 w-3.5" /> Shop</span>
                   </th>
+                  {isAdmin && (
+                    <th className="px-4 py-3 font-medium text-muted-foreground text-center">
+                      <span className="flex items-center justify-center gap-1.5"><Globe className="h-3.5 w-3.5" /> Website</span>
+                    </th>
+                  )}
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
@@ -508,6 +527,23 @@ export default function StockTransfers() {
                         <span className={`font-semibold ${product.stock <= product.reorderLevel ? "text-destructive" : ""}`}>{product.stock}</span>
                         {product.stock <= product.reorderLevel && <Badge variant="destructive" className="ml-2 text-xs">Low</Badge>}
                       </td>
+                      {isAdmin && (() => {
+                        const isPublished = (product as Product & { published?: boolean }).published ?? false;
+                        return (
+                          <td className="px-4 py-3 text-center">
+                            <Switch
+                              checked={isPublished}
+                              onCheckedChange={(checked) => {
+                                togglePublishedMutation.mutate({
+                                  id: product.id,
+                                  data: { published: checked } as unknown as ProductUpdate,
+                                });
+                              }}
+                              aria-label={isPublished ? "Hide from website" : "Show on website"}
+                            />
+                          </td>
+                        );
+                      })()}
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button size="sm" variant="outline" disabled={wh === 0} onClick={() => { setSelectedProductId(String(product.id)); setQuantity(""); setNotes(""); setIsTransferOpen(true); }}>
