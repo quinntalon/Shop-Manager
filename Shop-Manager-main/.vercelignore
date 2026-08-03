@@ -1,0 +1,14 @@
+# Development and build artifacts not needed on Vercel
+.cache/
+.git/
+.agents/
+.local/
+attached_assets/
+
+# Local env files — set real values in the Vercel dashboard
+.env
+.env.*
+
+# Replit-specific files
+.replit
+replit.nix

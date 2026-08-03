@@ -1,0 +1,36 @@
+node_modules/
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# pnpm
+.pnpm-store/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Replit
+.replit.nix
+
+# Local environment values — never commit real secrets
+.env
+
+# Vercel build artifacts (generated at build time, not committed)
+api/*.mjs
+api/*.mjs.map
+.vercel/output/

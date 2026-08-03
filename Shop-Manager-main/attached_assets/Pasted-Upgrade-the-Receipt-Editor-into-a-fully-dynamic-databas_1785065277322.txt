@@ -1,0 +1,179 @@
+Upgrade the Receipt Editor into a fully dynamic, database-driven receipt builder. Do not use hardcoded rows, columns, or receipt sections. Everything should be configurable from the admin interface and stored in the database.
+
+Requirements:
+
+• Allow the admin to add, edit, delete, reorder, show/hide, and resize receipt rows and columns.
+• Every change must be saved to the database and automatically reflected in the receipt preview, printed receipt, PDF receipt, and emailed receipt.
+• Build the editor using reusable React components and a modular architecture.
+
+Create database tables/models for:
+- Receipt Layouts
+- Receipt Sections
+- Receipt Fields
+- Receipt Settings
+
+Each field should support:
+- id
+- section
+- label
+- databaseField
+- visible
+- required
+- editable
+- order
+- width
+- alignment (left, center, right)
+- fontSize
+- fontWeight
+- textColor
+- backgroundColor
+- padding
+- margin
+
+The admin should be able to insert fields directly from the database instead of typing static text.
+
+Automatically load available database fields including:
+- Store Name
+- Logo
+- Address
+- Phone
+- Email
+- Website
+- Tax Number
+- Receipt Number
+- Invoice Number
+- Date
+- Time
+- Cashier
+- Customer Name
+- Customer Phone
+- Customer Email
+- Customer Address
+- Notes
+- Payment Method
+- Momo Transaction ID
+- Bank Name
+- Reference Number
+- Delivery Status
+- Items Table
+- Item Name
+- SKU
+- Barcode
+- Quantity
+- Unit Price
+- Discount
+- Tax
+- Line Total
+- Subtotal
+- Total Discount
+- Total Tax
+- Grand Total
+- Amount Paid
+- Change
+- Footer Message
+- QR Code
+- Barcode
+- Custom Image
+- Custom Text
+
+The receipt editor should include configurable sections:
+- Header
+- Store Information
+- Customer Information
+- Items Table
+- Totals
+- Payment Information
+- Footer
+
+Each section can be:
+- Enabled/Disabled
+- Reordered using drag-and-drop
+- Styled independently
+
+Items Table Editor:
+Allow the admin to:
+- Add/remove table columns
+- Reorder columns
+- Resize columns
+- Hide/show columns
+
+Columns should automatically populate from the sales database.
+
+Create a split-screen layout:
+
+Left Panel:
+- Receipt settings
+- Layout controls
+- Field manager
+- Styling options
+
+Right Panel:
+- Live receipt preview
+
+The preview should update instantly whenever the admin changes anything.
+
+Styling controls should include:
+- Font family
+- Font size
+- Font weight
+- Text colour
+- Background colour
+- Alignment
+- Line spacing
+- Margins
+- Padding
+- Divider visibility
+- Border style
+- Receipt width (58mm, 80mm, A4)
+- Rounded corners
+
+Logo settings:
+- Upload logo
+- Resize logo
+- Position left, centre, or right
+- Remove logo
+
+Footer settings:
+Allow unlimited footer rows, including:
+- Thank You message
+- Return Policy
+- Social Media
+- WhatsApp
+- Custom Text
+- Custom Image
+
+Support template variables such as:
+{{store_name}}
+{{receipt_number}}
+{{invoice_number}}
+{{customer_name}}
+{{customer_phone}}
+{{cashier}}
+{{sale_date}}
+{{subtotal}}
+{{discount}}
+{{tax}}
+{{grand_total}}
+{{amount_paid}}
+{{change}}
+{{payment_method}}
+{{momo_transaction_id}}
+
+These variables must automatically pull values from the database when generating a receipt.
+
+Add actions:
+- Save Layout
+- Save as New Layout
+- Duplicate Layout
+- Delete Layout
+- Reset to Default
+- Export Layout (JSON)
+- Import Layout (JSON)
+
+Support multiple receipt templates so the admin can switch between layouts.
+
+Implement role-based permissions so only Admin users can modify receipt layouts.
+
+Design the system so any new database field added in the future automatically appears in the "Add Field" menu without requiring code changes.
+
+Maintain backward compatibility with existing receipts and ensure all receipt generation (preview, print, PDF, and email) uses the active saved layout.

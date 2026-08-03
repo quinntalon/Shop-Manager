@@ -1,0 +1,1093 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Shop Sales & Inventory Management API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: users
+    description: User management and roles
+  - name: settings
+    description: Business branding and theme settings
+  - name: products
+    description: Product and inventory management
+  - name: categories
+    description: Product categories
+  - name: sales
+    description: Sales and transactions
+  - name: dashboard
+    description: Dashboard summaries and analytics
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── Settings ─────────────────────────────────────────────────────────────────
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get business settings (public)
+      responses:
+        "200":
+          description: Current business settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+    patch:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update business settings (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsUpdate"
+      responses:
+        "200":
+          description: Updated business settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+
+  # ── Receipt Templates ───────────────────────────────────────────────────────
+  /receipt-templates:
+    get:
+      operationId: listReceiptTemplates
+      tags: [settings]
+      summary: List receipt templates
+      responses:
+        "200":
+          description: List of receipt templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReceiptTemplate"
+    post:
+      operationId: createReceiptTemplate
+      tags: [settings]
+      summary: Create a receipt template (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceiptTemplateInput"
+      responses:
+        "201":
+          description: Receipt template created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptTemplate"
+
+  /receipt-templates/default:
+    get:
+      operationId: getDefaultReceiptTemplate
+      tags: [settings]
+      summary: Get the default receipt template (falls back to built-in defaults)
+      responses:
+        "200":
+          description: Default receipt template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptTemplate"
+
+  /receipt-templates/{id}:
+    get:
+      operationId: getReceiptTemplate
+      tags: [settings]
+      summary: Get a receipt template by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Receipt template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptTemplate"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateReceiptTemplate
+      tags: [settings]
+      summary: Update a receipt template (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceiptTemplateInput"
+      responses:
+        "200":
+          description: Updated receipt template
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptTemplate"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteReceiptTemplate
+      tags: [settings]
+      summary: Delete a receipt template (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /receipt-templates/{id}/set-default:
+    post:
+      operationId: setDefaultReceiptTemplate
+      tags: [settings]
+      summary: Mark a receipt template as the default (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Receipt template set as default
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReceiptTemplate"
+        "404":
+          description: Not found
+
+  # ── Users ────────────────────────────────────────────────────────────────────
+  /users/me:
+    get:
+      operationId: getMyRole
+      tags: [users]
+      summary: Get current user role and permissions
+      responses:
+        "200":
+          description: Current user role info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyRoleResponse"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all registered users (admin only)
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppUser"
+
+  /users/{clerkUserId}:
+    patch:
+      operationId: updateUserRole
+      tags: [users]
+      summary: Update a user role (admin only)
+      parameters:
+        - name: clerkUserId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppUserRoleUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppUser"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Remove a user (admin only)
+      parameters:
+        - name: clerkUserId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Categories ──────────────────────────────────────────────────────────────
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      operationId: createCategory
+      tags: [categories]
+      summary: Create a category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+
+  /categories/{id}:
+    patch:
+      operationId: updateCategory
+      tags: [categories]
+      summary: Update a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+    delete:
+      operationId: deleteCategory
+      tags: [categories]
+      summary: Delete a category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── Products ─────────────────────────────────────────────────────────────────
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List all products
+      parameters:
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: lowStock
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /products/{id}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get a product by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /products/{id}/adjust-stock:
+    post:
+      operationId: adjustStock
+      tags: [products]
+      summary: Manually adjust stock level
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StockAdjustment"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  # ── Sales ─────────────────────────────────────────────────────────────────────
+  /sales:
+    get:
+      operationId: listSales
+      tags: [sales]
+      summary: List sales transactions
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of sales
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sale"
+    post:
+      operationId: createSale
+      tags: [sales]
+      summary: Create a new sale (checkout)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaleInput"
+      responses:
+        "201":
+          description: Sale created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sale"
+
+  /sales/{id}:
+    get:
+      operationId: getSale
+      tags: [sales]
+      summary: Get a sale by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sale
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sale"
+        "404":
+          description: Not found
+
+  # ── Storage ──────────────────────────────────────────────────────────────────
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      tags: [products]
+      summary: Request a presigned upload URL for object storage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestUploadUrlBody"
+      responses:
+        "200":
+          description: Presigned upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestUploadUrlResponse"
+
+  /storage/objects/{objectPath}:
+    get:
+      operationId: getStorageObject
+      tags: [products]
+      summary: Serve a stored object
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Object file
+
+  # ── Dashboard / Analytics ─────────────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get key business metrics
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/sales-by-day:
+    get:
+      operationId: getSalesByDay
+      tags: [dashboard]
+      summary: Sales revenue grouped by day (last 30 days)
+      responses:
+        "200":
+          description: Daily sales
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DailySales"
+
+  /dashboard/top-products:
+    get:
+      operationId: getTopProducts
+      tags: [dashboard]
+      summary: Top-selling products by revenue
+      responses:
+        "200":
+          description: Top products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopProduct"
+
+  /dashboard/low-stock:
+    get:
+      operationId: getLowStockProducts
+      tags: [dashboard]
+      summary: Products with stock at or below reorder level
+      responses:
+        "200":
+          description: Low stock products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    Category:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    CategoryInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+
+    Product:
+      type: object
+      required: [id, name, sku, price, stock, reorderLevel, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        sku:
+          type: string
+        description:
+          type: ["string", "null"]
+        photoUrl:
+          type: ["string", "null"]
+        price:
+          type: number
+        costPrice:
+          type: ["number", "null"]
+        stock:
+          type: integer
+        reorderLevel:
+          type: integer
+        categoryId:
+          type: ["integer", "null"]
+        categoryName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    ProductInput:
+      type: object
+      required: [name, sku, price, stock]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        sku:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        photoUrl:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        costPrice:
+          type: number
+          minimum: 0
+        stock:
+          type: integer
+          minimum: 0
+        reorderLevel:
+          type: integer
+          minimum: 0
+        categoryId:
+          type: integer
+
+    ProductUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        sku:
+          type: string
+        description:
+          type: string
+        photoUrl:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        costPrice:
+          type: number
+          minimum: 0
+        stock:
+          type: integer
+          minimum: 0
+        reorderLevel:
+          type: integer
+          minimum: 0
+        categoryId:
+          type: integer
+
+    StockAdjustment:
+      type: object
+      required: [delta]
+      properties:
+        delta:
+          type: integer
+          description: Positive to add stock, negative to remove
+
+    SaleItem:
+      type: object
+      required: [productId, quantity, unitPrice]
+      properties:
+        productId:
+          type: integer
+        productName:
+          type: ["string", "null"]
+        productPhotoUrl:
+          type: ["string", "null"]
+        quantity:
+          type: integer
+          minimum: 1
+        unitPrice:
+          type: number
+        discount:
+          type: number
+
+    SaleInput:
+      type: object
+      required: [items]
+      properties:
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        note:
+          type: string
+        paymentMethod:
+          type: string
+          enum: [cash, momo, card, bank, delivery]
+          default: cash
+        transactionId:
+          type: string
+        bankName:
+          type: string
+        deliveryPaymentStatus:
+          type: string
+          enum: [pay_on_delivery, paid]
+        cartDiscount:
+          type: number
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SaleItemInput"
+
+    SaleItemInput:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+        discount:
+          type: number
+          minimum: 0
+
+    Sale:
+      type: object
+      required: [id, subtotal, discountTotal, total, items, createdAt, paymentMethod]
+      properties:
+        id:
+          type: integer
+        customerName:
+          type: ["string", "null"]
+        customerPhone:
+          type: ["string", "null"]
+        note:
+          type: ["string", "null"]
+        subtotal:
+          type: number
+        cartDiscount:
+          type: number
+        discountTotal:
+          type: number
+        total:
+          type: number
+        paymentMethod:
+          type: string
+          enum: [cash, momo, card, bank, delivery]
+        transactionId:
+          type: ["string", "null"]
+        bankName:
+          type: ["string", "null"]
+        deliveryPaymentStatus:
+          type: ["string", "null"]
+          enum: [pay_on_delivery, paid, null]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SaleItem"
+        createdAt:
+          type: string
+
+    AppUser:
+      type: object
+      required: [id, clerkUserId, name, email, createdAt]
+      properties:
+        id:
+          type: integer
+        clerkUserId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AppUserRoleUpdate:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: ["string", "null"]
+
+    MyRoleResponse:
+      type: object
+      required: [clerkUserId, name, email, permissions]
+      properties:
+        clerkUserId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: ["string", "null"]
+        permissions:
+          type: array
+          items:
+            type: string
+
+    RequestUploadUrlBody:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+        contentType:
+          type: string
+
+    RequestUploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+        objectPath:
+          type: string
+
+    DashboardSummary:
+      type: object
+      required: [todayRevenue, weekRevenue, monthRevenue, totalProducts, lowStockCount, totalSalesToday]
+      properties:
+        todayRevenue:
+          type: number
+        weekRevenue:
+          type: number
+        monthRevenue:
+          type: number
+        totalProducts:
+          type: integer
+        lowStockCount:
+          type: integer
+        totalSalesToday:
+          type: integer
+
+    DailySales:
+      type: object
+      required: [date, revenue, count]
+      properties:
+        date:
+          type: string
+        revenue:
+          type: number
+        count:
+          type: integer
+
+    TopProduct:
+      type: object
+      required: [productId, productName, totalRevenue, totalQuantity]
+      properties:
+        productId:
+          type: integer
+        productName:
+          type: string
+        totalRevenue:
+          type: number
+        totalQuantity:
+          type: integer
+
+    Settings:
+      type: object
+      required: [id, businessName, themeMode, primaryColor, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        businessName:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        themeMode:
+          type: string
+          enum: [light, dark]
+        primaryColor:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    SettingsUpdate:
+      type: object
+      properties:
+        businessName:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        themeMode:
+          type: string
+          enum: [light, dark]
+        primaryColor:
+          type: string
+
+    ReceiptElementId:
+      type: string
+      enum:
+        - logo
+        - storeInfo
+        - receiptMeta
+        - customerInfo
+        - itemsTable
+        - totals
+        - paymentDetails
+        - footer
+
+    ReceiptElementStyle:
+      type: object
+      required: [id, visible, order, align, bold, fontSize]
+      properties:
+        id:
+          $ref: "#/components/schemas/ReceiptElementId"
+        visible:
+          type: boolean
+        order:
+          type: integer
+        align:
+          type: string
+          enum: [left, center, right]
+        bold:
+          type: boolean
+        fontSize:
+          type: string
+          enum: [xs, sm, base, lg, xl]
+        color:
+          type: ["string", "null"]
+
+    ReceiptTemplateConfig:
+      type: object
+      required:
+        - paperSize
+        - fontFamily
+        - baseFontSize
+        - spacing
+        - textColor
+        - accentColor
+        - backgroundColor
+        - showLogo
+        - storeName
+        - footerText
+        - elements
+      properties:
+        paperSize:
+          type: string
+          enum: ["58mm", "80mm"]
+        fontFamily:
+          type: string
+          enum: [sans, mono, serif]
+        baseFontSize:
+          type: integer
+        spacing:
+          type: integer
+        textColor:
+          type: string
+        accentColor:
+          type: string
+        backgroundColor:
+          type: string
+        showLogo:
+          type: boolean
+        logoUrl:
+          type: ["string", "null"]
+        storeName:
+          type: string
+        storeAddress:
+          type: string
+        storePhone:
+          type: string
+        footerText:
+          type: string
+        elements:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReceiptElementStyle"
+
+    ReceiptTemplate:
+      type: object
+      required: [id, name, isDefault, config, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        isDefault:
+          type: boolean
+        config:
+          $ref: "#/components/schemas/ReceiptTemplateConfig"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ReceiptTemplateInput:
+      type: object
+      required: [name, config]
+      properties:
+        name:
+          type: string
+        config:
+          $ref: "#/components/schemas/ReceiptTemplateConfig"
