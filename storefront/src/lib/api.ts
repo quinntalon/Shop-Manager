@@ -1,4 +1,4 @@
-const BASE = "/api/store";
+const BASE = `${import.meta.env.VITE_API_URL ?? ""}/api/store`;
 
 export interface StoreCategory {
   id: number;
