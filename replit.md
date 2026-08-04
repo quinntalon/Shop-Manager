@@ -5,23 +5,44 @@ A point-of-sale and shop management system with inventory tracking, sales record
 ## Stack
 
 - **Monorepo**: pnpm workspaces, Node.js 24, TypeScript 5.9
-- **Frontend**: React 19, Vite 7, Tailwind CSS 4, TanStack Query (`frontend/`)
-- **Backend**: Fastify 5 API server (`backend/`)
-- **Database**: PostgreSQL + Drizzle ORM (`lib/db/`)
+- **ShopDesk frontend**: React 19, Vite 7, Tailwind CSS 4, TanStack Query (`shopDesk/frontend/`)
+- **Storefront**: React 19, Vite 7, Tailwind CSS 4 — customer-facing store (`storefront/`)
+- **Backend**: Fastify 5 API server — shared by both frontends (`shopDesk/backend/`)
+- **Database**: PostgreSQL + Drizzle ORM (`shopDesk/lib/db/`)
 - **Auth**: Clerk (dev keys pre-configured)
 - **Image uploads**: Cloudinary (pre-configured)
-- **API codegen**: Orval from OpenAPI spec (`lib/api-spec/`)
+- **API codegen**: Orval from OpenAPI spec (`shopDesk/lib/api-spec/`)
+
+## Project Layout
+
+```
+shopDesk/          # Management app (admin/POS)
+  frontend/        #   @workspace/shop — React + Vite SPA
+  backend/         #   @workspace/api-server — Fastify API (shared with storefront)
+  lib/
+    db/            #   @workspace/db — Drizzle schema and DB client
+    api-spec/      #   OpenAPI spec + generated hooks and schemas
+    api-zod/       #   Zod schemas derived from the API spec
+    api-client-react/ # React Query hooks for the API
+    object-storage-web/
+  scripts/         #   Utility scripts
+
+storefront/        # @workspace/storefront — customer-facing store (React + Vite)
+```
+
+Both frontends talk to the **same backend API** (`shopDesk/backend/`):
+- In dev, both proxy `/api/*` to `localhost:3001` via Vite's dev server proxy.
+- When deploying the storefront to a separate domain, set `VITE_API_URL=https://your-api-domain.com` in the storefront build.
 
 ## How to Run
 
-Two workflows run in parallel (started automatically via the run button):
+Three workflows run in parallel (started automatically via the run button):
 
 | Workflow | Command | Port |
 |---|---|---|
 | API Server | `PORT=3001 pnpm --filter @workspace/api-server run dev` | 3001 |
 | Start application | `pnpm --filter @workspace/shop run dev` | 5000 |
-
-The frontend proxies `/api/*` to the API server on port 3001.
+| Storefront | `PORT=5001 pnpm --filter @workspace/storefront run dev` | 5001 |
 
 ## Environment Variables
 
@@ -57,13 +78,12 @@ pnpm run build
 pnpm --filter @workspace/api-spec run codegen
 ```
 
-## Vercel Deployment
+## Vercel Deployment (ShopDesk)
 
-The repository includes a Vercel Build Output API configuration. From the repository
-root, Vercel uses:
+The ShopDesk app (management + API) includes a Vercel Build Output API configuration at `shopDesk/vercel.json`. Vercel uses:
 
 - Install command: `pnpm install`
-- Build command: `node build.vercel.mjs`
+- Build command: `node shopDesk/build.vercel.mjs`
 
 Configure these environment variables in the Vercel project for the relevant
 environments before deploying:
@@ -87,19 +107,6 @@ After changing any Vercel environment variable, create a new deployment and
 disable the build cache for that deployment so the frontend bundle is rebuilt
 with the new public Clerk key.
 
-## Project Layout
-
-```
-frontend/          # @workspace/shop — React + Vite frontend
-backend/           # @workspace/api-server — Fastify API server
-lib/
-  db/              # @workspace/db — Drizzle schema and DB client
-  api-spec/        # OpenAPI spec + generated hooks and schemas
-  api-zod/         # Zod schemas derived from the API spec
-  api-client-react/# React Query hooks for the API
-  object-storage-web/
-scripts/           # Utility scripts (post-merge, etc.)
-```
 
 ## Receipt Editor
 

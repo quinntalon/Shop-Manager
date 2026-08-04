@@ -1,11 +1,9 @@
 packages:
-  - artifacts/*
-  - frontend
-  - backend
   - storefront
-  - lib/*
-  - lib/integrations/*
-  - scripts
+  - shopDesk/frontend
+  - shopDesk/backend
+  - shopDesk/lib/*
+  - shopDesk/scripts
 
 autoInstallPeers: false
 
