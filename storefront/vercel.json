@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "buildCommand": "cd .. && pnpm install && pnpm --filter @workspace/storefront run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
