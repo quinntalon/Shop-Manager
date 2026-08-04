@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "buildCommand": "cd .. && pnpm install && pnpm --filter @workspace/storefront run build",
-  "outputDirectory": "dist",
+  "buildCommand": "pnpm --filter @workspace/storefront run build",
+  "outputDirectory": "storefront/dist",
+  "installCommand": "pnpm install",
+  "framework": null,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ]
 }
