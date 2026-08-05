@@ -38,6 +38,26 @@ args = "Start application"
 task = "workflow.run"
 args = "Storefront"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "DB Push"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "DB Push Force"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Typecheck"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "API Codegen"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Build"
+
 [[workflows.workflow]]
 name = "API Server"
 author = "agent"
@@ -70,6 +90,61 @@ author = "agent"
 task = "shell.exec"
 args = "PORT=5001 pnpm --filter @workspace/storefront run dev"
 waitForPort = 5001
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "DB Push"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/db run push"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "DB Push Force"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/db run push-force"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Typecheck"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm run typecheck"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "API Codegen"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/api-spec run codegen"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Build"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm run build"
 
 [workflows.workflow.metadata]
 outputType = "console"
