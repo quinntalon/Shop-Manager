@@ -58,6 +58,7 @@ All required env vars are already set in the Replit environment:
 | `CLOUDINARY_API_KEY` | Cloudinary (pre-configured) |
 | `CLOUDINARY_API_SECRET` | Cloudinary (pre-configured) |
 | `SESSION_SECRET` | Stored as a Replit Secret |
+| `VITE_STOREFRONT_URL` | *(ShopDesk frontend only)* Public URL of the deployed Storefront (e.g. `https://yourstore.vercel.app`). When set, the Inventory → Storefront tab shows a "View on Storefront" link for activated products. Optional — omit in dev. |
 
 ## Common Commands
 

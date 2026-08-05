@@ -5,5 +5,6 @@ export * from "./reports-api";
 export * from "./stock-transfers-api";
 export * from "./admin-api";
 export * from "./loyalty-api";
+export * from "./storefront-activation-api";
 export { setBaseUrl, setAuthTokenGetter } from "./custom-fetch";
 export type { AuthTokenGetter } from "./custom-fetch";

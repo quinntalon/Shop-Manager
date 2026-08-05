@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { eq, ilike, gte, lte, and, desc, asc, type SQL } from "drizzle-orm";
+// storefrontActive filter: only published products are visible in the store
 import { db, productsTable, categoriesTable } from "@workspace/db";
 import { z } from "zod/v4";
 
@@ -78,7 +79,7 @@ const storeRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const { search, categoryId, minPrice, maxPrice, sort } = query.data;
-    const conditions: SQL[] = [];
+    const conditions: SQL[] = [eq(productsTable.storefrontActive, true)];
 
     if (categoryId != null) {
       conditions.push(eq(productsTable.categoryId, categoryId));
@@ -120,7 +121,7 @@ const storeRoutes: FastifyPluginAsync = async (fastify) => {
       .select(PRODUCT_SELECT)
       .from(productsTable)
       .leftJoin(categoriesTable, eq(productsTable.categoryId, categoriesTable.id))
-      .where(eq(productsTable.id, params.data.id));
+      .where(and(eq(productsTable.id, params.data.id), eq(productsTable.storefrontActive, true)));
 
     if (!row) {
       return reply.code(404).send({ error: "Product not found" });

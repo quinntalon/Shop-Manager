@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { eq, ilike, lte, and, inArray, type SQL, sql } from "drizzle-orm";
+import { z } from "zod/v4";
 import { db, productsTable, categoriesTable } from "@workspace/db";
 import {
   ListProductsQueryParams,
@@ -28,6 +29,7 @@ function buildProduct(row: {
   discountPercent: number;
   reorderLevel: number;
   categoryId: number | null;
+  storefrontActive: boolean;
   createdAt: Date;
   categoryName?: string | null;
 }) {
@@ -44,6 +46,7 @@ function buildProduct(row: {
     discountPercent: row.discountPercent,
     reorderLevel: row.reorderLevel,
     categoryId: row.categoryId,
+    storefrontActive: row.storefrontActive,
     categoryName: row.categoryName ?? null,
     createdAt: row.createdAt.toISOString(),
   };
@@ -62,6 +65,7 @@ const PRODUCT_SELECT = {
   discountPercent: productsTable.discountPercent,
   reorderLevel: productsTable.reorderLevel,
   categoryId: productsTable.categoryId,
+  storefrontActive: productsTable.storefrontActive,
   createdAt: productsTable.createdAt,
   categoryName: categoriesTable.name,
 } as const;
@@ -300,6 +304,64 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         .where(eq(productsTable.id, params.data.id));
 
       return buildProduct(row);
+    },
+  );
+
+  // ── Storefront activation ──────────────────────────────────────────────────
+
+  // Toggle a single product's storefront visibility
+  fastify.patch(
+    "/products/:id/storefront-status",
+    { preHandler: [requirePermission("inventory")] },
+    async (request, reply) => {
+      const params = GetProductParams.safeParse(request.params);
+      if (!params.success) {
+        return reply.code(400).send({ error: params.error.message });
+      }
+      const body = z.object({ active: z.boolean() }).safeParse(request.body);
+      if (!body.success) {
+        return reply.code(400).send({ error: body.error.message });
+      }
+
+      const [updated] = await db
+        .update(productsTable)
+        .set({ storefrontActive: body.data.active })
+        .where(eq(productsTable.id, params.data.id))
+        .returning();
+
+      if (!updated) {
+        return reply.code(404).send({ error: "Product not found" });
+      }
+
+      const [row] = await db
+        .select(PRODUCT_SELECT)
+        .from(productsTable)
+        .leftJoin(categoriesTable, eq(productsTable.categoryId, categoriesTable.id))
+        .where(eq(productsTable.id, params.data.id));
+
+      return buildProduct(row);
+    },
+  );
+
+  // Bulk toggle storefront visibility for multiple products
+  fastify.patch(
+    "/products/bulk-storefront-status",
+    { preHandler: [requirePermission("inventory")] },
+    async (request, reply) => {
+      const body = z
+        .object({ ids: z.array(z.number().int().positive()).min(1), active: z.boolean() })
+        .safeParse(request.body);
+      if (!body.success) {
+        return reply.code(400).send({ error: body.error.message });
+      }
+
+      const result = await db
+        .update(productsTable)
+        .set({ storefrontActive: body.data.active })
+        .where(inArray(productsTable.id, body.data.ids))
+        .returning({ id: productsTable.id });
+
+      return reply.send({ updated: result.length });
     },
   );
 
