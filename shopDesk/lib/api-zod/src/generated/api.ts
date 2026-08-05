@@ -515,9 +515,7 @@ export const CreateProductBody = zod.object({
   "photoUrl": zod.string().optional(),
   "price": zod.number().min(createProductBodyPriceMin),
   "costPrice": zod.number().min(createProductBodyCostPriceMin).optional(),
-  "stock": zod.number().min(createProductBodyStockMin).optional(),
-  "warehouseStock": zod.number().min(0).optional(),
-  "discountPercent": zod.number().min(0).max(100).optional(),
+  "stock": zod.number().min(createProductBodyStockMin),
   "reorderLevel": zod.number().min(createProductBodyReorderLevelMin).optional(),
   "categoryId": zod.number().optional()
 })
@@ -587,18 +585,8 @@ export const UpdateProductBody = zod.object({
   "price": zod.number().min(updateProductBodyPriceMin).optional(),
   "costPrice": zod.number().min(updateProductBodyCostPriceMin).optional(),
   "stock": zod.number().min(updateProductBodyStockMin).optional(),
-  "discountPercent": zod.number().min(0).max(100).optional(),
   "reorderLevel": zod.number().min(updateProductBodyReorderLevelMin).optional(),
   "categoryId": zod.number().optional()
-})
-
-export const BulkDiscountBody = zod.object({
-  "discountPercent": zod.number().min(0).max(100),
-  "productIds": zod.array(zod.number()).optional()
-})
-
-export const AddWarehouseStockBody = zod.object({
-  "quantity": zod.number().min(1)
 })
 
 export const UpdateProductResponse = zod.object({
@@ -711,7 +699,6 @@ export const CreateSaleBody = zod.object({
   "bankName": zod.string().optional(),
   "deliveryPaymentStatus": zod.enum(['pay_on_delivery', 'paid']).optional(),
   "cartDiscount": zod.number().min(createSaleBodyCartDiscountMin).optional(),
-  "pointsRedeemed": zod.number().int().min(0).optional(),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "quantity": zod.number().min(1),

@@ -13,7 +13,5 @@ export interface AppUser {
   email: string;
   /** @nullable */
   role?: string | null;
-  /** Custom permission overrides. null means use role defaults. */
-  permissions?: string[] | null;
   createdAt: Date;
 }

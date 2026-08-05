@@ -132,8 +132,6 @@ export interface SaleInput {
   deliveryPaymentStatus?: SaleInputDeliveryPaymentStatus;
   /** @minimum 0 */
   cartDiscount?: number;
-  /** Points to redeem for a discount on this sale */
-  pointsRedeemed?: number;
   items: SaleItemInput[];
 }
 
@@ -189,16 +187,12 @@ export interface AppUser {
   email: string;
   /** @nullable */
   role?: string | null;
-  /** Custom permission overrides. null means use role defaults. */
-  permissions?: string[] | null;
   createdAt: string;
 }
 
 export interface AppUserRoleUpdate {
   /** @nullable */
   role: string | null;
-  /** Custom permission overrides. null or omitted means reset to role defaults. */
-  permissions?: string[] | null;
 }
 
 export interface MyRoleResponse {
@@ -258,9 +252,6 @@ export interface Settings {
   logoUrl?: string | null;
   themeMode: SettingsThemeMode;
   primaryColor: string;
-  loyaltyEnabled: boolean;
-  loyaltyPointsPerCedi: number;
-  loyaltyRedemptionRate: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -279,9 +270,6 @@ export interface SettingsUpdate {
   logoUrl?: string | null;
   themeMode?: SettingsUpdateThemeMode;
   primaryColor?: string;
-  loyaltyEnabled?: boolean;
-  loyaltyPointsPerCedi?: number;
-  loyaltyRedemptionRate?: number;
 }
 
 export type ReceiptElementId = typeof ReceiptElementId[keyof typeof ReceiptElementId];
@@ -376,68 +364,6 @@ export interface ReceiptTemplate {
 export interface ReceiptTemplateInput {
   name: string;
   config: ReceiptTemplateConfig;
-}
-
-export interface Customer {
-  name: string;
-  /** @nullable */
-  phone?: string | null;
-  totalOrders: number;
-  totalSpent: number;
-  lastOrderAt: string;
-  loyaltyPoints?: number;
-}
-
-export interface LoyaltyTransaction {
-  id: number;
-  points: number;
-  type: string;
-  saleId?: number | null;
-  note?: string | null;
-  createdAt: string;
-}
-
-export interface LoyaltyAccount {
-  phone: string;
-  balance: number;
-  transactions: LoyaltyTransaction[];
-}
-
-export interface LoyaltyAdjustInput {
-  customerPhone: string;
-  customerName?: string;
-  points: number;
-  note?: string;
-}
-
-export interface CustomerPurchase {
-  id: number;
-  total: number;
-  subtotal: number;
-  cartDiscount: number;
-  paymentMethod: string;
-  /** @nullable */
-  note?: string | null;
-  createdAt: string;
-}
-
-export interface RevenueEntry {
-  period: string;
-  revenue: number;
-  count: number;
-}
-
-export interface PaymentMethodStat {
-  method: string;
-  count: number;
-  revenue: number;
-}
-
-export interface ReportSummary {
-  totalRevenue: number;
-  totalSales: number;
-  avgOrderValue: number;
-  uniqueCustomers: number;
 }
 
 export type ListProductsParams = {
