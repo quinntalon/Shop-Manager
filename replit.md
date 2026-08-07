@@ -1,4 +1,4 @@
-# SyncCart
+# ShopDesk
 
 A point-of-sale and shop management system with inventory tracking, sales recording, and category management.
 

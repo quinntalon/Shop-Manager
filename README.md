@@ -1,4 +1,4 @@
-# ShopManager
+# ShopDesk
 
 A modern point-of-sale and shop management system. Built as a pnpm monorepo with a React frontend and Fastify API backend.
 
