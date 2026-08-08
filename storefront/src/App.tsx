@@ -8,7 +8,7 @@ import NotFound from "@/pages/not-found";
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col bg-surface">
+    <div className="min-h-screen flex flex-col bg-surface transition-colors duration-300">
       <Navbar />
       <main className="flex-1">
         <Switch>

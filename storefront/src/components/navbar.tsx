@@ -1,12 +1,28 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Search, Zap, Menu, X } from "lucide-react";
+import { Search, Zap, Menu, X, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
   const [location] = useLocation();
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [lightMode, setLightMode] = useState(false);
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("shopdesk-theme");
+    const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+    const shouldUseLight = savedTheme ? savedTheme === "light" : prefersLight;
+    setLightMode(shouldUseLight);
+    document.documentElement.classList.toggle("theme-light", shouldUseLight);
+  }, []);
+
+  function toggleTheme() {
+    const nextLightMode = !lightMode;
+    setLightMode(nextLightMode);
+    document.documentElement.classList.toggle("theme-light", nextLightMode);
+    window.localStorage.setItem("shopdesk-theme", nextLightMode ? "light" : "dark");
+  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -30,7 +46,7 @@ export default function Navbar() {
               <Zap className="w-4.5 h-4.5 text-surface" strokeWidth={2.5} />
             </div>
             <span className="font-display text-lg font-bold text-slate-50 tracking-tight">
-              Volt<span className="text-amber">Ex</span>
+              Shop<span className="text-amber">Desk</span>
             </span>
           </Link>
 
@@ -65,6 +81,16 @@ export default function Navbar() {
               />
             </div>
           </form>
+
+          <button
+            type="button"
+            className="theme-toggle shrink-0"
+            onClick={toggleTheme}
+            aria-label={lightMode ? "Switch to dark theme" : "Switch to light theme"}
+            title={lightMode ? "Switch to dark theme" : "Switch to light theme"}
+          >
+            {lightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+          </button>
 
           {/* Mobile hamburger */}
           <button
@@ -107,6 +133,14 @@ export default function Navbar() {
                 />
               </div>
             </form>
+            <button
+              type="button"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-400 hover:text-amber transition-colors"
+              onClick={toggleTheme}
+            >
+              {lightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              {lightMode ? "Dark theme" : "Light theme"}
+            </button>
           </div>
         )}
       </div>

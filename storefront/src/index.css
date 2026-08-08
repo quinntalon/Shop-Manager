@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&family=Syne:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 @layer theme, base, components, utilities;
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -6,27 +6,27 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: 'Inter', sans-serif;
-  --font-display: 'Syne', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-display: 'Plus Jakarta Sans', sans-serif;
 
-  --color-surface:     #0c0e14;
-  --color-surface-2:   #13161f;
-  --color-surface-3:   #1a1d28;
-  --color-border:      #252836;
-  --color-border-2:    #2e3245;
+  --color-surface:     var(--surface);
+  --color-surface-2:   var(--surface-2);
+  --color-surface-3:   var(--surface-3);
+  --color-border:      var(--border);
+  --color-border-2:    var(--border-2);
 
-  --color-amber:       #f59e0b;
-  --color-amber-light: #fbbf24;
-  --color-amber-dark:  #d97706;
-  --color-amber-glow:  rgba(245,158,11,0.15);
+  --color-amber:       var(--amber);
+  --color-amber-light: var(--amber-light);
+  --color-amber-dark:  var(--amber-dark);
+  --color-amber-glow:  var(--amber-glow);
 
-  --color-slate-50:    #f8fafc;
-  --color-slate-100:   #f1f5f9;
-  --color-slate-200:   #e2e8f0;
-  --color-slate-300:   #cbd5e1;
-  --color-slate-400:   #94a3b8;
-  --color-slate-500:   #64748b;
-  --color-slate-600:   #475569;
+  --color-slate-50:    var(--text-strong);
+  --color-slate-100:   var(--text-primary);
+  --color-slate-200:   var(--text-secondary);
+  --color-slate-300:   var(--text-muted);
+  --color-slate-400:   var(--text-subtle);
+  --color-slate-500:   var(--text-faint);
+  --color-slate-600:   var(--text-quiet);
   --color-slate-700:   #334155;
   --color-slate-800:   #1e293b;
   --color-slate-900:   #0f172a;
@@ -39,6 +39,46 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+}
+
+:root {
+  color-scheme: dark;
+  --surface: #0c0e14;
+  --surface-2: #13161f;
+  --surface-3: #1a1d28;
+  --border: #252836;
+  --border-2: #2e3245;
+  --text-strong: #f8fafc;
+  --text-primary: #f1f5f9;
+  --text-secondary: #e2e8f0;
+  --text-muted: #cbd5e1;
+  --text-subtle: #94a3b8;
+  --text-faint: #64748b;
+  --text-quiet: #475569;
+  --amber: #f59e0b;
+  --amber-light: #fbbf24;
+  --amber-dark: #d97706;
+  --amber-glow: rgba(245, 158, 11, 0.15);
+}
+
+:root.theme-light {
+  color-scheme: light;
+  --surface: #f7f8fa;
+  --surface-2: #ffffff;
+  --surface-3: #eef1f5;
+  --border: #e3e7ee;
+  --border-2: #cfd6e2;
+  --text-strong: #101828;
+  --text-primary: #1d2939;
+  --text-secondary: #344054;
+  --text-muted: #475467;
+  --text-subtle: #667085;
+  --text-faint: #98a2b3;
+  --text-quiet: #b5bfcd;
+  --amber: #d97706;
+  --amber-light: #b45309;
+  --amber-dark: #92400e;
+  --amber-glow: rgba(217, 119, 6, 0.12);
 }
 
 @layer base {
@@ -95,7 +135,7 @@
     font-weight: 700;
     font-size: 0.875rem;
     letter-spacing: 0.025em;
-    border-radius: var(--radius-lg);
+    border-radius: 0.75rem;
     transition: all 0.2s;
     cursor: pointer;
     border: none;
@@ -121,7 +161,7 @@
     color: var(--color-slate-200);
     font-weight: 600;
     font-size: 0.875rem;
-    border-radius: var(--radius-lg);
+    border-radius: 0.75rem;
     border: 1px solid var(--color-border-2);
     transition: all 0.2s;
     cursor: pointer;
@@ -138,13 +178,13 @@
   .card {
     background-color: var(--color-surface-2);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-xl);
+    border-radius: 1rem;
     overflow: hidden;
     transition: all 0.25s;
   }
   .card:hover {
     border-color: var(--color-border-2);
-    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    box-shadow: 0 20px 60px color-mix(in srgb, var(--text-strong) 8%, transparent);
     transform: translateY(-3px);
   }
 
@@ -194,7 +234,7 @@
     padding: 0.625rem 1rem;
     background-color: var(--color-surface-3);
     border: 1px solid var(--color-border-2);
-    border-radius: var(--radius-lg);
+    border-radius: 0.75rem;
     color: var(--color-slate-100);
     font-size: 0.875rem;
     outline: none;
@@ -212,5 +252,24 @@
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--color-amber), transparent);
     opacity: 0.4;
+  }
+
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--color-border-2);
+    border-radius: 0.75rem;
+    color: var(--color-slate-400);
+    background: var(--color-surface-2);
+    transition: all 0.2s ease;
+  }
+
+  .theme-toggle:hover {
+    color: var(--color-amber);
+    border-color: var(--color-amber);
+    background: var(--color-amber-glow);
   }
 }

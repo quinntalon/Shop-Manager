@@ -13,7 +13,7 @@ export default function Footer() {
                 <Zap className="w-4.5 h-4.5 text-surface" strokeWidth={2.5} />
               </div>
               <span className="font-display text-lg font-bold text-slate-50">
-                Volt<span className="text-amber">Ex</span>
+                Shop<span className="text-amber">Desk</span>
               </span>
             </div>
             <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
@@ -63,8 +63,8 @@ export default function Footer() {
         <div className="glow-line my-8" />
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
-          <span>© {new Date().getFullYear()} VoltEx Appliances. All rights reserved.</span>
-          <span>Powered by VoltEx POS</span>
+          <span>© {new Date().getFullYear()} ShopDesk. All rights reserved.</span>
+          <span>Powered by ShopDesk POS</span>
         </div>
       </div>
     </footer>
