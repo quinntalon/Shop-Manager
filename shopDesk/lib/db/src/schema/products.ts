@@ -16,6 +16,7 @@ export const productsTable = pgTable("products", {
   categoryId: integer("category_id"),
   photoUrl: text("photo_url"),
   storefrontActive: boolean("storefront_active").notNull().default(false),
+  storefrontActivatedAt: timestamp("storefront_activated_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

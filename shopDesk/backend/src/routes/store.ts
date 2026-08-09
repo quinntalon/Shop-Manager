@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { eq, ilike, gte, lte, and, desc, asc, type SQL } from "drizzle-orm";
+import { eq, ilike, gte, lte, and, desc, asc, isNotNull, sql, type SQL } from "drizzle-orm";
 // storefrontActive filter: only published products are visible in the store
 import { db, productsTable, categoriesTable } from "@workspace/db";
 import { z } from "zod/v4";
@@ -10,6 +10,7 @@ const StoreProductsQuery = z.object({
   minPrice:   z.coerce.number().min(0).optional(),
   maxPrice:   z.coerce.number().min(0).optional(),
   sort:       z.enum(["newest", "price_asc", "price_desc", "name"]).default("newest"),
+  new:        z.enum(["1"]).optional(),
 });
 
 const StoreProductParams = z.object({ id: z.coerce.number().int().positive() });
@@ -24,6 +25,7 @@ const PRODUCT_SELECT = {
   discountPercent: productsTable.discountPercent,
   stock:           productsTable.stock,
   categoryId:      productsTable.categoryId,
+  storefrontActivatedAt: productsTable.storefrontActivatedAt,
   createdAt:       productsTable.createdAt,
   categoryName:    categoriesTable.name,
 } as const;
@@ -38,6 +40,7 @@ function buildProduct(row: {
   discountPercent: number;
   stock: number;
   categoryId: number | null;
+  storefrontActivatedAt: Date | null;
   createdAt: Date;
   categoryName?: string | null;
 }) {
@@ -51,6 +54,7 @@ function buildProduct(row: {
     discountPercent: row.discountPercent,
     stock: row.stock,
     categoryId: row.categoryId,
+    storefrontActivatedAt: row.storefrontActivatedAt?.toISOString() ?? null,
     categoryName: row.categoryName ?? null,
     createdAt: row.createdAt.toISOString(),
   };
@@ -81,6 +85,9 @@ const storeRoutes: FastifyPluginAsync = async (fastify) => {
     const { search, categoryId, minPrice, maxPrice, sort } = query.data;
     const conditions: SQL[] = [eq(productsTable.storefrontActive, true)];
 
+    if (query.data.new === "1") {
+      conditions.push(isNotNull(productsTable.storefrontActivatedAt));
+    }
     if (categoryId != null) {
       conditions.push(eq(productsTable.categoryId, categoryId));
     }
@@ -98,7 +105,7 @@ const storeRoutes: FastifyPluginAsync = async (fastify) => {
       sort === "price_asc"  ? asc(productsTable.price)  :
       sort === "price_desc" ? desc(productsTable.price) :
       sort === "name"       ? asc(productsTable.name)   :
-      /* newest */            desc(productsTable.createdAt);
+      /* newest */            desc(sql`coalesce(${productsTable.storefrontActivatedAt}, ${productsTable.createdAt})`);
 
     const rows = await db
       .select(PRODUCT_SELECT)

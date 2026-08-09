@@ -30,6 +30,7 @@ function parseSearch(qs: string) {
     search: p.get("search") ?? "",
     categoryId: p.get("categoryId") ? Number(p.get("categoryId")) : undefined,
     sort: (p.get("sort") as SortValue) ?? "newest",
+    newArrivals: p.get("new") === "1",
   };
 }
 
@@ -40,6 +41,7 @@ export default function Catalog() {
   const [searchInput, setSearchInput] = useState(initial.search);
   const [categoryId, setCategoryId] = useState<number | undefined>(initial.categoryId);
   const [sort, setSort] = useState<SortValue>(initial.sort);
+  const [newArrivals, setNewArrivals] = useState(initial.newArrivals);
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -50,6 +52,7 @@ export default function Catalog() {
     setSearchInput(next.search);
     setCategoryId(next.categoryId);
     setSort(next.sort);
+    setNewArrivals(next.newArrivals);
   }, [rawSearch]);
 
   const { data: categories = [] } = useQuery({
@@ -61,6 +64,7 @@ export default function Catalog() {
     search: searchInput.trim() || undefined,
     categoryId,
     sort,
+    newArrivals,
     minPrice: minPrice ? Number(minPrice) : undefined,
     maxPrice: maxPrice ? Number(maxPrice) : undefined,
   };
@@ -88,6 +92,7 @@ export default function Catalog() {
     if (search) query.set("search", search);
     if (cat) query.set("categoryId", String(cat));
     if (nextSort !== "newest") query.set("sort", nextSort);
+    if (newArrivals) query.set("new", "1");
     setLocation(`/catalog${query.toString() ? `?${query}` : ""}`);
   }
 
@@ -95,6 +100,7 @@ export default function Catalog() {
     setSearchInput("");
     setCategoryId(undefined);
     setSort("newest");
+    setNewArrivals(false);
     setMinPrice("");
     setMaxPrice("");
     setLocation("/catalog");
@@ -108,23 +114,23 @@ export default function Catalog() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.16em] text-slate-400 mb-5">
-        <span>Home <span className="mx-2 text-slate-300">/</span> Collections</span>
+       <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.16em] text-slate-400 mb-5">
+         <span>Home <span className="mx-2 text-slate-300">/</span> Categories</span>
         <span className="hidden sm:inline">ShopDesk / 2026</span>
       </div>
 
       <section className="collection-banner mb-7">
         <div className="relative z-10 max-w-md px-6 sm:px-10 py-7 sm:py-8">
           <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-amber mb-2">
-            The ShopDesk collection
+             ShopDesk categories
           </p>
           <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-[-0.04em] text-slate-50 leading-tight">
             Everything your home needs,
             <br />
-            <span className="text-amber">beautifully considered.</span>
+             <span className="text-amber">made for everyday living.</span>
           </h1>
           <p className="mt-3 text-xs text-slate-400 max-w-sm leading-relaxed">
-            Discover reliable appliances chosen for everyday living, from kitchen essentials to smart home upgrades.
+             Explore live products synced directly from your ShopDesk inventory.
           </p>
         </div>
       </section>
@@ -164,8 +170,38 @@ export default function Catalog() {
         </div>
       </div>
 
-      <div className="flex gap-8 items-start">
-        <aside className={`fixed inset-0 z-40 bg-surface/70 backdrop-blur-sm ${sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} lg:static lg:opacity-100 lg:pointer-events-auto lg:bg-transparent lg:backdrop-blur-none lg:w-44 lg:shrink-0`}>
+       <div className="flex gap-8 items-start">
+         <main className="flex-1 min-w-0">
+           <div className="flex items-center justify-between gap-3 mb-4">
+             <div>
+               <h2 className="font-display text-2xl font-extrabold tracking-[-0.04em] text-slate-50">
+                 {newArrivals ? "New Arrivals" : activeCategoryName ?? "All products"}
+               </h2>
+               <p className="text-xs text-slate-400 mt-1">{isLoading ? "Curating your selection…" : `${filtered.length} pieces to explore`}</p>
+             </div>
+             <div className="flex items-center gap-1">
+               <form onSubmit={(event) => { event.preventDefault(); updateUrl(); }} className="relative hidden sm:block">
+                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                 <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Search" className="input-field h-8 w-36 pl-8 text-xs" />
+               </form>
+               <button type="button" onClick={() => setGridView(true)} className={`theme-toggle ${gridView ? "text-amber" : ""}`} aria-label="Grid view"><Grid2X2 className="w-4 h-4" /></button>
+               <button type="button" onClick={() => setGridView(false)} className={`theme-toggle ${!gridView ? "text-amber" : ""}`} aria-label="List view"><List className="w-4 h-4" /></button>
+             </div>
+           </div>
+
+           {isLoading ? (
+             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="quiet-card animate-pulse"><div className="aspect-[1.08/1] bg-surface-3" /><div className="p-4 space-y-2"><div className="h-3 bg-surface-3 rounded w-1/3" /><div className="h-4 bg-surface-3 rounded w-3/4" /><div className="h-3 bg-surface-3 rounded w-1/2" /></div></div>)}</div>
+           ) : isError ? (
+             <div className="py-20 text-center text-sm text-red-500">Unable to load products right now.</div>
+           ) : filtered.length === 0 ? (
+             <div className="py-20 text-center"><Heart className="w-8 h-8 mx-auto text-slate-300 mb-3" /><p className="font-bold text-slate-100">No products found</p><p className="text-xs text-slate-400 mt-1">Try adjusting your search or filters.</p><button type="button" className="btn-ghost mt-4 text-xs" onClick={clearAll}>Clear filters</button></div>
+           ) : gridView ? (
+             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">{filtered.map((product) => <ProductCard key={product.id} product={product} />)}</div>
+           ) : (
+             <div className="space-y-3">{filtered.map((product) => <ProductCard key={product.id} product={product} listView />)}</div>
+           )}
+         </main>
+         <aside className={`fixed inset-0 z-40 bg-surface/70 backdrop-blur-sm ${sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} lg:static lg:opacity-100 lg:pointer-events-auto lg:bg-transparent lg:backdrop-blur-none lg:w-48 lg:shrink-0 lg:order-last`}>
           <div className={`absolute right-0 top-0 h-full w-72 bg-surface-2 border-l border-border p-6 transition-transform ${sidebarOpen ? "translate-x-0" : "translate-x-full"} lg:static lg:translate-x-0 lg:h-auto lg:w-auto lg:border-0 lg:p-0`}>
             <div className="flex items-center justify-between mb-6 lg:hidden">
               <h2 className="font-bold text-slate-100">Filters</h2>
@@ -195,34 +231,6 @@ export default function Catalog() {
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <div>
-              <h2 className="font-display text-2xl font-extrabold tracking-[-0.04em] text-slate-50">{activeCategoryName ?? "All products"}</h2>
-              <p className="text-xs text-slate-400 mt-1">{isLoading ? "Curating your selection…" : `${filtered.length} pieces to explore`}</p>
-            </div>
-            <div className="flex items-center gap-1">
-              <form onSubmit={(event) => { event.preventDefault(); updateUrl(); }} className="relative hidden sm:block">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Search" className="input-field h-8 w-36 pl-8 text-xs" />
-              </form>
-              <button type="button" onClick={() => setGridView(true)} className={`theme-toggle ${gridView ? "text-amber" : ""}`} aria-label="Grid view"><Grid2X2 className="w-4 h-4" /></button>
-              <button type="button" onClick={() => setGridView(false)} className={`theme-toggle ${!gridView ? "text-amber" : ""}`} aria-label="List view"><List className="w-4 h-4" /></button>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="quiet-card animate-pulse"><div className="aspect-[1.08/1] bg-surface-3" /><div className="p-4 space-y-2"><div className="h-3 bg-surface-3 rounded w-1/3" /><div className="h-4 bg-surface-3 rounded w-3/4" /><div className="h-3 bg-surface-3 rounded w-1/2" /></div></div>)}</div>
-          ) : isError ? (
-            <div className="py-20 text-center text-sm text-red-500">Unable to load products right now.</div>
-          ) : filtered.length === 0 ? (
-            <div className="py-20 text-center"><Heart className="w-8 h-8 mx-auto text-slate-300 mb-3" /><p className="font-bold text-slate-100">No products found</p><p className="text-xs text-slate-400 mt-1">Try adjusting your search or filters.</p><button type="button" className="btn-ghost mt-4 text-xs" onClick={clearAll}>Clear filters</button></div>
-          ) : gridView ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">{filtered.map((product) => <ProductCard key={product.id} product={product} />)}</div>
-          ) : (
-            <div className="space-y-3">{filtered.map((product) => <ProductCard key={product.id} product={product} listView />)}</div>
-          )}
-        </main>
       </div>
     </div>
   );
