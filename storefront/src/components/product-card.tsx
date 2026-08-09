@@ -1,22 +1,33 @@
 import { Link } from "wouter";
-import { ShoppingBag, ImageOff, Tag } from "lucide-react";
+import { Heart, ImageOff, Tag } from "lucide-react";
 import { cn, formatPrice, effectivePrice } from "@/lib/utils";
 import type { StoreProduct } from "@/lib/api";
 
 interface Props {
   product: StoreProduct;
   className?: string;
+  listView?: boolean;
 }
 
-export default function ProductCard({ product, className }: Props) {
+export default function ProductCard({ product, className, listView = false }: Props) {
   const discounted = product.discountPercent > 0;
   const finalPrice = effectivePrice(product.price, product.discountPercent);
   const inStock = product.stock > 0;
 
   return (
-    <Link href={`/products/${product.id}`} className={cn("group block card", className)}>
+    <Link
+      href={`/products/${product.id}`}
+      className={cn(
+        "group quiet-card overflow-hidden",
+        listView ? "flex items-center gap-4 p-3" : "block",
+        className,
+      )}
+    >
       {/* Image */}
-      <div className="relative aspect-square bg-surface-3 overflow-hidden">
+      <div className={cn(
+        "relative bg-surface-3 overflow-hidden shrink-0",
+        listView ? "w-24 h-24 rounded-lg" : "aspect-[1.08/1]",
+      )}>
         {product.photoUrl ? (
           <img
             src={product.photoUrl}
@@ -25,9 +36,9 @@ export default function ProductCard({ product, className }: Props) {
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-600">
-            <ImageOff className="w-10 h-10" />
-            <span className="text-xs">No image</span>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-400">
+            <ImageOff className="w-8 h-8" />
+            <span className="text-[10px] uppercase tracking-widest">No image</span>
           </div>
         )}
 
@@ -45,26 +56,25 @@ export default function ProductCard({ product, className }: Props) {
         </div>
 
         {/* Hover overlay */}
-        <div className="absolute inset-0 bg-surface/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <span className="flex items-center gap-2 btn-primary text-sm shadow-xl">
-            <ShoppingBag className="w-4 h-4" />
-            View Details
+        <div className="absolute right-3 top-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2/90 text-slate-500 shadow-sm transition-colors group-hover:text-amber">
+            <Heart className="w-4 h-4" />
           </span>
         </div>
       </div>
 
       {/* Info */}
-      <div className="p-4 space-y-1.5">
+      <div className={cn("space-y-1.5", listView ? "py-1 pr-2 min-w-0 flex-1" : "p-4")}>
         {product.categoryName && (
-          <span className="text-xs font-semibold text-amber tracking-wide uppercase">
+          <span className="text-[10px] font-bold text-amber tracking-[0.14em] uppercase">
             {product.categoryName}
           </span>
         )}
-        <h3 className="font-semibold text-slate-100 leading-snug line-clamp-2 group-hover:text-amber transition-colors">
+        <h3 className="font-bold text-slate-100 leading-snug line-clamp-2 group-hover:text-amber transition-colors">
           {product.name}
         </h3>
         <div className="flex items-end gap-2 pt-1">
-          <span className="text-lg font-bold text-slate-50">
+          <span className="text-sm font-bold text-slate-50">
             {formatPrice(finalPrice)}
           </span>
           {discounted && (
@@ -73,10 +83,11 @@ export default function ProductCard({ product, className }: Props) {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 pt-0.5">
-          <span className={cn("badge text-xs", inStock ? "badge-green" : "badge-red")}>
-            {inStock ? `${product.stock} in stock` : "Out of stock"}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <span className={cn("text-[10px] font-medium", inStock ? "text-green-600" : "text-red-500")}>
+            {inStock ? `${product.stock} available` : "Out of stock"}
           </span>
+          <span className="text-[10px] text-slate-500">View details →</span>
         </div>
       </div>
     </Link>

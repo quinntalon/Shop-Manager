@@ -1,26 +1,26 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Search, Zap, Menu, X, Sun, Moon } from "lucide-react";
+import { Search, Zap, Menu, X, Sun, Moon, Heart, ShoppingBag, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Navbar() {
   const [location] = useLocation();
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [lightMode, setLightMode] = useState(false);
+  const [lightMode, setLightMode] = useState(true);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("shopdesk-theme");
     const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
     const shouldUseLight = savedTheme ? savedTheme === "light" : prefersLight;
     setLightMode(shouldUseLight);
-    document.documentElement.classList.toggle("theme-light", shouldUseLight);
+    document.documentElement.classList.toggle("theme-dark", !shouldUseLight);
   }, []);
 
   function toggleTheme() {
     const nextLightMode = !lightMode;
     setLightMode(nextLightMode);
-    document.documentElement.classList.toggle("theme-light", nextLightMode);
+    document.documentElement.classList.toggle("theme-dark", !nextLightMode);
     window.localStorage.setItem("shopdesk-theme", nextLightMode ? "light" : "dark");
   }
 
@@ -39,25 +39,25 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center h-16 gap-4">
+        <div className="relative flex items-center h-[4.5rem] gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0 group">
-            <div className="w-8 h-8 rounded-lg bg-amber flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+            <div className="w-8 h-8 rounded-xl bg-amber flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <Zap className="w-4.5 h-4.5 text-surface" strokeWidth={2.5} />
             </div>
-            <span className="font-display text-lg font-bold text-slate-50 tracking-tight">
+            <span className="font-display text-lg font-extrabold text-slate-50 tracking-[-0.04em]">
               Shop<span className="text-amber">Desk</span>
             </span>
           </Link>
 
           {/* Nav links (desktop) */}
-          <nav className="hidden md:flex items-center gap-1 ml-4">
+          <nav className="hidden md:flex items-center gap-1 ml-5">
             {navLinks.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                   "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
                   location === l.href
                     ? "text-amber bg-amber-glow"
                     : "text-slate-400 hover:text-slate-100 hover:bg-surface-3",
@@ -69,12 +69,12 @@ export default function Navbar() {
           </nav>
 
           {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 hidden sm:flex max-w-md ml-auto">
+          <form onSubmit={handleSearch} className="flex-1 hidden sm:flex max-w-xs ml-auto">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search appliances..."
+                placeholder="Search products..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="input-field pl-9 pr-4 h-9 text-sm"
@@ -82,7 +82,19 @@ export default function Navbar() {
             </div>
           </form>
 
-          <button
+          <div className="hidden sm:flex items-center gap-1 text-slate-400">
+            <button type="button" className="theme-toggle" aria-label="Saved items">
+              <Heart className="w-4 h-4" />
+            </button>
+            <button type="button" className="theme-toggle" aria-label="Shopping bag">
+              <ShoppingBag className="w-4 h-4" />
+            </button>
+            <button type="button" className="theme-toggle" aria-label="Account">
+              <UserRound className="w-4 h-4" />
+            </button>
+          </div>
+
+            <button
             type="button"
             className="theme-toggle shrink-0"
             onClick={toggleTheme}
