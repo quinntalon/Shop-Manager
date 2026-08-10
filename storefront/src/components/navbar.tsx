@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Search, Zap, Menu, X, Sun, Moon, Heart, ShoppingBag, UserRound } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, Zap, Menu, X, Sun, Moon, Heart, ShoppingBag, UserRound, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchCategories } from "@/lib/api";
 
 export default function Navbar() {
   const [location] = useLocation();
   const [search, setSearch] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [lightMode, setLightMode] = useState(true);
+  const { data: categories = [] } = useQuery({
+    queryKey: ["store-categories"],
+    queryFn: fetchCategories,
+  });
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("shopdesk-theme");
@@ -33,6 +40,7 @@ export default function Navbar() {
 
   const navLinks = [
     { href: "/", label: "Home" },
+    { href: "/catalog?sort=newest&new=1", label: "New Arrivals" },
     { href: "/catalog", label: "Shop All" },
   ];
 
@@ -51,8 +59,42 @@ export default function Navbar() {
           </Link>
 
           {/* Nav links (desktop) */}
-          <nav className="hidden md:flex items-center gap-1 ml-5">
-            {navLinks.map((l) => (
+           <nav className="hidden md:flex items-center gap-1 ml-5">
+             <div className="relative">
+               <button
+                 type="button"
+                 className={cn(
+                   "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors inline-flex items-center gap-1",
+                   location.startsWith("/catalog")
+                     ? "text-amber bg-amber-glow"
+                     : "text-slate-400 hover:text-slate-100 hover:bg-surface-3",
+                 )}
+                 onClick={() => setCategoriesOpen((open) => !open)}
+                 aria-expanded={categoriesOpen}
+                 aria-haspopup="menu"
+               >
+                 Categories <ChevronDown className={cn("w-3 h-3 transition-transform", categoriesOpen && "rotate-180")} />
+               </button>
+               {categoriesOpen && (
+                 <div className="absolute left-0 top-full mt-2 w-56 rounded-xl border border-border bg-surface-2 p-2 shadow-xl" role="menu">
+                   <Link href="/catalog" onClick={() => setCategoriesOpen(false)} className="block rounded-lg px-3 py-2 text-xs font-semibold text-slate-100 hover:bg-surface-3">
+                     All categories
+                   </Link>
+                   {categories.map((category) => (
+                     <Link
+                       key={category.id}
+                       href={`/catalog?categoryId=${category.id}`}
+                       onClick={() => setCategoriesOpen(false)}
+                       className="block rounded-lg px-3 py-2 text-xs text-slate-400 hover:bg-surface-3 hover:text-slate-100"
+                       role="menuitem"
+                     >
+                       {category.name}
+                     </Link>
+                   ))}
+                 </div>
+               )}
+             </div>
+             {navLinks.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
@@ -69,7 +111,7 @@ export default function Navbar() {
           </nav>
 
           {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 hidden sm:flex max-w-xs ml-auto">
+           <form onSubmit={handleSearch} className="flex-1 hidden sm:flex max-w-md mx-auto">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
               <input
@@ -118,7 +160,20 @@ export default function Navbar() {
         {/* Mobile menu */}
         {menuOpen && (
           <div className="md:hidden border-t border-border py-3 space-y-1">
-            {navLinks.map((l) => (
+             <Link href="/catalog" onClick={() => setMenuOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-surface-3">
+               Categories
+             </Link>
+             {categories.map((category) => (
+               <Link
+                 key={category.id}
+                 href={`/catalog?categoryId=${category.id}`}
+                 onClick={() => setMenuOpen(false)}
+                 className="block pl-6 pr-3 py-2 rounded-lg text-sm text-slate-500 hover:text-slate-100 hover:bg-surface-3"
+               >
+                 {category.name}
+               </Link>
+             ))}
+             {navLinks.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}

@@ -31,8 +31,8 @@
   --color-slate-800:   #1e293b;
   --color-slate-900:   #0f172a;
 
-  --color-green:       #22c55e;
-  --color-red:         #ef4444;
+  --color-green:       #111111;
+  --color-red:         #666666;
 
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
@@ -43,42 +43,42 @@
 
 :root {
   color-scheme: light;
-  --surface: #f7f8fa;
+  --surface: #ffffff;
   --surface-2: #ffffff;
-  --surface-3: #eef1f5;
-  --border: #e3e7ee;
-  --border-2: #cfd6e2;
-  --text-strong: #101828;
-  --text-primary: #1d2939;
-  --text-secondary: #344054;
-  --text-muted: #475467;
-  --text-subtle: #667085;
-  --text-faint: #98a2b3;
-  --text-quiet: #b5bfcd;
-  --amber: #d97706;
-  --amber-light: #b45309;
-  --amber-dark: #92400e;
-  --amber-glow: rgba(217, 119, 6, 0.12);
+  --surface-3: #f5f5f5;
+  --border: #e5e5e5;
+  --border-2: #c9c9c9;
+  --text-strong: #050505;
+  --text-primary: #111111;
+  --text-secondary: #262626;
+  --text-muted: #525252;
+  --text-subtle: #737373;
+  --text-faint: #a3a3a3;
+  --text-quiet: #d4d4d4;
+  --amber: #111111;
+  --amber-light: #000000;
+  --amber-dark: #000000;
+  --amber-glow: rgba(0, 0, 0, 0.08);
 }
 
 :root.theme-dark {
   color-scheme: dark;
-  --surface: #0c0e14;
-  --surface-2: #13161f;
-  --surface-3: #1a1d28;
-  --border: #252836;
-  --border-2: #2e3245;
-  --text-strong: #f8fafc;
-  --text-primary: #f1f5f9;
-  --text-secondary: #e2e8f0;
-  --text-muted: #cbd5e1;
-  --text-subtle: #94a3b8;
-  --text-faint: #64748b;
-  --text-quiet: #475569;
-  --amber: #f59e0b;
-  --amber-light: #fbbf24;
-  --amber-dark: #d97706;
-  --amber-glow: rgba(245, 158, 11, 0.15);
+  --surface: #0a0a0a;
+  --surface-2: #111111;
+  --surface-3: #1a1a1a;
+  --border: #292929;
+  --border-2: #404040;
+  --text-strong: #ffffff;
+  --text-primary: #f5f5f5;
+  --text-secondary: #e5e5e5;
+  --text-muted: #d4d4d4;
+  --text-subtle: #a3a3a3;
+  --text-faint: #737373;
+  --text-quiet: #525252;
+  --amber: #f5f5f5;
+  --amber-light: #ffffff;
+  --amber-dark: #ffffff;
+  --amber-glow: rgba(255, 255, 255, 0.12);
 }
 
 @layer base {
@@ -216,14 +216,14 @@
     border: 1px solid rgba(245,158,11,0.3);
   }
   .badge-green {
-    background-color: rgba(34,197,94,0.12);
-    color: #4ade80;
-    border: 1px solid rgba(34,197,94,0.25);
+    background-color: #f5f5f5;
+    color: #111111;
+    border: 1px solid #d4d4d4;
   }
   .badge-red {
-    background-color: rgba(239,68,68,0.12);
-    color: #f87171;
-    border: 1px solid rgba(239,68,68,0.25);
+    background-color: #f5f5f5;
+    color: #525252;
+    border: 1px solid #d4d4d4;
   }
   .badge-slate {
     background-color: rgba(100,116,139,0.15);

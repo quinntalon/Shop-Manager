@@ -18,6 +18,7 @@ export interface StoreProduct {
   stock: number;
   categoryId: number | null;
   categoryName: string | null;
+  storefrontActivatedAt: string | null;
   createdAt: string;
 }
 
@@ -27,6 +28,7 @@ export interface StoreProductsParams {
   minPrice?: number;
   maxPrice?: number;
   sort?: "newest" | "price_asc" | "price_desc" | "name";
+  newArrivals?: boolean;
 }
 
 async function request<T>(url: string): Promise<T> {
@@ -46,6 +48,7 @@ export function fetchProducts(params: StoreProductsParams = {}): Promise<StorePr
   if (params.minPrice != null) q.set("minPrice", String(params.minPrice));
   if (params.maxPrice != null) q.set("maxPrice", String(params.maxPrice));
   if (params.sort)       q.set("sort",       params.sort);
+  if (params.newArrivals) q.set("new", "1");
   const qs = q.toString();
   return request<StoreProduct[]>(`${BASE}/products${qs ? `?${qs}` : ""}`);
 }

@@ -11,10 +11,17 @@ import {
   DeleteProductParams,
   AdjustStockParams,
   AdjustStockBody,
-  BulkDiscountBody,
-  AddWarehouseStockBody,
 } from "@workspace/api-zod";
 import { requireAnyRole, requirePermission } from "../middlewares/requireRole";
+
+const AddWarehouseStockBody = z.object({
+  quantity: z.number().int().positive(),
+});
+
+const BulkDiscountBody = z.object({
+  discountPercent: z.number().int().min(0).max(100),
+  productIds: z.array(z.number().int().positive()).optional(),
+});
 
 function buildProduct(row: {
   id: number;
@@ -325,7 +332,10 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
 
       const [updated] = await db
         .update(productsTable)
-        .set({ storefrontActive: body.data.active })
+        .set({
+          storefrontActive: body.data.active,
+          storefrontActivatedAt: body.data.active ? new Date() : null,
+        })
         .where(eq(productsTable.id, params.data.id))
         .returning();
 
@@ -357,7 +367,10 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
 
       const result = await db
         .update(productsTable)
-        .set({ storefrontActive: body.data.active })
+        .set({
+          storefrontActive: body.data.active,
+          storefrontActivatedAt: body.data.active ? new Date() : null,
+        })
         .where(inArray(productsTable.id, body.data.ids))
         .returning({ id: productsTable.id });
 
