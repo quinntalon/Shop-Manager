@@ -84,7 +84,13 @@ pnpm --filter @workspace/api-spec run codegen
 The ShopDesk app (management + API) includes a Vercel Build Output API configuration at `shopDesk/vercel.json`. Vercel uses:
 
 - Install command: `pnpm install`
-- Build command: `node shopDesk/build.vercel.mjs`
+- Build command: `pnpm --filter @workspace/db run push && node shopDesk/build.vercel.mjs`
+
+The build applies the current Drizzle schema to the configured Vercel
+`DATABASE_URL` before bundling the frontend and API. This is required because
+this repository does not contain versioned SQL migrations. If the database
+connection is missing or unreachable, the deployment fails during the build
+instead of publishing a frontend whose API returns database errors.
 
 Configure these environment variables in the Vercel project for the relevant
 environments before deploying:

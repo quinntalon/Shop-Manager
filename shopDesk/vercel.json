@@ -1,5 +1,5 @@
 {
   "version": 2,
   "installCommand": "pnpm install",
-  "buildCommand": "node build.vercel.mjs"
+  "buildCommand": "pnpm --filter @workspace/db run push && node build.vercel.mjs"
 }
