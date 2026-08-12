@@ -19,9 +19,17 @@ export type PermissionType = typeof ALL_PERMISSIONS[number];
 
 export const userRolesTable = pgTable("user_roles", {
   id: serial("id").primaryKey(),
-  clerkUserId: text("clerk_user_id").notNull().unique(),
+  username: text("clerk_user_id").notNull().unique(),
+  passwordHash: text("password_hash").notNull().default(""),
   name: text("name").notNull().default(""),
   email: text("email").notNull().default(""),
+  address: text("address").notNull().default(""),
+  phone: text("phone").notNull().default(""),
+  nextOfKinName: text("next_of_kin_name").notNull().default(""),
+  nextOfKinPhone: text("next_of_kin_phone").notNull().default(""),
+  position: text("position").notNull().default(""),
+  applicationNotes: text("application_notes").notNull().default(""),
+  status: text("status").$type<"pending" | "approved" | "rejected">().notNull().default("pending"),
   role: text("role").$type<UserRoleType | null>(),
   /** When set, overrides the role-based permission defaults for this user. */
   permissions: text("permissions").array(),

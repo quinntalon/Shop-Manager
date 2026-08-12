@@ -13,7 +13,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 process.env.NODE_ENV ??= "production";
 
 // Check required env vars early so the error message is clear in Vercel logs.
-const REQUIRED = ["DATABASE_URL", "CLERK_SECRET_KEY", "CLERK_PUBLISHABLE_KEY"];
+const REQUIRED = ["DATABASE_URL"];
 type BuildApp = (typeof import("./app.js"))["buildApp"];
 type App = Awaited<ReturnType<BuildApp>>;
 

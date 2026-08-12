@@ -1,8 +1,7 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
-import { getAuth } from "@clerk/fastify";
 import { eq } from "drizzle-orm";
 import { db, userRolesTable } from "@workspace/db";
-import type { UserRoleType } from "@workspace/db";
+import { getCurrentUser } from "../lib/auth";
 
 export type Permission =
   | "dashboard"
@@ -14,7 +13,7 @@ export type Permission =
   | "customers"
   | "reports";
 
-export const ROLE_PERMISSIONS: Record<UserRoleType, Permission[]> = {
+export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   admin: ["dashboard", "inventory", "sales", "categories", "users", "settings", "customers", "reports"],
   salesperson: ["dashboard", "sales", "customers"],
   cashier: ["sales"],
@@ -22,44 +21,34 @@ export const ROLE_PERMISSIONS: Record<UserRoleType, Permission[]> = {
 
 export function requirePermission(...permissions: Permission[]) {
   return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    const { userId } = getAuth(req);
-    if (!userId) {
-      reply.code(401).send({ error: "Unauthorized" });
+    const user = await getCurrentUser(req);
+    if (!user) {
+      reply.code(401).send({ error: "Please sign in to continue." });
       return;
     }
-    const [row] = await db
-      .select()
-      .from(userRolesTable)
-      .where(eq(userRolesTable.clerkUserId, userId));
-    if (!row || !row.role) {
-      reply.code(403).send({ error: "No role assigned. Contact an admin." });
+    if (user.status !== "approved" || !user.role) {
+      reply.code(403).send({ error: "Your application is waiting for admin approval." });
       return;
     }
     const userPerms: string[] =
-      row.permissions && row.permissions.length > 0
-        ? row.permissions
-        : (ROLE_PERMISSIONS[row.role] ?? []);
+      user.permissions && user.permissions.length > 0
+        ? user.permissions
+        : (ROLE_PERMISSIONS[user.role] ?? []);
     if (!permissions.every((p) => userPerms.includes(p))) {
       reply.code(403).send({ error: "Insufficient permissions." });
-      return;
     }
   };
 }
 
 export function requireAnyRole() {
   return async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    const { userId } = getAuth(req);
-    if (!userId) {
-      reply.code(401).send({ error: "Unauthorized" });
+    const user = await getCurrentUser(req);
+    if (!user) {
+      reply.code(401).send({ error: "Please sign in to continue." });
       return;
     }
-    const [row] = await db
-      .select()
-      .from(userRolesTable)
-      .where(eq(userRolesTable.clerkUserId, userId));
-    if (!row || !row.role) {
-      reply.code(403).send({ error: "No role assigned. Contact an admin." });
-      return;
+    if (user.status !== "approved" || !user.role) {
+      reply.code(403).send({ error: "Your application is waiting for admin approval." });
     }
   };
 }

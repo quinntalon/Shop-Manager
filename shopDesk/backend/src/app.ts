@@ -1,8 +1,6 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
-import { clerkPlugin } from "@clerk/fastify";
-import { clerkProxyPlugin } from "./middlewares/clerkProxyMiddleware";
 import router from "./routes/";
 import { logger } from "./lib/logger";
 
@@ -13,22 +11,14 @@ export async function buildApp() {
     loggerInstance: logger,
   });
 
-  // Clerk proxy must be registered first — its content-type parser for raw
-  // Buffer bodies must not be overridden by later plugins on those routes.
-  await app.register(clerkProxyPlugin);
-
-  // CORS — mirrors the previous Express cors({ credentials: true, origin: true })
+  // The app uses same-origin HTTP-only sessions. Keep credentials enabled for
+  // local development and deployments where the frontend/API are separated.
   await app.register(cors, { credentials: true, origin: true });
 
   // Multipart — used by the storage/upload route (replaces multer)
   await app.register(multipart, {
     limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
   });
-
-  // Clerk authentication middleware
-  // Reads CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY from the environment
-  // automatically; no need to pass them explicitly.
-  await app.register(clerkPlugin);
 
   // All API routes under /api
   await app.register(router, { prefix: "/api" });

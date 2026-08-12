@@ -13,8 +13,10 @@ import reportsRoutes from "./reports";
 import stockTransfersRoutes from "./stockTransfers";
 import loyaltyRoutes from "./loyalty";
 import storeRoutes from "./store";
+import authRoutes from "./auth";
 
 const router: FastifyPluginAsync = async (fastify) => {
+  await fastify.register(authRoutes);
   await fastify.register(healthRoutes);
   await fastify.register(storageRoutes);
   await fastify.register(usersRoutes);

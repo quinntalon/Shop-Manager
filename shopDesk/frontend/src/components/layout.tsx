@@ -1,6 +1,5 @@
 import { useState, useEffect, ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { useUser, useClerk } from "@clerk/react";
 import {
   LayoutDashboard,
   Package,
@@ -57,10 +56,10 @@ function SidebarContent({
 }: {
   navItems: { href: string; label: string; icon: typeof LayoutDashboard; permission: Permission }[];
   location: string;
-  user: ReturnType<typeof useUser>["user"];
+  user: { name: string; email: string; username: string } | null;
   role: string | null;
   basePath: string;
-  signOut: (opts: { redirectUrl: string }) => void;
+  signOut: () => void | Promise<void>;
   onNavClick?: () => void;
   collapsed?: boolean;
   onCollapseToggle?: () => void;
@@ -136,18 +135,14 @@ function SidebarContent({
         {!collapsed && (
           <div className="flex items-center gap-3 rounded-md px-1 py-2">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-              {user?.imageUrl ? (
-                <img src={user.imageUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
-              ) : (
-                <User className="h-4 w-4" />
-              )}
+              <User className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">
-                {user?.fullName || user?.primaryEmailAddress?.emailAddress || "User"}
+                {user?.name || user?.username || "User"}
               </p>
               <p className="truncate text-xs text-muted-foreground">
-                {user?.primaryEmailAddress?.emailAddress}
+                {user?.email || user?.username}
               </p>
             </div>
           </div>
@@ -163,7 +158,7 @@ function SidebarContent({
         {/* Logout */}
         <button
           type="button"
-          onClick={() => signOut({ redirectUrl: basePath || "/" })}
+          onClick={() => void signOut()}
           className={cn(
             "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
             collapsed && "justify-center px-2"
@@ -183,9 +178,7 @@ function SidebarContent({
 
 export default function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
-  const { user } = useUser();
-  const { signOut } = useClerk();
-  const { role, can } = useRole();
+  const { user, role, can, signOut } = useRole();
   const { settings } = useSettings();
 
   const [mobileOpen, setMobileOpen] = useState(false);

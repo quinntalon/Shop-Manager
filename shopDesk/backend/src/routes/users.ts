@@ -1,137 +1,112 @@
 import type { FastifyPluginAsync } from "fastify";
-import { getAuth, clerkClient } from "@clerk/fastify";
-import { eq, isNotNull, count } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db, userRolesTable } from "@workspace/db";
 import { USER_ROLES, type UserRoleType } from "@workspace/db";
-import { requirePermission } from "../middlewares/requireRole";
+import { getCurrentUser } from "../lib/auth";
+import { requirePermission, ROLE_PERMISSIONS } from "../middlewares/requireRole";
 import { z } from "zod/v4";
 
+const UserParams = z.object({ clerkUserId: z.string().min(1) });
 const RoleUpdateBody = z.object({
   role: z.enum(USER_ROLES).nullable(),
   permissions: z.array(z.string()).nullable().optional(),
 });
-
-const ClerkUserIdParams = z.object({
-  clerkUserId: z.string().min(1),
+const StatusUpdateBody = z.object({
+  status: z.enum(["pending", "approved", "rejected"]),
 });
+
+function publicUser(user: typeof userRolesTable.$inferSelect) {
+  return {
+    id: user.id,
+    // Kept as an API compatibility name for the generated client. This is
+    // now the local username and is not a Clerk identifier.
+    clerkUserId: user.username,
+    username: user.username,
+    name: user.name,
+    email: user.email,
+    address: user.address,
+    phone: user.phone,
+    nextOfKinName: user.nextOfKinName,
+    nextOfKinPhone: user.nextOfKinPhone,
+    position: user.position,
+    applicationNotes: user.applicationNotes,
+    status: user.status,
+    role: user.role,
+    permissions: user.permissions ?? [],
+    createdAt: user.createdAt.toISOString(),
+  };
+}
 
 const usersRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get("/users/me", async (request, reply) => {
-    const { userId } = getAuth(request);
-    if (!userId) {
-      return reply.code(401).send({ error: "Unauthorized" });
-    }
-
-    let name = "";
-    let email = "";
-    try {
-      const clerkUser = await clerkClient.users.getUser(userId);
-      name =
-        [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
-        clerkUser.username ||
-        "";
-      email =
-        clerkUser.emailAddresses.find(
-          (e) => e.id === clerkUser.primaryEmailAddressId,
-        )?.emailAddress ?? "";
-    } catch {
-      request.log.warn("Could not fetch Clerk user info for %s", userId);
-    }
-
-    const [existing] = await db
-      .select()
-      .from(userRolesTable)
-      .where(eq(userRolesTable.clerkUserId, userId));
-
-    if (!existing) {
-      const [adminCount] = await db
-        .select({ count: count() })
-        .from(userRolesTable)
-        .where(isNotNull(userRolesTable.role));
-
-      const isFirst = adminCount.count === 0;
-      const role: UserRoleType | null = isFirst ? "admin" : null;
-
-      await db
-        .insert(userRolesTable)
-        .values({ clerkUserId: userId, name, email, role })
-        .returning();
-
-      const permissions = role
-        ? (
-            await import("../middlewares/requireRole").then(
-              (m) => m.ROLE_PERMISSIONS[role] ?? [],
-            )
-          )
-        : [];
-
-      return { clerkUserId: userId, name, email, role, permissions };
-    }
-
-    await db
-      .update(userRolesTable)
-      .set({ name: name || existing.name, email: email || existing.email })
-      .where(eq(userRolesTable.clerkUserId, userId));
-
-    const { ROLE_PERMISSIONS } = await import("../middlewares/requireRole");
-    const effectivePermissions: string[] =
-      existing.permissions && existing.permissions.length > 0
-        ? existing.permissions
-        : existing.role
-          ? (ROLE_PERMISSIONS[existing.role] ?? [])
-          : [];
-
-    return {
-      clerkUserId: userId,
-      name: name || existing.name,
-      email: email || existing.email,
-      role: existing.role,
-      permissions: effectivePermissions,
-    };
+    const user = await getCurrentUser(request);
+    if (!user) return reply.code(401).send({ error: "Please sign in to continue." });
+    return reply.send({
+      ...publicUser(user),
+      permissions:
+        user.permissions && user.permissions.length > 0
+          ? user.permissions
+          : user.role
+            ? (ROLE_PERMISSIONS[user.role] ?? [])
+            : [],
+    });
   });
 
-  fastify.get(
-    "/users",
-    { preHandler: [requirePermission("users")] },
-    async () => {
-      const rows = await db
-        .select()
-        .from(userRolesTable)
-        .orderBy(userRolesTable.createdAt);
-      return rows;
-    },
-  );
+  fastify.get("/users", { preHandler: [requirePermission("users")] }, async () => {
+    const rows = await db.select().from(userRolesTable).orderBy(userRolesTable.createdAt);
+    return rows.map(publicUser);
+  });
 
   fastify.patch(
     "/users/:clerkUserId",
     { preHandler: [requirePermission("users")] },
     async (request, reply) => {
-      const params = ClerkUserIdParams.safeParse(request.params);
-      if (!params.success) {
-        return reply.code(400).send({ error: params.error.message });
-      }
+      const params = UserParams.safeParse(request.params);
       const parsed = RoleUpdateBody.safeParse(request.body);
-      if (!parsed.success) {
-        return reply.code(400).send({ error: parsed.error.message });
+      if (!params.success || !parsed.success) {
+        return reply.code(400).send({ error: "Invalid user or role data." });
       }
 
-      const updateData: { role: UserRoleType | null; permissions?: string[] | null } = {
+      const updates: {
+        role: UserRoleType | null;
+        permissions?: string[] | null;
+        status: "pending" | "approved" | "rejected";
+      } = {
         role: parsed.data.role as UserRoleType | null,
+        status: parsed.data.role ? "approved" : "pending",
       };
-      if ("permissions" in parsed.data) {
-        updateData.permissions = parsed.data.permissions ?? null;
+      if ("permissions" in parsed.data) updates.permissions = parsed.data.permissions ?? null;
+
+      const [row] = await db
+        .update(userRolesTable)
+        .set(updates)
+        .where(eq(userRolesTable.username, params.data.clerkUserId))
+        .returning();
+      if (!row) return reply.code(404).send({ error: "User not found." });
+      return publicUser(row);
+    },
+  );
+
+  fastify.patch(
+    "/users/:clerkUserId/status",
+    { preHandler: [requirePermission("users")] },
+    async (request, reply) => {
+      const params = UserParams.safeParse(request.params);
+      const parsed = StatusUpdateBody.safeParse(request.body);
+      if (!params.success || !parsed.success) {
+        return reply.code(400).send({ error: "Invalid application status." });
       }
 
       const [row] = await db
         .update(userRolesTable)
-        .set(updateData)
-        .where(eq(userRolesTable.clerkUserId, params.data.clerkUserId))
+        .set({
+          status: parsed.data.status,
+          role: parsed.data.status === "approved" ? "cashier" : null,
+        })
+        .where(eq(userRolesTable.username, params.data.clerkUserId))
         .returning();
-
-      if (!row) {
-        return reply.code(404).send({ error: "User not found" });
-      }
-      return row;
+      if (!row) return reply.code(404).send({ error: "User not found." });
+      return publicUser(row);
     },
   );
 
@@ -139,18 +114,18 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
     "/users/:clerkUserId",
     { preHandler: [requirePermission("users")] },
     async (request, reply) => {
-      const params = ClerkUserIdParams.safeParse(request.params);
-      if (!params.success) {
-        return reply.code(400).send({ error: params.error.message });
+      const params = UserParams.safeParse(request.params);
+      if (!params.success) return reply.code(400).send({ error: "Invalid user." });
+
+      const current = await getCurrentUser(request);
+      if (current?.username === params.data.clerkUserId) {
+        return reply.code(400).send({ error: "You cannot delete your own account." });
       }
       const [row] = await db
         .delete(userRolesTable)
-        .where(eq(userRolesTable.clerkUserId, params.data.clerkUserId))
+        .where(eq(userRolesTable.username, params.data.clerkUserId))
         .returning();
-
-      if (!row) {
-        return reply.code(404).send({ error: "User not found" });
-      }
+      if (!row) return reply.code(404).send({ error: "User not found." });
       return reply.code(204).send();
     },
   );

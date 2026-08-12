@@ -2,6 +2,7 @@ export * from "./categories";
 export * from "./products";
 export * from "./sales";
 export * from "./userRoles";
+export * from "./sessions";
 export * from "./settings";
 export * from "./receiptTemplates";
 export * from "./stockTransfers";

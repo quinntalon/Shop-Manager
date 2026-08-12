@@ -15,20 +15,8 @@ if (Number.isNaN(port) || port <= 0) {
 
 // BASE_PATH defaults to "/" so `vite build` works without the env var.
 const basePath = process.env.BASE_PATH ?? "/";
-// Vercel sometimes has the public Clerk key configured under the backend's
-// shared name. Keep the client build resilient to that naming mismatch while
-// never falling back to the secret key.
-const clerkPublishableKey =
-  process.env.VITE_CLERK_PUBLISHABLE_KEY ??
-  process.env.CLERK_PUBLISHABLE_KEY ??
-  "";
-
 export default defineConfig({
   base: basePath,
-  define: {
-    "import.meta.env.VITE_CLERK_PUBLISHABLE_KEY":
-      JSON.stringify(clerkPublishableKey),
-  },
   plugins: [
     react(),
     tailwindcss({ optimize: false }),

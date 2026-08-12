@@ -1,13 +1,9 @@
-import { useEffect, useRef, type ReactNode } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk, ClerkLoading, ClerkLoaded } from "@clerk/react";
-import { publishableKeyFromHost } from "@clerk/react/internal";
-import { shadcn } from "@clerk/themes";
+import { useEffect, useState, type ReactNode } from "react";
 import { Switch, Route, Redirect, useLocation, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
-
 import Layout from "@/components/layout";
 import Dashboard from "@/pages/dashboard";
 import Products from "@/pages/inventory";
@@ -23,356 +19,245 @@ import ReceiptEditorPage from "@/pages/settings/receipt-editor";
 import StockTransfers from "@/pages/stock-transfers";
 import { useRole, type Permission } from "@/hooks/use-role";
 import { useSettings, applyTheme } from "@/hooks/use-settings";
+import { authQueryKey, login, register } from "@/lib/auth";
 import { ShieldAlert, LogOut } from "lucide-react";
 
 const queryClient = new QueryClient();
-
-let clerkPubKey: string | undefined;
-try {
-  clerkPubKey = publishableKeyFromHost(
-    window.location.hostname,
-    import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-  );
-} catch {
-  clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-}
-
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
-
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-function stripBase(path: string): string {
-  return basePath && path.startsWith(basePath)
-    ? path.slice(basePath.length) || "/"
-    : path;
+function Field({
+  label,
+  name,
+  value,
+  onChange,
+  type = "text",
+  required = true,
+  placeholder,
+  autoComplete,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  required?: boolean;
+  placeholder?: string;
+  autoComplete?: string;
+}) {
+  return (
+    <label className="space-y-1.5 text-sm">
+      <span className="font-medium text-foreground">{label}</span>
+      <input
+        name={name}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        type={type}
+        required={required}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+      />
+    </label>
+  );
 }
 
-if (!clerkPubKey) {
-  document.getElementById("root")!.innerHTML =
-    `<div style="display:flex;min-height:100dvh;align-items:center;justify-content:center;font-family:sans-serif;padding:2rem;text-align:center">
-      <div>
-        <h1 style="font-size:1.25rem;font-weight:700;margin-bottom:.5rem">Configuration error</h1>
-        <p style="color:#64748b;max-width:360px">
-          <code>VITE_CLERK_PUBLISHABLE_KEY</code> is not set.<br/>
-          Add it in Vercel → Settings → Environment Variables, then redeploy without cache.
-        </p>
+function AuthCard({ children, title, subtitle }: { children: ReactNode; title: string; subtitle: string }) {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-8">
+      <div className="w-full max-w-2xl rounded-2xl border bg-card p-6 shadow-lg sm:p-8">
+        <div className="mb-7 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <span className="text-lg font-bold">SD</span>
+          </div>
+          <h1 className="text-2xl font-bold">{title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+        </div>
+        {children}
       </div>
-    </div>`;
-  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY");
+    </div>
+  );
 }
-
-const clerkAppearance = {
-  theme: shadcn,
-  cssLayerName: "clerk",
-  options: {
-    logoPlacement: "inside" as const,
-    logoLinkUrl: basePath || "/",
-    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
-  },
-  variables: {
-    colorPrimary: "hsl(221, 83%, 53%)",
-    colorForeground: "hsl(222, 47%, 11%)",
-    colorMutedForeground: "hsl(215, 16%, 47%)",
-    colorDanger: "hsl(0, 84%, 60%)",
-    colorBackground: "hsl(0, 0%, 100%)",
-    colorInput: "hsl(214, 32%, 91%)",
-    colorInputForeground: "hsl(222, 47%, 11%)",
-    colorNeutral: "hsl(214, 32%, 91%)",
-    fontFamily: "'Plus Jakarta Sans', sans-serif",
-    borderRadius: "0.5rem",
-  },
-  elements: {
-    rootBox: "w-full flex justify-center",
-    cardBox: "bg-white rounded-2xl w-[440px] max-w-full overflow-hidden shadow-lg border border-slate-200",
-    card: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    headerTitle: "text-slate-900 font-bold",
-    headerSubtitle: "text-slate-500",
-    socialButtonsBlockButtonText: "text-slate-700 font-medium",
-    formFieldLabel: "text-slate-700 font-medium",
-    footerActionLink: "text-blue-600 font-semibold hover:text-blue-700",
-    footerActionText: "text-slate-500",
-    dividerText: "text-slate-400",
-    identityPreviewEditButton: "text-blue-600",
-    formFieldSuccessText: "text-green-600",
-    alertText: "text-slate-700",
-    logoBox: "flex justify-center",
-    logoImage: "h-12 w-12",
-    socialButtonsBlockButton: "border-slate-200 hover:bg-slate-50",
-    formButtonPrimary: "bg-blue-600 hover:bg-blue-700 text-white font-semibold",
-    formFieldInput: "border-slate-200 bg-slate-50 text-slate-900",
-    footerAction: "bg-slate-50 border-t border-slate-100",
-    dividerLine: "bg-slate-200",
-    alert: "border-slate-200",
-    otpCodeFieldInput: "border-slate-200",
-    formFieldRow: "",
-    main: "",
-  },
-};
 
 function SignInPage() {
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setError("");
+    setSubmitting(true);
+    try {
+      const result = await login({ username, password });
+      queryClient.setQueryData(authQueryKey, result.user);
+      setLocation("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to sign in.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
-      <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
-    </div>
+    <AuthCard title="Sign in to ShopDesk" subtitle="Use your approved account to continue">
+      <form className="mx-auto max-w-md space-y-4" onSubmit={handleSubmit}>
+        <Field label="Username" name="username" value={username} onChange={setUsername} autoComplete="username" />
+        <Field label="Password" name="password" value={password} onChange={setPassword} type="password" autoComplete="current-password" />
+        {error && <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+        <button className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60" disabled={isSubmitting}>
+          {isSubmitting ? "Signing in…" : "Sign in"}
+        </button>
+        <p className="text-center text-sm text-muted-foreground">
+          Need an account?{" "}
+          <a className="font-semibold text-primary hover:underline" href="/sign-up">Submit an application</a>
+        </p>
+      </form>
+    </AuthCard>
   );
 }
 
 function SignUpPage() {
-  const { signOut } = useClerk();
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState({
+    fullName: "", address: "", username: "", password: "", email: "",
+    phone: "", nextOfKinName: "", nextOfKinPhone: "", position: "", applicationNotes: "",
+  });
+  const [error, setError] = useState("");
+  const [isSubmitting, setSubmitting] = useState(false);
+  const update = (name: keyof typeof form) => (value: string) => setForm((current) => ({ ...current, [name]: value }));
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setError("");
+    setSubmitting(true);
+    try {
+      const result = await register(form);
+      queryClient.setQueryData(authQueryKey, result.user);
+      setLocation("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to submit your application.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-background px-4">
-      <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
-      <button
-        type="button"
-        onClick={() => signOut({ redirectUrl: `${basePath}/sign-in` })}
-        className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm transition-all hover:border-primary/40 hover:bg-muted hover:text-foreground active:scale-95"
-      >
-        <LogOut className="h-4 w-4" />
-        Sign out
-      </button>
-    </div>
+    <AuthCard title="Apply for access" subtitle="Complete the form. An administrator will review your application.">
+      <form className="space-y-5" onSubmit={handleSubmit}>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Full name" name="fullName" value={form.fullName} onChange={update("fullName")} />
+          <Field label="Position applied for" name="position" value={form.position} onChange={update("position")} placeholder="e.g. Cashier" />
+          <Field label="Username" name="username" value={form.username} onChange={update("username")} placeholder="letters, numbers, dots or dashes" />
+          <Field label="Password" name="password" value={form.password} onChange={update("password")} type="password" />
+          <Field label="Email address" name="email" value={form.email} onChange={update("email")} type="email" required={false} />
+          <Field label="Phone number" name="phone" value={form.phone} onChange={update("phone")} />
+        </div>
+        <Field label="Address" name="address" value={form.address} onChange={update("address")} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Next-of-kin name" name="nextOfKinName" value={form.nextOfKinName} onChange={update("nextOfKinName")} />
+          <Field label="Next-of-kin phone" name="nextOfKinPhone" value={form.nextOfKinPhone} onChange={update("nextOfKinPhone")} />
+        </div>
+        <label className="block space-y-1.5 text-sm">
+          <span className="font-medium">Additional information</span>
+          <textarea
+            name="applicationNotes"
+            value={form.applicationNotes}
+            onChange={(event) => update("applicationNotes")(event.target.value)}
+            rows={3}
+            placeholder="Anything else the administrator should know?"
+            className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </label>
+        {error && <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+        <button className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting application…" : "Submit application"}
+        </button>
+        <p className="text-center text-sm text-muted-foreground">
+          Already applied?{" "}
+          <a className="font-semibold text-primary hover:underline" href="/sign-in">Sign in</a>
+        </p>
+      </form>
+    </AuthCard>
   );
-}
-
-function ClerkQueryClientCacheInvalidator() {
-  const { addListener } = useClerk();
-  const qc = useQueryClient();
-  const prevUserIdRef = useRef<string | null | undefined>(undefined);
-
-  useEffect(() => {
-    const unsubscribe = addListener(({ user }) => {
-      const userId = user?.id ?? null;
-      if (prevUserIdRef.current !== undefined && prevUserIdRef.current !== userId) {
-        qc.clear();
-      }
-      prevUserIdRef.current = userId;
-    });
-    return unsubscribe;
-  }, [addListener, qc]);
-
-  return null;
 }
 
 function PendingAccess() {
-  const { signOut } = useClerk();
+  const { signOut } = useRole();
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-background px-4 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-        <ShieldAlert className="h-8 w-8 text-muted-foreground" />
-      </div>
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted"><ShieldAlert className="h-8 w-8 text-muted-foreground" /></div>
       <h1 className="text-xl font-bold">Waiting for access</h1>
-      <p className="max-w-sm text-sm text-muted-foreground">
-        Your account has been created, but an administrator hasn't assigned you a role yet.
-        Please check back soon or contact your administrator.
-      </p>
-      <button
-        type="button"
-        onClick={() => signOut({ redirectUrl: `${basePath}/sign-in` })}
-        className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm transition-all hover:border-primary/40 hover:bg-muted hover:text-foreground active:scale-95"
-      >
-        <LogOut className="h-4 w-4" />
-        Sign out
+      <p className="max-w-sm text-sm text-muted-foreground">Your application was submitted successfully. An administrator will review your details and assign your role.</p>
+      <button type="button" onClick={() => void signOut()} className="flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted">
+        <LogOut className="h-4 w-4" /> Sign out
       </button>
     </div>
   );
 }
 
-function RequirePermission({
-  permission,
-  children,
-}: {
-  permission: Permission;
-  children: ReactNode;
-}) {
+function RejectedAccess() {
+  const { signOut } = useRole();
+  return (
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-background px-4 text-center">
+      <ShieldAlert className="h-10 w-10 text-destructive" />
+      <h1 className="text-xl font-bold">Application not approved</h1>
+      <p className="max-w-sm text-sm text-muted-foreground">Your application was not approved. Contact the administrator if you believe this was a mistake.</p>
+      <button type="button" onClick={() => void signOut()} className="rounded-lg border bg-card px-4 py-2 text-sm font-medium hover:bg-muted">Sign out</button>
+    </div>
+  );
+}
+
+function RequirePermission({ permission, children }: { permission: Permission; children: ReactNode }) {
   const { can, isLoading } = useRole();
   if (isLoading) return null;
   if (!can(permission)) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 p-10 text-center">
-        <ShieldAlert className="h-8 w-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
-          You don't have permission to view this page.
-        </p>
-      </div>
-    );
+    return <div className="flex flex-col items-center justify-center gap-3 p-10 text-center"><ShieldAlert className="h-8 w-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">You don't have permission to view this page.</p></div>;
   }
   return <>{children}</>;
 }
 
 function AppRoutes() {
-  const { isLoading, isPending, isError } = useRole();
-
-  if (isLoading) return (
-    <div className="flex min-h-[100dvh] items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-    </div>
-  );
-  if (isError) return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-background px-4 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-        <ShieldAlert className="h-8 w-8 text-destructive" />
-      </div>
-      <h1 className="text-xl font-bold">Could not connect to server</h1>
-      <p className="max-w-sm text-sm text-muted-foreground">
-        The API server isn't responding. Make sure <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">CLERK_SECRET_KEY</code> is set in your environment variables and the API server is running.
-      </p>
-    </div>
-  );
-  if (isPending) return <PendingAccess />;
-
   return (
-    <Show when="signed-in">
-      <Layout>
-        <Switch>
-          <Route path="/">
-            <RequirePermission permission="dashboard">
-              <Dashboard />
-            </RequirePermission>
-          </Route>
-          <Route path="/inventory">
-            <RequirePermission permission="inventory">
-              <Products />
-            </RequirePermission>
-          </Route>
-          <Route path="/sales">
-            <RequirePermission permission="sales">
-              <Sales />
-            </RequirePermission>
-          </Route>
-          <Route path="/sales/new">
-            <RequirePermission permission="sales">
-              <NewSale />
-            </RequirePermission>
-          </Route>
-          <Route path="/sales/:id">
-            <RequirePermission permission="sales">
-              <SaleDetail />
-            </RequirePermission>
-          </Route>
-          <Route path="/categories">
-            <RequirePermission permission="categories">
-              <Categories />
-            </RequirePermission>
-          </Route>
-          <Route path="/customers">
-            <RequirePermission permission="customers">
-              <CustomersPage />
-            </RequirePermission>
-          </Route>
-          <Route path="/reports">
-            <RequirePermission permission="reports">
-              <ReportsPage />
-            </RequirePermission>
-          </Route>
-          <Route path="/users">
-            <RequirePermission permission="users">
-              <UsersPage />
-            </RequirePermission>
-          </Route>
-          <Route path="/settings">
-            <RequirePermission permission="settings">
-              <SettingsPage />
-            </RequirePermission>
-          </Route>
-          <Route path="/settings/receipt-editor">
-            <RequirePermission permission="settings">
-              <ReceiptEditorPage />
-            </RequirePermission>
-          </Route>
-          <Route path="/stock-transfers">
-            <RequirePermission permission="inventory">
-              <StockTransfers />
-            </RequirePermission>
-          </Route>
-          <Route component={NotFound} />
-        </Switch>
-      </Layout>
-    </Show>
+    <Layout>
+      <Switch>
+        <Route path="/"><RequirePermission permission="dashboard"><Dashboard /></RequirePermission></Route>
+        <Route path="/inventory"><RequirePermission permission="inventory"><Products /></RequirePermission></Route>
+        <Route path="/sales"><RequirePermission permission="sales"><Sales /></RequirePermission></Route>
+        <Route path="/sales/new"><RequirePermission permission="sales"><NewSale /></RequirePermission></Route>
+        <Route path="/sales/:id"><RequirePermission permission="sales"><SaleDetail /></RequirePermission></Route>
+        <Route path="/categories"><RequirePermission permission="categories"><Categories /></RequirePermission></Route>
+        <Route path="/customers"><RequirePermission permission="customers"><CustomersPage /></RequirePermission></Route>
+        <Route path="/reports"><RequirePermission permission="reports"><ReportsPage /></RequirePermission></Route>
+        <Route path="/users"><RequirePermission permission="users"><UsersPage /></RequirePermission></Route>
+        <Route path="/settings"><RequirePermission permission="settings"><SettingsPage /></RequirePermission></Route>
+        <Route path="/settings/receipt-editor"><RequirePermission permission="settings"><ReceiptEditorPage /></RequirePermission></Route>
+        <Route path="/stock-transfers"><RequirePermission permission="inventory"><StockTransfers /></RequirePermission></Route>
+        <Route component={NotFound} />
+      </Switch>
+    </Layout>
   );
 }
 
 function HomeRedirect() {
-  return (
-    <>
-      <ClerkLoading>
-        <div className="flex min-h-[100dvh] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      </ClerkLoading>
-      <ClerkLoaded>
-        <Show when="signed-in">
-          <AppRoutes />
-        </Show>
-        <Show when="signed-out">
-          <Redirect to="/sign-in" />
-        </Show>
-      </ClerkLoaded>
-    </>
-  );
+  const { isLoading, isAuthenticated, isPending, isRejected, isError } = useRole();
+  if (isLoading) return <div className="flex min-h-[100dvh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
+  if (isError) return <div className="flex min-h-[100dvh] items-center justify-center px-4 text-center"><p className="text-sm text-destructive">The server is unavailable. Please try again.</p></div>;
+  if (!isAuthenticated) return <Redirect to="/sign-in" />;
+  if (isPending) return <PendingAccess />;
+  if (isRejected) return <RejectedAccess />;
+  return <AppRoutes />;
 }
 
 function ThemeSync() {
   const { settings } = useSettings();
   useEffect(() => {
-    if (settings) {
-      applyTheme(settings.themeMode, settings.primaryColor);
-    }
+    if (settings) applyTheme(settings.themeMode, settings.primaryColor);
   }, [settings?.themeMode, settings?.primaryColor]);
   return null;
-}
-
-function ClerkProviderWithRoutes() {
-  const [, setLocation] = useLocation();
-  const { settings } = useSettings();
-
-  const businessName = settings?.businessName || "Nexus POS";
-  const logoImageUrl = settings?.logoUrl
-    ? settings.logoUrl
-    : `${window.location.origin}${basePath}/logo.svg`;
-  const colorPrimary = settings?.primaryColor
-    ? `hsl(${settings.primaryColor})`
-    : clerkAppearance.variables.colorPrimary;
-
-  return (
-    <ClerkProvider
-      publishableKey={clerkPubKey as string}
-      proxyUrl={clerkProxyUrl}
-      appearance={{
-        ...clerkAppearance,
-        options: { ...clerkAppearance.options, logoImageUrl },
-        variables: { ...clerkAppearance.variables, colorPrimary },
-      }}
-      signInUrl={`${basePath}/sign-in`}
-      signUpUrl={`${basePath}/sign-up`}
-      localization={{
-        signIn: {
-          start: {
-            title: `Sign in to ${businessName}`,
-            subtitle: "Welcome back! Please sign in to continue",
-          },
-        },
-        signUp: {
-          start: {
-            title: "Create your account",
-            subtitle: `Get started with ${businessName} today`,
-          },
-        },
-      }}
-      routerPush={(to) => setLocation(stripBase(to))}
-      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
-    >
-      <ClerkQueryClientCacheInvalidator />
-      <TooltipProvider>
-        <Switch>
-          <Route path="/sign-in/*?" component={SignInPage} />
-          <Route path="/sign-up/*?" component={SignUpPage} />
-          <Route component={HomeRedirect} />
-        </Switch>
-        <Toaster />
-      </TooltipProvider>
-    </ClerkProvider>
-  );
 }
 
 function App() {
@@ -380,7 +265,14 @@ function App() {
     <WouterRouter base={basePath}>
       <QueryClientProvider client={queryClient}>
         <ThemeSync />
-        <ClerkProviderWithRoutes />
+        <TooltipProvider>
+          <Switch>
+            <Route path="/sign-in" component={SignInPage} />
+            <Route path="/sign-up" component={SignUpPage} />
+            <Route component={HomeRedirect} />
+          </Switch>
+          <Toaster />
+        </TooltipProvider>
       </QueryClientProvider>
     </WouterRouter>
   );
