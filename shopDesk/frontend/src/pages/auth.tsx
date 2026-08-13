@@ -51,20 +51,20 @@ function GoogleButton() {
 
 function AuthShell({ children, extraFooter }: { children: React.ReactNode; extraFooter?: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white px-4 py-4 font-[Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif] text-gray-900">
-      <div className="w-full max-w-[480px] rounded-2xl border border-gray-200 bg-white px-8 py-8 shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-white px-4 py-2 font-[Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif] text-gray-900">
+      <div className="w-full max-w-[400px] rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-lg">
         <div className="flex justify-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-blue-500 shadow-lg">
             <ShoppingCart className="h-8 w-8 text-white" strokeWidth={2.4} />
           </div>
         </div>
 
-        <div className="mt-6 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Sign in to Nexus POS</h1>
-          <p className="mt-2 text-[15px] text-gray-600">Welcome back! Please sign in to continue</p>
+        <div className="mt-4 text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Sign in to Nexus POS</h1>
+          <p className="mt-1.5 text-[14px] text-gray-600">Welcome back! Please sign in to continue</p>
         </div>
 
-        <div className="mt-8 space-y-5">{children}</div>
+        <div className="mt-5 space-y-4">{children}</div>
 
         {extraFooter}
       </div>
@@ -74,7 +74,7 @@ function AuthShell({ children, extraFooter }: { children: React.ReactNode; extra
 
 function AuthFooter({ prompt, actionText, href }: { prompt: string; actionText: string; href: string }) {
   return (
-    <div className="mt-6 text-center text-[15px] text-gray-600">
+    <div className="mt-4 text-center text-[14px] text-gray-600">
       {prompt}{" "}
       <a href={href} className="font-semibold text-blue-500 hover:underline">
         {actionText}
@@ -107,21 +107,13 @@ export function SignInPage() {
     <AuthShell
       extraFooter={<AuthFooter prompt="Don't have an account?" actionText="Sign up" href="/sign-up" />}
     >
-      <GoogleButton />
-
-      <div className="relative flex items-center justify-center text-sm text-gray-500">
-        <span className="h-px flex-1 bg-gray-300" />
-        <span className="mx-3">or</span>
-        <span className="h-px flex-1 bg-gray-300" />
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <Field
-          label="Email address or username"
+          label="Username"
           name="username"
           value={username}
           onChange={setUsername}
-          placeholder="Enter email or username"
+          placeholder="Enter your username"
           autoComplete="username"
         />
 
@@ -131,7 +123,7 @@ export function SignInPage() {
           value={password}
           onChange={setPassword}
           type="password"
-          placeholder="Enter password"
+          placeholder="Enter your password"
           autoComplete="current-password"
         />
 
@@ -144,14 +136,14 @@ export function SignInPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-3 text-[15px] font-semibold text-white shadow-md transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-2.5 text-[15px] font-semibold text-white shadow-md transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting ? "Signing in…" : "Continue"}
           <ArrowRight className="h-4 w-4" />
         </button>
       </form>
 
-      <div className="mt-6 text-center text-sm text-gray-600">
+      <div className="mt-4 text-center text-sm text-gray-600">
         Secured by <span className="font-semibold text-gray-900">ShopDesk</span>
       </div>
     </AuthShell>
@@ -196,12 +188,12 @@ export function SignUpPage() {
     <AuthShell
       extraFooter={<AuthFooter prompt="Already have an account?" actionText="Sign in" href="/sign-in" />}
     >
-      <div className="mb-3 text-center">
-        <h2 className="text-2xl font-bold text-gray-900">Create account</h2>
-        <p className="mt-2 text-[15px] text-gray-600">Request access to the Nexus POS workspace.</p>
+      <div className="mb-2 text-center">
+        <h2 className="text-xl font-bold text-gray-900">Create account</h2>
+        <p className="mt-1 text-[14px] text-gray-600">Request access to the Nexus POS workspace.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-3">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Full name" name="fullName" value={form.fullName} onChange={update("fullName")} placeholder="Jane Smith" autoComplete="name" />
           <Field label="Position" name="position" value={form.position} onChange={update("position")} placeholder="Cashier" autoComplete="organization-title" />
@@ -239,7 +231,7 @@ export function SignUpPage() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-3 text-[15px] font-semibold text-white shadow-md transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-2.5 text-[15px] font-semibold text-white shadow-md transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {isSubmitting ? "Submitting…" : "Submit application"}
           <ArrowRight className="h-4 w-4" />

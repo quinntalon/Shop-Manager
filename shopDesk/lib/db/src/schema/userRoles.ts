@@ -19,7 +19,7 @@ export type PermissionType = typeof ALL_PERMISSIONS[number];
 
 export const userRolesTable = pgTable("user_roles", {
   id: serial("id").primaryKey(),
-  username: text("clerk_user_id").notNull().unique(),
+  username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull().default(""),
   name: text("name").notNull().default(""),
   email: text("email").notNull().default(""),

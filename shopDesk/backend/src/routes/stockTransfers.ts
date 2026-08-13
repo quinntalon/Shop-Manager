@@ -92,7 +92,7 @@ const stockTransfersRoutes: FastifyPluginAsync = async (fastify) => {
       // Record the transfer
       const [transfer] = await db
         .insert(stockTransfersTable)
-        .values({ productId, quantity, notes: notes ?? null, transferredBy: currentUser?.id ?? null })
+        .values({ productId, quantity, notes: notes ?? null, transferredBy: currentUser?.id?.toString() ?? null })
         .returning();
 
       const [row] = await db
