@@ -1,8 +1,8 @@
 import type { FastifyPluginAsync } from "fastify";
 import { eq, desc, and, sql, type SQL } from "drizzle-orm";
 import { db, productsTable, stockTransfersTable } from "@workspace/db";
-import { getAuth } from "@clerk/fastify";
 import { CreateStockTransferBody, ListStockTransfersQueryParams } from "@workspace/api-zod";
+import { getCurrentUser } from "../lib/auth";
 import { requirePermission } from "../middlewares/requireRole";
 
 const stockTransfersRoutes: FastifyPluginAsync = async (fastify) => {
@@ -63,7 +63,7 @@ const stockTransfersRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const { productId, quantity, notes } = parsed.data;
-      const { userId } = getAuth(request);
+      const currentUser = await getCurrentUser(request);
 
       // Validate product + warehouse stock in a single query
       const [product] = await db
@@ -92,7 +92,7 @@ const stockTransfersRoutes: FastifyPluginAsync = async (fastify) => {
       // Record the transfer
       const [transfer] = await db
         .insert(stockTransfersTable)
-        .values({ productId, quantity, notes: notes ?? null, transferredBy: userId ?? null })
+        .values({ productId, quantity, notes: notes ?? null, transferredBy: currentUser?.id ?? null })
         .returning();
 
       const [row] = await db

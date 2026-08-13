@@ -15,7 +15,7 @@ export interface LocalUser {
   createdAt: string;
 }
 
-export const authQueryKey = ["/api/users/me"] as const;
+export const authQueryKey = ["/api/auth/me"] as const;
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -35,7 +35,7 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export function getCurrentUser(): Promise<LocalUser | null> {
-  return request<LocalUser>("/api/users/me").catch((error) => {
+  return request<LocalUser>("/api/auth/me").catch((error) => {
     if ((error as Error & { status?: number }).status === 401) return null;
     throw error;
   });

@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Switch, Route, Redirect, useLocation, Router as WouterRouter } from "wouter";
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { useEffect, type ReactNode } from "react";
+import { Switch, Route, Redirect, Router as WouterRouter } from "wouter";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -17,9 +17,9 @@ import ReportsPage from "@/pages/reports";
 import SettingsPage from "@/pages/settings";
 import ReceiptEditorPage from "@/pages/settings/receipt-editor";
 import StockTransfers from "@/pages/stock-transfers";
+import { SignInPage, SignUpPage } from "@/pages/auth";
 import { useRole, type Permission } from "@/hooks/use-role";
 import { useSettings, applyTheme } from "@/hooks/use-settings";
-import { authQueryKey, login, register } from "@/lib/auth";
 import { ShieldAlert, LogOut } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -78,112 +78,6 @@ function AuthCard({ children, title, subtitle }: { children: ReactNode; title: s
   );
 }
 
-function SignInPage() {
-  const [, setLocation] = useLocation();
-  const queryClient = useQueryClient();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isSubmitting, setSubmitting] = useState(false);
-
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setError("");
-    setSubmitting(true);
-    try {
-      const result = await login({ username, password });
-      queryClient.setQueryData(authQueryKey, result.user);
-      setLocation("/");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to sign in.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <AuthCard title="Sign in to ShopDesk" subtitle="Use your approved account to continue">
-      <form className="mx-auto max-w-md space-y-4" onSubmit={handleSubmit}>
-        <Field label="Username" name="username" value={username} onChange={setUsername} autoComplete="username" />
-        <Field label="Password" name="password" value={password} onChange={setPassword} type="password" autoComplete="current-password" />
-        {error && <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
-        <button className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60" disabled={isSubmitting}>
-          {isSubmitting ? "Signing in…" : "Sign in"}
-        </button>
-        <p className="text-center text-sm text-muted-foreground">
-          Need an account?{" "}
-          <a className="font-semibold text-primary hover:underline" href="/sign-up">Submit an application</a>
-        </p>
-      </form>
-    </AuthCard>
-  );
-}
-
-function SignUpPage() {
-  const [, setLocation] = useLocation();
-  const queryClient = useQueryClient();
-  const [form, setForm] = useState({
-    fullName: "", address: "", username: "", password: "", email: "",
-    phone: "", nextOfKinName: "", nextOfKinPhone: "", position: "", applicationNotes: "",
-  });
-  const [error, setError] = useState("");
-  const [isSubmitting, setSubmitting] = useState(false);
-  const update = (name: keyof typeof form) => (value: string) => setForm((current) => ({ ...current, [name]: value }));
-
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    setError("");
-    setSubmitting(true);
-    try {
-      const result = await register(form);
-      queryClient.setQueryData(authQueryKey, result.user);
-      setLocation("/");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to submit your application.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <AuthCard title="Apply for access" subtitle="Complete the form. An administrator will review your application.">
-      <form className="space-y-5" onSubmit={handleSubmit}>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Full name" name="fullName" value={form.fullName} onChange={update("fullName")} />
-          <Field label="Position applied for" name="position" value={form.position} onChange={update("position")} placeholder="e.g. Cashier" />
-          <Field label="Username" name="username" value={form.username} onChange={update("username")} placeholder="letters, numbers, dots or dashes" />
-          <Field label="Password" name="password" value={form.password} onChange={update("password")} type="password" />
-          <Field label="Email address" name="email" value={form.email} onChange={update("email")} type="email" required={false} />
-          <Field label="Phone number" name="phone" value={form.phone} onChange={update("phone")} />
-        </div>
-        <Field label="Address" name="address" value={form.address} onChange={update("address")} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Next-of-kin name" name="nextOfKinName" value={form.nextOfKinName} onChange={update("nextOfKinName")} />
-          <Field label="Next-of-kin phone" name="nextOfKinPhone" value={form.nextOfKinPhone} onChange={update("nextOfKinPhone")} />
-        </div>
-        <label className="block space-y-1.5 text-sm">
-          <span className="font-medium">Additional information</span>
-          <textarea
-            name="applicationNotes"
-            value={form.applicationNotes}
-            onChange={(event) => update("applicationNotes")(event.target.value)}
-            rows={3}
-            placeholder="Anything else the administrator should know?"
-            className="w-full rounded-md border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-        </label>
-        {error && <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
-        <button className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60" disabled={isSubmitting}>
-          {isSubmitting ? "Submitting application…" : "Submit application"}
-        </button>
-        <p className="text-center text-sm text-muted-foreground">
-          Already applied?{" "}
-          <a className="font-semibold text-primary hover:underline" href="/sign-in">Sign in</a>
-        </p>
-      </form>
-    </AuthCard>
-  );
-}
 
 function PendingAccess() {
   const { signOut } = useRole();
