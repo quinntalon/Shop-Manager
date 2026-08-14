@@ -414,7 +414,7 @@ export default function UsersPage() {
                           size="icon"
                           title="Edit permissions"
                           onClick={() => setPermDialogUser(user)}
-                          data-testid={`button-perms-${user.clerkUserId}`}
+                          data-testid={`button-perms-${user.username}`}
                         >
                           <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
                         </Button>
