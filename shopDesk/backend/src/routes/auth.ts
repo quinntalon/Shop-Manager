@@ -9,6 +9,7 @@ import {
   requireCurrentUser,
   verifyPassword,
 } from "../lib/auth";
+import { ROLE_PERMISSIONS } from "../middlewares/requireRole";
 
 const RegistrationBody = z.object({
   fullName: z.string().trim().min(2).max(120),
@@ -111,7 +112,14 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.get("/auth/me", async (request, reply) => {
     const user = await requireCurrentUser(request, reply);
-    return user ? reply.send({ user: publicUser(user) }) : undefined;
+    if (!user) return;
+    const resolvedPermissions =
+      user.permissions && user.permissions.length > 0
+        ? user.permissions
+        : user.role
+          ? (ROLE_PERMISSIONS[user.role] ?? [])
+          : [];
+    return reply.send({ user: { ...publicUser(user), permissions: resolvedPermissions } });
   });
 
   fastify.post("/auth/logout", async (request, reply) => {
@@ -123,6 +131,35 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     const user = await requireCurrentUser(request, reply);
     if (!user) return;
     return reply.send({ status: user.status, role: user.role });
+  });
+
+  /**
+   * Bootstrap endpoint: promotes the currently logged-in user to admin.
+   * Only works when NO approved admin exists yet — a one-time setup safety valve.
+   */
+  fastify.post("/auth/bootstrap-admin", async (request, reply) => {
+    const user = await requireCurrentUser(request, reply);
+    if (!user) return;
+
+    // Check if any admin already exists
+    const [existingAdmin] = await db
+      .select({ id: userRolesTable.id })
+      .from(userRolesTable)
+      .where(
+        eq(userRolesTable.role, "admin"),
+      );
+
+    if (existingAdmin) {
+      return reply.code(403).send({ error: "An admin account already exists. Use the Users page to manage roles." });
+    }
+
+    const [updated] = await db
+      .update(userRolesTable)
+      .set({ role: "admin", status: "approved" })
+      .where(eq(userRolesTable.id, user.id))
+      .returning();
+
+    return reply.send({ message: "You are now an admin.", user: publicUser(updated) });
   });
 };
 
