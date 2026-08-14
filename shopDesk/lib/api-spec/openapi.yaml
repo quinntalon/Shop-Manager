@@ -224,7 +224,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/AppUser"
 
-  /users/{clerkUserId}:
+  /users/{username}:
     patch:
       operationId: updateUserRole
       tags: [users]

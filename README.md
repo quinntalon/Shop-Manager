@@ -21,7 +21,7 @@ A modern point-of-sale and shop management system. Built as a pnpm monorepo with
 | Frontend | React 19, Vite 7, Tailwind CSS 4, TanStack Query |
 | Backend | Fastify 5 |
 | Database | PostgreSQL + Drizzle ORM |
-| Auth | Clerk |
+| Auth | Custom session-based auth (scrypt + HttpOnly cookies) |
 | Validation | Zod v4, drizzle-zod |
 | API codegen | Orval (OpenAPI → React Query hooks + Zod schemas) |
 
@@ -54,14 +54,27 @@ pnpm --filter @workspace/shop run dev
 
 | Variable | Description |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `CLERK_SECRET_KEY` | Clerk secret key |
-| `CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (frontend build) |
-| `SESSION_SECRET` | Session signing secret |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name (image uploads) |
-| `CLOUDINARY_API_KEY` | Cloudinary API key |
-| `CLOUDINARY_API_SECRET` | Cloudinary API secret |
+| `DATABASE_URL` | PostgreSQL connection string (required) |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name (image uploads, optional) |
+| `CLOUDINARY_API_KEY` | Cloudinary API key (optional) |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret (optional) |
+| `PORT` | Server port for local dev (not used on Vercel) |
+| `BASE_PATH` | Frontend base path, defaults to `/` |
+
+## First-Time Setup
+
+After deploying, you need to create an admin account:
+
+1. Register a user account via the sign-up page
+2. Log in, then run this in the browser console:
+   ```js
+   fetch('/api/auth/bootstrap-admin', { method: 'POST', credentials: 'same-origin' })
+     .then(r => r.json()).then(console.log)
+   ```
+3. Refresh — you now have full admin access
+4. Use the Users page to approve and assign roles to other users
+
+This endpoint is permanently disabled once any admin account exists.
 
 ## Common Commands
 
@@ -79,6 +92,6 @@ pnpm --filter @workspace/db run push
 pnpm --filter @workspace/api-spec run codegen
 ```
 
-## CI
+## Deployment
 
-Every push and pull request to `main` runs a full typecheck via GitHub Actions (`.github/workflows/ci.yml`).
+See [DEPLOYMENT.md](DEPLOYMENT.md) for full Vercel deployment instructions.
