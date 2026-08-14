@@ -289,7 +289,7 @@ export default function UsersPage() {
 
   function handleDelete(user: AppUser) {
     deleteUser.mutate(
-      { clerkUserId: user.clerkUserId },
+      { username: user.username },
       {
         onSuccess: () => {
           invalidate();
@@ -347,7 +347,7 @@ export default function UsersPage() {
                     : getDefaultsForRole(user.role);
 
                 return (
-                  <TableRow key={user.clerkUserId} data-testid={`row-user-${user.clerkUserId}`}>
+                  <TableRow key={user.username} data-testid={`row-user-${user.username}`}>
                     <TableCell className="font-medium">
                       {user.name || "—"}
                       {user.email === myEmail && (
@@ -363,7 +363,7 @@ export default function UsersPage() {
                           value={user.role}
                           onValueChange={(val) => handleRoleChange(user, val)}
                         >
-                          <SelectTrigger className="w-36" data-testid={`select-role-${user.clerkUserId}`}>
+                          <SelectTrigger className="w-36" data-testid={`select-role-${user.username}`}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -374,7 +374,7 @@ export default function UsersPage() {
                         </Select>
                       ) : (
                         <Select onValueChange={(val) => handleRoleChange(user, val)}>
-                          <SelectTrigger className="w-36" data-testid={`select-role-${user.clerkUserId}`}>
+                          <SelectTrigger className="w-36" data-testid={`select-role-${user.username}`}>
                             <SelectValue placeholder="Assign role…" />
                           </SelectTrigger>
                           <SelectContent>
