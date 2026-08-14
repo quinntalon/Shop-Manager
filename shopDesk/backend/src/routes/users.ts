@@ -6,7 +6,7 @@ import { getCurrentUser } from "../lib/auth";
 import { requirePermission, ROLE_PERMISSIONS } from "../middlewares/requireRole";
 import { z } from "zod/v4";
 
-const UserParams = z.object({ clerkUserId: z.string().min(1) });
+const UserParams = z.object({ username: z.string().min(1) });
 const RoleUpdateBody = z.object({
   role: z.enum(USER_ROLES).nullable(),
   permissions: z.array(z.string()).nullable().optional(),
@@ -18,9 +18,6 @@ const StatusUpdateBody = z.object({
 function publicUser(user: typeof userRolesTable.$inferSelect) {
   return {
     id: user.id,
-    // Kept as an API compatibility name for the generated client. This is
-    // now the local username and is not a Clerk identifier.
-    clerkUserId: user.username,
     username: user.username,
     name: user.name,
     email: user.email,
@@ -58,7 +55,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   fastify.patch(
-    "/users/:clerkUserId",
+    "/users/:username",
     { preHandler: [requirePermission("users")] },
     async (request, reply) => {
       const params = UserParams.safeParse(request.params);
@@ -80,7 +77,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
       const [row] = await db
         .update(userRolesTable)
         .set(updates)
-        .where(eq(userRolesTable.username, params.data.clerkUserId))
+        .where(eq(userRolesTable.username, params.data.username))
         .returning();
       if (!row) return reply.code(404).send({ error: "User not found." });
       return publicUser(row);
@@ -88,7 +85,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   fastify.patch(
-    "/users/:clerkUserId/status",
+    "/users/:username/status",
     { preHandler: [requirePermission("users")] },
     async (request, reply) => {
       const params = UserParams.safeParse(request.params);
@@ -103,7 +100,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
           status: parsed.data.status,
           role: parsed.data.status === "approved" ? "cashier" : null,
         })
-        .where(eq(userRolesTable.username, params.data.clerkUserId))
+        .where(eq(userRolesTable.username, params.data.username))
         .returning();
       if (!row) return reply.code(404).send({ error: "User not found." });
       return publicUser(row);
@@ -111,19 +108,19 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   fastify.delete(
-    "/users/:clerkUserId",
+    "/users/:username",
     { preHandler: [requirePermission("users")] },
     async (request, reply) => {
       const params = UserParams.safeParse(request.params);
       if (!params.success) return reply.code(400).send({ error: "Invalid user." });
 
       const current = await getCurrentUser(request);
-      if (current?.username === params.data.clerkUserId) {
+      if (current?.username === params.data.username) {
         return reply.code(400).send({ error: "You cannot delete your own account." });
       }
       const [row] = await db
         .delete(userRolesTable)
-        .where(eq(userRolesTable.username, params.data.clerkUserId))
+        .where(eq(userRolesTable.username, params.data.username))
         .returning();
       if (!row) return reply.code(404).send({ error: "User not found." });
       return reply.code(204).send();

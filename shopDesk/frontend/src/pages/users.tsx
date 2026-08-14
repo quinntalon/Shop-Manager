@@ -423,7 +423,7 @@ export default function UsersPage() {
                           size="icon"
                           onClick={() => handleDelete(user)}
                           disabled={user.email === myEmail}
-                          data-testid={`button-delete-${user.clerkUserId}`}
+                          data-testid={`button-delete-${user.username}`}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>

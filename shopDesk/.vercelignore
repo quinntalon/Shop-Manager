@@ -1,9 +1,10 @@
-# Development and build artifacts not needed on Vercel
-.cache/
-.git/
-.agents/
-.local/
-attached_assets/
+# Dependencies — installed fresh by Vercel
+node_modules/
+
+# Build artifacts — regenerated during Vercel build
+dist/
+frontend/dist/
+*.tsbuildinfo
 
 # Local env files — set real values in the Vercel dashboard
 .env
@@ -12,3 +13,12 @@ attached_assets/
 # Replit-specific files
 .replit
 replit.nix
+
+# Dev/internal files not needed at deploy time
+.cache/
+.git/
+.agents/
+.local/
+attached_assets/
+scripts/
+artifacts/
