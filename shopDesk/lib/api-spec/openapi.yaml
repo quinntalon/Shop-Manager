@@ -230,7 +230,7 @@ paths:
       tags: [users]
       summary: Update a user role (admin only)
       parameters:
-        - name: clerkUserId
+        - name: username
           in: path
           required: true
           schema:
@@ -253,7 +253,7 @@ paths:
       tags: [users]
       summary: Remove a user (admin only)
       parameters:
-        - name: clerkUserId
+        - name: username
           in: path
           required: true
           schema:
@@ -847,11 +847,11 @@ components:
 
     AppUser:
       type: object
-      required: [id, clerkUserId, name, email, createdAt]
+      required: [id, username, name, email, createdAt]
       properties:
         id:
           type: integer
-        clerkUserId:
+        username:
           type: string
         name:
           type: string
@@ -872,9 +872,9 @@ components:
 
     MyRoleResponse:
       type: object
-      required: [clerkUserId, name, email, permissions]
+      required: [username, name, email, permissions]
       properties:
-        clerkUserId:
+        username:
           type: string
         name:
           type: string

@@ -182,7 +182,7 @@ export interface Sale {
 
 export interface AppUser {
   id: number;
-  clerkUserId: string;
+  username: string;
   name: string;
   email: string;
   /** @nullable */
@@ -196,7 +196,7 @@ export interface AppUserRoleUpdate {
 }
 
 export interface MyRoleResponse {
-  clerkUserId: string;
+  username: string;
   name: string;
   email: string;
   /** @nullable */
