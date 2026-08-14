@@ -1065,7 +1065,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUser>>, {username: string}> = (props) => {
           const {username} = props ?? {};
 
-          return  deleteUser(clerkUserId,requestOptions)
+          return  deleteUser(username,requestOptions)
         }
 
 
@@ -1083,11 +1083,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Remove a user (admin only)
  */
 export const useDeleteUser = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{clerkUserId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{username: string}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof deleteUser>>,
         TError,
-        {clerkUserId: string},
+        {username: string},
         TContext
       > => {
       return useMutation(getDeleteUserMutationOptions(options));

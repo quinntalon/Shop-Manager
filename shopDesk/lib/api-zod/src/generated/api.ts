@@ -350,7 +350,7 @@ export const SetDefaultReceiptTemplateResponse = zod.object({
  * @summary Get current user role and permissions
  */
 export const GetMyRoleResponse = zod.object({
-  "clerkUserId": zod.string(),
+  "username": zod.string(),
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string().nullish(),
@@ -363,7 +363,7 @@ export const GetMyRoleResponse = zod.object({
  */
 export const ListUsersResponseItem = zod.object({
   "id": zod.number(),
-  "clerkUserId": zod.string(),
+  "username": zod.string(),
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string().nullish(),
@@ -376,7 +376,7 @@ export const ListUsersResponse = zod.array(ListUsersResponseItem)
  * @summary Update a user role (admin only)
  */
 export const UpdateUserRoleParams = zod.object({
-  "clerkUserId": zod.coerce.string()
+  "username": zod.coerce.string()
 })
 
 export const UpdateUserRoleBody = zod.object({
@@ -385,7 +385,7 @@ export const UpdateUserRoleBody = zod.object({
 
 export const UpdateUserRoleResponse = zod.object({
   "id": zod.number(),
-  "clerkUserId": zod.string(),
+  "username": zod.string(),
   "name": zod.string(),
   "email": zod.string(),
   "role": zod.string().nullish(),
