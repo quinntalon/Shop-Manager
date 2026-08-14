@@ -1019,35 +1019,29 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Update a user role (admin only)
  */
 export const useUpdateUserRole = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserRole>>, TError,{clerkUserId: string;data: BodyType<AppUserRoleUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserRole>>, TError,{username: string;data: BodyType<AppUserRoleUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof updateUserRole>>,
         TError,
-        {clerkUserId: string;data: BodyType<AppUserRoleUpdate>},
+        {username: string;data: BodyType<AppUserRoleUpdate>},
         TContext
       > => {
       return useMutation(getUpdateUserRoleMutationOptions(options));
     }
 
-export const getDeleteUserUrl = (clerkUserId: string,) => {
-
-
-
-
-  return `/api/users/${clerkUserId}`
+export const getDeleteUserUrl = (username: string,) => {
+  return `/api/users/${username}`
 }
 
 /**
  * @summary Remove a user (admin only)
  */
-export const deleteUser = async (clerkUserId: string, options?: RequestInit): Promise<void> => {
+export const deleteUser = async (username: string, options?: RequestInit): Promise<void> => {
 
-  return customFetch<void>(getDeleteUserUrl(clerkUserId),
+  return customFetch<void>(getDeleteUserUrl(username),
   {
     ...options,
     method: 'DELETE'
-
-
   }
 );}
 
@@ -1055,8 +1049,8 @@ export const deleteUser = async (clerkUserId: string, options?: RequestInit): Pr
 
 
 export const getDeleteUserMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{clerkUserId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{clerkUserId: string}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{username: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{username: string}, TContext> => {
 
 const mutationKey = ['deleteUser'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1068,8 +1062,8 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUser>>, {clerkUserId: string}> = (props) => {
-          const {clerkUserId} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteUser>>, {username: string}> = (props) => {
+          const {username} = props ?? {};
 
           return  deleteUser(clerkUserId,requestOptions)
         }
