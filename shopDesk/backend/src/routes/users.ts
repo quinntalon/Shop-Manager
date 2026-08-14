@@ -14,6 +14,9 @@ const RoleUpdateBody = z.object({
 const StatusUpdateBody = z.object({
   status: z.enum(["pending", "approved", "rejected"]),
 });
+const ResetPasswordBody = z.object({
+  newPassword: z.string().min(8).max(128),
+});
 
 function publicUser(user: typeof userRolesTable.$inferSelect) {
   return {
