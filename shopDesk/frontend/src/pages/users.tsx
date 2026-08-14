@@ -117,9 +117,9 @@ function PermissionDialog({ user, open, onClose, onSave, isSaving }: PermissionD
 
   function handleSave() {
     if (!isCustomMode) {
-      onSave(user.clerkUserId, null); // null = use role defaults
+      onSave(user.username, null); // null = use role defaults
     } else {
-      onSave(user.clerkUserId, Array.from(selected) as Permission[]);
+      onSave(user.username, Array.from(selected) as Permission[]);
     }
   }
 
@@ -244,7 +244,7 @@ export default function UsersPage() {
   function handleRoleChange(user: AppUser, role: string) {
     updateRole.mutate(
       {
-        clerkUserId: user.clerkUserId,
+        username: user.username,
         data: { role: role === "pending" ? null : (role as "admin" | "salesperson" | "cashier") },
       },
       {
@@ -259,14 +259,14 @@ export default function UsersPage() {
     );
   }
 
-  function handleSavePermissions(clerkUserId: string, permissions: Permission[] | null) {
+  function handleSavePermissions(username: string, permissions: Permission[] | null) {
     setSavingPerms(true);
-    const user = users?.find((u) => u.clerkUserId === clerkUserId);
+    const user = users?.find((u) => u.username === username);
     if (!user) return;
 
     updateRole.mutate(
       {
-        clerkUserId,
+        username,
         data: {
           role: user.role as "admin" | "salesperson" | "cashier" | null,
           permissions,
