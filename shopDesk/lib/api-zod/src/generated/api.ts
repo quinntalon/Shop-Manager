@@ -397,7 +397,7 @@ export const UpdateUserRoleResponse = zod.object({
  * @summary Remove a user (admin only)
  */
 export const DeleteUserParams = zod.object({
-  "clerkUserId": zod.coerce.string()
+  "username": zod.coerce.string()
 })
 
 export const DeleteUserResponse = zod.void()

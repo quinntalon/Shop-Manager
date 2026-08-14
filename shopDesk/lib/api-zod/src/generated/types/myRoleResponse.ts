@@ -7,7 +7,7 @@
  */
 
 export interface MyRoleResponse {
-  clerkUserId: string;
+  username: string;
   name: string;
   email: string;
   /** @nullable */

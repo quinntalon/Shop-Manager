@@ -8,7 +8,7 @@
 
 export interface AppUser {
   id: number;
-  clerkUserId: string;
+  username: string;
   name: string;
   email: string;
   /** @nullable */
