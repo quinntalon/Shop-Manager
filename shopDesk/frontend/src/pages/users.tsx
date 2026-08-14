@@ -82,7 +82,7 @@ interface PermissionDialogProps {
   user: AppUser;
   open: boolean;
   onClose: () => void;
-  onSave: (clerkUserId: string, permissions: Permission[] | null) => void;
+  onSave: (username: string, permissions: Permission[] | null) => void;
   isSaving: boolean;
 }
 
