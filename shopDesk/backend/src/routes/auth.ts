@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { db, userRolesTable } from "@workspace/db";
 import {
