@@ -962,21 +962,17 @@ export function useListUsers<TData = Awaited<ReturnType<typeof listUsers>>, TErr
 
 
 
-export const getUpdateUserRoleUrl = (clerkUserId: string,) => {
-
-
-
-
-  return `/api/users/${clerkUserId}`
+export const getUpdateUserRoleUrl = (username: string,) => {
+  return `/api/users/${username}`
 }
 
 /**
  * @summary Update a user role (admin only)
  */
-export const updateUserRole = async (clerkUserId: string,
+export const updateUserRole = async (username: string,
     appUserRoleUpdate: AppUserRoleUpdate, options?: RequestInit): Promise<AppUser> => {
 
-  return customFetch<AppUser>(getUpdateUserRoleUrl(clerkUserId),
+  return customFetch<AppUser>(getUpdateUserRoleUrl(username),
   {
     ...options,
     method: 'PATCH',
@@ -989,8 +985,8 @@ export const updateUserRole = async (clerkUserId: string,
 
 
 export const getUpdateUserRoleMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserRole>>, TError,{clerkUserId: string;data: BodyType<AppUserRoleUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateUserRole>>, TError,{clerkUserId: string;data: BodyType<AppUserRoleUpdate>}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUserRole>>, TError,{username: string;data: BodyType<AppUserRoleUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUserRole>>, TError,{username: string;data: BodyType<AppUserRoleUpdate>}, TContext> => {
 
 const mutationKey = ['updateUserRole'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1002,10 +998,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserRole>>, {clerkUserId: string;data: BodyType<AppUserRoleUpdate>}> = (props) => {
-          const {clerkUserId,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUserRole>>, {username: string;data: BodyType<AppUserRoleUpdate>}> = (props) => {
+          const {username,data} = props ?? {};
 
-          return  updateUserRole(clerkUserId,data,requestOptions)
+          return  updateUserRole(username,data,requestOptions)
         }
 
 
