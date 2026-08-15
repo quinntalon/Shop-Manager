@@ -35,10 +35,12 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export function getCurrentUser(): Promise<LocalUser | null> {
-  return request<LocalUser>("/api/auth/me").catch((error) => {
-    if ((error as Error & { status?: number }).status === 401) return null;
-    throw error;
-  });
+  return request<{ user: LocalUser }>("/api/auth/me")
+    .then((data) => data.user)
+    .catch((error) => {
+      if ((error as Error & { status?: number }).status === 401) return null;
+      throw error;
+    });
 }
 
 export function login(data: { username: string; password: string }) {

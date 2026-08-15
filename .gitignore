@@ -34,3 +34,5 @@ pnpm-debug.log*
 api/*.mjs
 api/*.mjs.map
 .vercel/output/
+.vercel
+.env*
