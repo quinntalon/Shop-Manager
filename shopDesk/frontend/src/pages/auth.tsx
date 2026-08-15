@@ -88,6 +88,7 @@ export function SignInPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setSubmitting] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -141,7 +142,34 @@ export function SignInPage() {
           {isSubmitting ? "Signing in…" : "Continue"}
           <ArrowRight className="h-4 w-4" />
         </button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => setShowForgot(true)}
+            className="text-sm text-blue-500 hover:underline"
+          >
+            Forgot password?
+          </button>
+        </div>
       </form>
+
+      {showForgot && (
+        <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <p className="font-semibold">Need a password reset?</p>
+          <p className="mt-1 text-blue-700">
+            Contact your administrator and ask them to reset your password from the{" "}
+            <span className="font-medium">Users</span> page.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowForgot(false)}
+            className="mt-2 text-xs text-blue-500 hover:underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       <div className="mt-4 text-center text-sm text-gray-600">
         Secured by <span className="font-semibold text-gray-900">ShopDesk</span>

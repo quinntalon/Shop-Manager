@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, userRolesTable } from "@workspace/db";
 import { USER_ROLES, type UserRoleType } from "@workspace/db";
 import { getCurrentUser } from "../lib/auth";
+import { hashPassword } from "../lib/auth";
 import { requirePermission, ROLE_PERMISSIONS } from "../middlewares/requireRole";
 import { z } from "zod/v4";
 
@@ -127,6 +128,25 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
         .returning();
       if (!row) return reply.code(404).send({ error: "User not found." });
       return reply.code(204).send();
+    },
+  );
+  fastify.post(
+    "/users/:username/reset-password",
+    { preHandler: [requirePermission("users")] },
+    async (request, reply) => {
+      const params = UserParams.safeParse(request.params);
+      const parsed = ResetPasswordBody.safeParse(request.body);
+      if (!params.success || !parsed.success) {
+        return reply.code(400).send({ error: "Invalid request. Password must be at least 8 characters." });
+      }
+
+      const [row] = await db
+        .update(userRolesTable)
+        .set({ passwordHash: await hashPassword(parsed.data.newPassword) })
+        .where(eq(userRolesTable.username, params.data.username))
+        .returning();
+      if (!row) return reply.code(404).send({ error: "User not found." });
+      return reply.send({ ok: true });
     },
   );
 };

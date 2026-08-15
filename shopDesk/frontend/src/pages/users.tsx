@@ -34,7 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Users as UsersIcon, Trash2, ShieldCheck, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { Users as UsersIcon, Trash2, ShieldCheck, SlidersHorizontal, RotateCcw, KeyRound } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRole } from "@/hooks/use-role";
 import { cn } from "@/lib/utils";
@@ -225,6 +225,112 @@ function PermissionDialog({ user, open, onClose, onSave, isSaving }: PermissionD
   );
 }
 
+function ResetPasswordDialog({
+  user,
+  open,
+  onClose,
+}: {
+  user: AppUser | null;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { toast } = useToast();
+  const [newPassword, setNewPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  function handleClose() {
+    setNewPassword("");
+    setConfirm("");
+    setError("");
+    onClose();
+  }
+
+  async function handleSave() {
+    if (newPassword.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+    if (newPassword !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setError("");
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/users/${user?.username}/reset-password`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ newPassword }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? "Failed to reset password.");
+      }
+      toast({ title: "Password reset successfully" });
+      handleClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reset password.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Reset Password</DialogTitle>
+          <DialogDescription>
+            Set a new password for{" "}
+            <span className="font-medium text-foreground">
+              {user?.name || user?.username}
+            </span>
+            . They will need to use it on their next sign-in.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 py-2">
+          <label className="block space-y-1.5 text-sm">
+            <span className="font-medium">New password</span>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Minimum 8 characters"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+          </label>
+          <label className="block space-y-1.5 text-sm">
+            <span className="font-medium">Confirm password</span>
+            <input
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="Re-enter password"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+          </label>
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={handleClose} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving || !newPassword || !confirm}>
+            {isSaving ? "Saving…" : "Reset password"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function UsersPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -236,6 +342,7 @@ export default function UsersPage() {
 
   const [permDialogUser, setPermDialogUser] = useState<AppUser | null>(null);
   const [savingPerms, setSavingPerms] = useState(false);
+  const [resetDialogUser, setResetDialogUser] = useState<AppUser | null>(null);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
@@ -421,6 +528,15 @@ export default function UsersPage() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          title="Reset password"
+                          onClick={() => setResetDialogUser(user)}
+                          data-testid={`button-reset-${user.username}`}
+                        >
+                          <KeyRound className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleDelete(user)}
                           disabled={user.email === myEmail}
                           data-testid={`button-delete-${user.username}`}
@@ -455,6 +571,12 @@ export default function UsersPage() {
           isSaving={savingPerms}
         />
       )}
+
+      <ResetPasswordDialog
+        user={resetDialogUser}
+        open={!!resetDialogUser}
+        onClose={() => setResetDialogUser(null)}
+      />
     </div>
   );
 }
