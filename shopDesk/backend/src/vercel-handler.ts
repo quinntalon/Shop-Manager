@@ -86,7 +86,14 @@ export default async function handler(
     };
 
     for (const [name, value] of Object.entries(injectedResponse.headers)) {
-      if (value !== undefined) res.setHeader(name, value);
+      if (value === undefined) continue;
+      // set-cookie must use setHeader with an array to preserve multiple values
+      if (name.toLowerCase() === "set-cookie") {
+        const cookies = Array.isArray(value) ? value : [String(value)];
+        res.setHeader("set-cookie", cookies);
+      } else {
+        res.setHeader(name, value as string | number | string[]);
+      }
     }
     res.statusCode = injectedResponse.statusCode;
     res.end(injectedResponse.rawPayload);
