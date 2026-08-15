@@ -5,6 +5,9 @@ packages:
   - shopDesk/lib/*
   - shopDesk/scripts
 
+allowBuilds:
+  esbuild: false
+
 autoInstallPeers: false
 
 catalog:
