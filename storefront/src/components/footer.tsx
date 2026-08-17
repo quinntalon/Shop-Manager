@@ -64,7 +64,7 @@ export default function Footer() {
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
           <span>© {new Date().getFullYear()} ShopDesk. All rights reserved.</span>
-          <span>Powered by ShopDesk POS</span>
+          <span>Powered by ShopDesk</span>
         </div>
       </div>
     </footer>
