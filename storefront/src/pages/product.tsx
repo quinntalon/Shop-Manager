@@ -186,7 +186,7 @@ export default function ProductDetail() {
           <div className="grid grid-cols-2 gap-3 pt-2">
             {[
               { icon: "🛡️", text: "2-Year Warranty" },
-              { icon: "🚚", text: "Free Delivery on orders ≥ GH₵500" },
+              { icon: "🚚", text: "Free Delivery on orders ≥ GH₵1000" },
               { icon: "🔄", text: "30-Day Returns" },
               { icon: "🔧", text: "Expert Installation" },
             ].map((p) => (
