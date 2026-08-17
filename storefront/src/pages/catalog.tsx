@@ -165,7 +165,7 @@ export default function Catalog() {
       </div>
 
       <div className="flex gap-8 items-start">
-        <aside className={`fixed inset-0 z-40 bg-surface/70 backdrop-blur-sm ${sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} lg:static lg:opacity-100 lg:pointer-events-auto lg:bg-transparent lg:backdrop-blur-none lg:w-44 lg:shrink-0`}>
+        <aside className={`fixed inset-0 z-40 bg-surface/70 backdrop-blur-sm ${sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"} lg:static lg:opacity-100 lg:pointer-events-auto lg:bg-transparent lg:backdrop-blur-none lg:w-52 lg:shrink-0`}>
           <div className={`absolute right-0 top-0 h-full w-72 bg-surface-2 border-l border-border p-6 transition-transform ${sidebarOpen ? "translate-x-0" : "translate-x-full"} lg:static lg:translate-x-0 lg:h-auto lg:w-auto lg:border-0 lg:p-0`}>
             <div className="flex items-center justify-between mb-6 lg:hidden">
               <h2 className="font-bold text-slate-100">Filters</h2>
@@ -177,8 +177,8 @@ export default function Catalog() {
                 <div className="space-y-1">
                   <button type="button" onClick={() => selectCategory(undefined)} className={`w-full flex items-center justify-between text-left text-xs py-1.5 ${!categoryId ? "font-bold text-amber" : "text-slate-500 hover:text-slate-100"}`}>All products <span>{products.length}</span></button>
                   {categories.map((category) => (
-                    <button type="button" key={category.id} onClick={() => selectCategory(category.id)} className={`w-full flex items-center justify-between text-left text-xs py-1.5 ${categoryId === category.id ? "font-bold text-amber" : "text-slate-500 hover:text-slate-100"}`}>
-                      <span className="truncate pr-2">{category.name}</span><ChevronRight className="w-3 h-3" />
+                    <button type="button" key={category.id} onClick={() => selectCategory(category.id)} className={`w-full flex items-center justify-between text-left text-xs py-1.5 gap-2 ${categoryId === category.id ? "font-bold text-amber" : "text-slate-500 hover:text-slate-100"}`}>
+                      <span className="break-words leading-snug">{category.name}</span><ChevronRight className="w-3 h-3 shrink-0" />
                     </button>
                   ))}
                 </div>
