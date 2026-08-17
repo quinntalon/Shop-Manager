@@ -963,6 +963,10 @@ export function useListUsers<TData = Awaited<ReturnType<typeof listUsers>>, TErr
 
 
 export const getUpdateUserRoleUrl = (username: string,) => {
+
+
+
+
   return `/api/users/${username}`
 }
 
@@ -1030,6 +1034,10 @@ export const useUpdateUserRole = <TError = ErrorType<unknown>,
     }
 
 export const getDeleteUserUrl = (username: string,) => {
+
+
+
+
   return `/api/users/${username}`
 }
 
@@ -1042,6 +1050,8 @@ export const deleteUser = async (username: string, options?: RequestInit): Promi
   {
     ...options,
     method: 'DELETE'
+
+
   }
 );}
 
