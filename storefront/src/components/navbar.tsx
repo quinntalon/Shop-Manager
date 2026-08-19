@@ -36,19 +36,7 @@ export default function Navbar() {
     { href: "/catalog", label: "Shop All" },
   ];
 
-  return (
-    <header className="sticky top-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="relative flex items-center h-[4.5rem] gap-4">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0 group">
-            <div className="w-8 h-8 rounded-xl bg-amber flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <Zap className="w-4.5 h-4.5 text-surface" strokeWidth={2.5} />
-            </div>
-            <span className="font-display text-lg font-extrabold text-slate-50 tracking-[-0.04em]">
-              Shop<span className="text-amber">Desk</span>
-            </span>
-          </Link>
+   
 
           {/* Nav links (desktop) */}
           <nav className="hidden md:flex items-center gap-1 ml-5">

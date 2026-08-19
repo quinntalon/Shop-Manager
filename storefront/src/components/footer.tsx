@@ -54,7 +54,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2.5 text-sm text-slate-500">
                 <Mail className="w-4 h-4 shrink-0 text-amber" />
-                hello@voltex.shop
+                hello@ElectroGhana.shop
               </li>
             </ul>
           </div>
