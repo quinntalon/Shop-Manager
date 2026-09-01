@@ -355,7 +355,7 @@ export default function Catalog() {
       {/* ════════════════════════════════════════════════════════
           MOBILE LAYOUT  (< md)
           ════════════════════════════════════════════════════════ */}
-      <div className="md:hidden flex flex-col min-h-screen pb-28">
+      <div className="md:hidden flex flex-col min-h-screen pb-20">
         {/* ── Search bar ── */}
         <div className="px-4 pt-3 pb-2">
           <form
