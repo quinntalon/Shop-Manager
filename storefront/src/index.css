@@ -437,8 +437,10 @@
   .bottom-nav {
     position: fixed;
     bottom: 0.5rem;
-    left: 0.625rem;
-    right: 0.625rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 4rem);
+    max-width: 22rem;
     z-index: 50;
     background: var(--color-surface-2);
     border: 1px solid var(--color-border);
