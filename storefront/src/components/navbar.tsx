@@ -42,24 +42,24 @@ export default function Navbar() {
       style={{
         background: "var(--surface-2)",
         borderBottom: "1px solid var(--border)",
-        boxShadow: "0 1px 8px color-mix(in srgb, var(--text-strong) 5%, transparent)",
+        boxShadow: "0 1px 6px color-mix(in srgb, var(--text-strong) 4%, transparent)",
       }}
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <div className="mx-auto max-w-7xl px-3 sm:px-5">
         {/* ── Main header row ── */}
-        <div className="flex h-14 items-center gap-3">
+        <div className="flex h-11 items-center gap-2">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0 text-decoration-none">
+          <Link href="/" className="flex items-center gap-1.5 shrink-0 text-decoration-none">
             {/* Orange lightning circle */}
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
+              className="flex h-6 w-6 items-center justify-center rounded-full shrink-0"
               style={{ background: "var(--sd-orange)" }}
             >
-              <Zap className="h-4 w-4 text-white" strokeWidth={2.5} fill="white" />
+              <Zap className="h-3 w-3 text-white" strokeWidth={2.5} fill="white" />
             </div>
             {/* Wordmark */}
             <span
-              className="text-[1.05rem] font-extrabold leading-none tracking-tight"
+              className="text-[0.875rem] font-extrabold leading-none tracking-tight"
               style={{ color: "var(--text-primary)" }}
             >
               Shop
@@ -68,13 +68,13 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop nav links */}
-          <nav className="hidden md:flex items-center gap-1 ml-4">
+          <nav className="hidden md:flex items-center gap-0.5 ml-3">
             {navLinks.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                  "px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
                   location === l.href
                     ? "text-white"
                     : "hover:bg-[var(--surface-3)]",
@@ -91,10 +91,10 @@ export default function Navbar() {
           </nav>
 
           {/* Desktop search */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-sm ml-auto">
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xs ml-auto">
             <div className="relative w-full">
               <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none"
                 style={{ color: "var(--text-faint)" }}
               />
               <input
@@ -102,21 +102,21 @@ export default function Navbar() {
                 placeholder="Search products..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="input-field pl-9 pr-4 h-9 text-sm"
+                className="input-field pl-8 pr-3 h-8 text-xs"
               />
             </div>
           </form>
 
           {/* Desktop right icons */}
-          <div className="hidden md:flex items-center gap-1" style={{ color: "var(--text-subtle)" }}>
+          <div className="hidden md:flex items-center gap-0.5" style={{ color: "var(--text-subtle)" }}>
             <button type="button" className="theme-toggle" aria-label="Saved items">
-              <Heart className="h-4 w-4" />
+              <Heart className="h-3.5 w-3.5" />
             </button>
             <button type="button" className="theme-toggle" aria-label="Shopping bag">
-              <ShoppingBag className="h-4 w-4" />
+              <ShoppingBag className="h-3.5 w-3.5" />
             </button>
             <button type="button" className="theme-toggle" aria-label="Account">
-              <UserRound className="h-4 w-4" />
+              <UserRound className="h-3.5 w-3.5" />
             </button>
           </div>
 
@@ -129,9 +129,9 @@ export default function Navbar() {
             title={lightMode ? "Dark mode" : "Light mode"}
           >
             {lightMode ? (
-              <Moon className="h-4 w-4" />
+              <Moon className="h-3.5 w-3.5" />
             ) : (
-              <Sun className="h-4 w-4" />
+              <Sun className="h-3.5 w-3.5" />
             )}
           </button>
 
@@ -141,7 +141,7 @@ export default function Navbar() {
             className="md:hidden theme-toggle shrink-0"
             aria-label="Search"
           >
-            <Search className="h-4 w-4" />
+            <Search className="h-3.5 w-3.5" />
           </Link>
 
           {/* Mobile hamburger */}
@@ -151,14 +151,14 @@ export default function Navbar() {
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle menu"
           >
-            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </button>
         </div>
 
         {/* ── Mobile dropdown menu ── */}
         {menuOpen && (
           <div
-            className="md:hidden py-3 space-y-1 border-t"
+            className="md:hidden py-2 space-y-0.5 border-t"
             style={{ borderColor: "var(--border)" }}
           >
             {navLinks.map((l) => (
@@ -167,14 +167,11 @@ export default function Navbar() {
                 href={l.href}
                 onClick={() => setMenuOpen(false)}
                 className={cn(
-                  "block px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors",
+                  "block px-3 py-2 rounded-lg text-xs font-semibold transition-colors",
                 )}
                 style={
                   location === l.href
-                    ? {
-                        background: "var(--sd-orange-glow)",
-                        color: "var(--sd-orange)",
-                      }
+                    ? { background: "var(--sd-orange-glow)", color: "var(--sd-orange)" }
                     : { color: "var(--text-subtle)" }
                 }
               >
@@ -183,10 +180,10 @@ export default function Navbar() {
             ))}
 
             {/* Mobile search inside menu */}
-            <form onSubmit={handleSearch} className="px-1 pt-2">
+            <form onSubmit={handleSearch} className="px-1 pt-1.5">
               <div className="relative">
                 <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 pointer-events-none"
                   style={{ color: "var(--text-faint)" }}
                 />
                 <input
@@ -194,21 +191,18 @@ export default function Navbar() {
                   placeholder="Search products, brands, categories..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="input-field pl-9 h-9 text-sm"
+                  className="input-field pl-8 h-8 text-xs"
                 />
               </div>
             </form>
 
             <button
               type="button"
-              className="flex items-center gap-2 px-3 py-2 w-full text-sm font-medium rounded-xl transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 w-full text-xs font-medium rounded-lg transition-colors"
               style={{ color: "var(--text-subtle)" }}
-              onClick={() => {
-                toggleTheme();
-                setMenuOpen(false);
-              }}
+              onClick={() => { toggleTheme(); setMenuOpen(false); }}
             >
-              {lightMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              {lightMode ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
               {lightMode ? "Dark theme" : "Light theme"}
             </button>
           </div>
