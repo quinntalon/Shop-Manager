@@ -99,12 +99,14 @@ function generateSkuPrefix(name: string): string {
 
 type ProductForm = {
   name: string; sku: string; description: string; photoUrl: string;
+  originalPhotoUrl: string;
   price: string; costPrice: string; warehouseStock: string;
   discountPercent: string; reorderLevel: string; categoryId: number | undefined;
 };
 
 const EMPTY_FORM: ProductForm = {
   name: "", sku: "", description: "", photoUrl: "",
+  originalPhotoUrl: "",
   price: "", costPrice: "", warehouseStock: "",
   discountPercent: "0", reorderLevel: "5", categoryId: undefined,
 };
@@ -163,12 +165,18 @@ export default function StockTransfers() {
   const selectedProduct = products?.find((p) => String(p.id) === selectedProductId);
 
   // ── Upload (shared: separate instances for add vs edit) ────────────────────
-  const { uploadFile: uploadAddFile, isUploading: isUploadingAdd } = useUpload({
-    onSuccess: (r) => { setAddForm((f) => ({ ...f, photoUrl: r.url })); setAddPhotoPreview(r.url); },
+  const { uploadFile: uploadAddFile, isUploading: isUploadingAdd, isProcessing: isProcessingAdd } = useUpload({
+    onSuccess: (r) => {
+      setAddForm((f) => ({ ...f, photoUrl: r.url, originalPhotoUrl: r.originalUrl }));
+      setAddPhotoPreview(r.url);
+    },
     onError: (e) => toast({ title: "Upload failed", description: String(e), variant: "destructive" }),
   });
-  const { uploadFile: uploadEditFile, isUploading: isUploadingEdit } = useUpload({
-    onSuccess: (r) => { setEditForm((f) => ({ ...f, photoUrl: r.url })); setEditPhotoPreview(r.url); },
+  const { uploadFile: uploadEditFile, isUploading: isUploadingEdit, isProcessing: isProcessingEdit } = useUpload({
+    onSuccess: (r) => {
+      setEditForm((f) => ({ ...f, photoUrl: r.url, originalPhotoUrl: r.originalUrl }));
+      setEditPhotoPreview(r.url);
+    },
     onError: (e) => toast({ title: "Upload failed", description: String(e), variant: "destructive" }),
   });
 
@@ -290,6 +298,7 @@ export default function StockTransfers() {
       sku: product.sku,
       description: product.description ?? "",
       photoUrl: product.photoUrl ?? "",
+      originalPhotoUrl: (product as Product & { originalPhotoUrl?: string }).originalPhotoUrl ?? "",
       price: String(product.price),
       costPrice: product.costPrice != null ? String(product.costPrice) : "",
       warehouseStock: String((product as Product & { warehouseStock?: number }).warehouseStock ?? 0),

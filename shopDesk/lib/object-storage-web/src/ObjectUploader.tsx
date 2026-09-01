@@ -2,7 +2,7 @@ import { useRef, type ReactNode } from "react";
 import { useUpload } from "./use-upload";
 
 interface ObjectUploaderProps {
-  /** Accepted MIME types (default: "image/*") */
+  /** Accepted MIME types (default: "image/jpeg,image/png,image/webp") */
   accept?: string;
   maxFileSize?: number;
   basePath?: string;
@@ -13,11 +13,14 @@ interface ObjectUploaderProps {
 }
 
 /**
- * A file upload button that uploads directly to Cloudinary via the API server.
- * Calls onSuccess with the resulting Cloudinary URL.
+ * A file upload button that uploads directly to Cloudinary via the API server,
+ * with automatic background removal when REMOVE_BG_API_KEY is configured.
+ *
+ * Calls onSuccess with the display URL (bg-removed when available).
+ * The original image URL is preserved server-side regardless.
  */
 export function ObjectUploader({
-  accept = "image/*",
+  accept = "image/jpeg,image/png,image/webp",
   maxFileSize = 10 * 1024 * 1024,
   basePath,
   onSuccess,
@@ -26,17 +29,23 @@ export function ObjectUploader({
   children,
 }: ObjectUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { uploadFile, isUploading } = useUpload({
+  const { uploadFile, isUploading, isProcessing } = useUpload({
     basePath,
     onSuccess: ({ url }) => onSuccess?.(url),
     onError,
   });
 
+  const busy = isUploading || isProcessing;
+
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > maxFileSize) {
-      onError?.(new Error(`File exceeds maximum size of ${Math.round(maxFileSize / 1024 / 1024)} MB`));
+      onError?.(
+        new Error(
+          `File exceeds maximum size of ${Math.round(maxFileSize / 1024 / 1024)} MB`,
+        ),
+      );
       return;
     }
     await uploadFile(file);
@@ -52,12 +61,12 @@ export function ObjectUploader({
         accept={accept}
         className="hidden"
         onChange={handleChange}
-        disabled={isUploading}
+        disabled={busy}
       />
       <button
         type="button"
         className={buttonClassName}
-        disabled={isUploading}
+        disabled={busy}
         onClick={() => inputRef.current?.click()}
       >
         {children}
