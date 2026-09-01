@@ -13,7 +13,6 @@ import {
   Home,
   LayoutGrid,
   List,
-  MoreHorizontal,
   Package,
   Search,
   ShoppingBag,
@@ -345,9 +344,7 @@ export default function Catalog() {
     updateUrl({ cat: id });
   }
 
-  /* ── visible categories in the icon row (All + up to 4 + More) ── */
-  const visibleCats = categories.slice(0, 4);
-  const hasMore     = categories.length > 4;
+  /* ── visible categories in the icon row (All + all cats) ── */
 
   /* ─────────────────────────────────────────────────────────── */
   return (
@@ -438,7 +435,7 @@ export default function Catalog() {
             </button>
 
             {/* Dynamic categories */}
-            {visibleCats.map((cat) => {
+            {categories.map((cat) => {
               const Icon = getCategoryIcon(cat.name);
               return (
                 <button
@@ -457,21 +454,6 @@ export default function Catalog() {
               );
             })}
 
-            {/* More */}
-            {hasMore && (
-              <button
-                type="button"
-                className="cat-icon-btn"
-                data-active="false"
-                onClick={() => setSidebarOpen(true)}
-                aria-label="More categories"
-              >
-                <span className="cat-icon-circle">
-                  <MoreHorizontal className="h-4 w-4" />
-                </span>
-                <span className="cat-icon-label">More</span>
-              </button>
-            )}
           </div>
         </div>
 
