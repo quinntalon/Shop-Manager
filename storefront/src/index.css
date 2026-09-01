@@ -513,18 +513,17 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    padding: 0.55rem 1rem;
+    gap: 0.35rem;
+    padding: 0.5rem 0.75rem;
     background-color: var(--color-sd-orange);
     color: #ffffff;
     font-weight: 700;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     border-radius: 0.625rem;
     border: none;
     cursor: pointer;
     transition: background-color 0.15s, transform 0.15s;
     white-space: nowrap;
-    flex: 1;
   }
   .btn-add-cart:hover {
     background-color: var(--color-sd-orange-dark);
