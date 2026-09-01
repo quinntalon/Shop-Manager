@@ -422,7 +422,7 @@ export default function Catalog() {
           className="px-4 pb-3 overflow-x-auto"
           style={{ scrollbarWidth: "none" }}
         >
-          <div className="flex items-start gap-4 w-max">
+          <div className="flex items-start gap-3 w-max">
             {/* All */}
             <button
               type="button"
@@ -432,7 +432,7 @@ export default function Catalog() {
               aria-label="All products"
             >
               <span className="cat-icon-circle">
-                <LayoutGrid className="h-5 w-5" />
+                <LayoutGrid className="h-4 w-4" />
               </span>
               <span className="cat-icon-label">All</span>
             </button>
@@ -450,7 +450,7 @@ export default function Catalog() {
                   aria-label={cat.name}
                 >
                   <span className="cat-icon-circle">
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-4 w-4" />
                   </span>
                   <span className="cat-icon-label">{cat.name.split(" ")[0]}</span>
                 </button>
@@ -467,7 +467,7 @@ export default function Catalog() {
                 aria-label="More categories"
               >
                 <span className="cat-icon-circle">
-                  <MoreHorizontal className="h-5 w-5" />
+                  <MoreHorizontal className="h-4 w-4" />
                 </span>
                 <span className="cat-icon-label">More</span>
               </button>
