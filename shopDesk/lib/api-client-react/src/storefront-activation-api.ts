@@ -13,6 +13,8 @@ export interface ProductWithStorefront extends Product {
   storefrontActive: boolean;
   warehouseStock: number;
   discountPercent: number;
+  /** Background-removed version of the photo (transparent PNG). Equals photoUrl when bg removal is unavailable. */
+  originalPhotoUrl: string | null;
 }
 
 // ── Fetch helpers ──────────────────────────────────────────────────────────
