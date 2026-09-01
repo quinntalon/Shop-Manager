@@ -50,9 +50,9 @@
 /* ─── Light mode ──────────────────────────────────────────── */
 :root {
   color-scheme: light;
-  --surface:   #F8FAFC;
+  --surface:   #ffffff;
   --surface-2: #ffffff;
-  --surface-3: #f1f5f9;
+  --surface-3: #f5f5f5;
   --border:    #e8edf4;
   --border-2:  #d1d9e6;
 
