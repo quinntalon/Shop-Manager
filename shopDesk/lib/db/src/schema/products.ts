@@ -15,6 +15,7 @@ export const productsTable = pgTable("products", {
   reorderLevel: integer("reorder_level").notNull().default(5),
   categoryId: integer("category_id"),
   photoUrl: text("photo_url"),
+  originalPhotoUrl: text("original_photo_url"),
   storefrontActive: boolean("storefront_active").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
