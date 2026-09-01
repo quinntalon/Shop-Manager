@@ -18,10 +18,10 @@ export default function Navbar() {
   }, []);
 
   function toggleTheme() {
-    const nextLightMode = !lightMode;
-    setLightMode(nextLightMode);
-    document.documentElement.classList.toggle("theme-dark", !nextLightMode);
-    window.localStorage.setItem("shopdesk-theme", nextLightMode ? "light" : "dark");
+    const next = !lightMode;
+    setLightMode(next);
+    document.documentElement.classList.toggle("theme-dark", !next);
+    window.localStorage.setItem("shopdesk-theme", next ? "light" : "dark");
   }
 
   function handleSearch(e: React.FormEvent) {
@@ -36,30 +36,67 @@ export default function Navbar() {
     { href: "/catalog", label: "Shop All" },
   ];
 
-   
+  return (
+    <header
+      className="sticky top-0 z-40 w-full"
+      style={{
+        background: "var(--surface-2)",
+        borderBottom: "1px solid var(--border)",
+        boxShadow: "0 1px 8px color-mix(in srgb, var(--text-strong) 5%, transparent)",
+      }}
+    >
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        {/* ── Main header row ── */}
+        <div className="flex h-14 items-center gap-3">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 shrink-0 text-decoration-none">
+            {/* Orange lightning circle */}
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
+              style={{ background: "var(--sd-orange)" }}
+            >
+              <Zap className="h-4 w-4 text-white" strokeWidth={2.5} fill="white" />
+            </div>
+            {/* Wordmark */}
+            <span
+              className="text-[1.05rem] font-extrabold leading-none tracking-tight"
+              style={{ color: "var(--text-primary)" }}
+            >
+              Shop
+              <span style={{ color: "var(--sd-orange)" }}>Desk</span>
+            </span>
+          </Link>
 
-          {/* Nav links (desktop) */}
-          <nav className="hidden md:flex items-center gap-1 ml-5">
+          {/* Desktop nav links */}
+          <nav className="hidden md:flex items-center gap-1 ml-4">
             {navLinks.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 className={cn(
-                   "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
                   location === l.href
-                    ? "text-amber bg-amber-glow"
-                    : "text-slate-400 hover:text-slate-100 hover:bg-surface-3",
+                    ? "text-white"
+                    : "hover:bg-[var(--surface-3)]",
                 )}
+                style={
+                  location === l.href
+                    ? { background: "var(--sd-orange)" }
+                    : { color: "var(--text-subtle)" }
+                }
               >
                 {l.label}
               </Link>
             ))}
           </nav>
 
-          {/* Search */}
-          <form onSubmit={handleSearch} className="flex-1 hidden sm:flex max-w-xs ml-auto">
+          {/* Desktop search */}
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-sm ml-auto">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
+                style={{ color: "var(--text-faint)" }}
+              />
               <input
                 type="text"
                 placeholder="Search products..."
@@ -70,75 +107,108 @@ export default function Navbar() {
             </div>
           </form>
 
-          <div className="hidden sm:flex items-center gap-1 text-slate-400">
+          {/* Desktop right icons */}
+          <div className="hidden md:flex items-center gap-1" style={{ color: "var(--text-subtle)" }}>
             <button type="button" className="theme-toggle" aria-label="Saved items">
-              <Heart className="w-4 h-4" />
+              <Heart className="h-4 w-4" />
             </button>
             <button type="button" className="theme-toggle" aria-label="Shopping bag">
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="h-4 w-4" />
             </button>
             <button type="button" className="theme-toggle" aria-label="Account">
-              <UserRound className="w-4 h-4" />
+              <UserRound className="h-4 w-4" />
             </button>
           </div>
 
-            <button
+          {/* Dark mode toggle — always visible */}
+          <button
             type="button"
             className="theme-toggle shrink-0"
             onClick={toggleTheme}
             aria-label={lightMode ? "Switch to dark theme" : "Switch to light theme"}
-            title={lightMode ? "Switch to dark theme" : "Switch to light theme"}
+            title={lightMode ? "Dark mode" : "Light mode"}
           >
-            {lightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            {lightMode ? (
+              <Moon className="h-4 w-4" />
+            ) : (
+              <Sun className="h-4 w-4" />
+            )}
           </button>
+
+          {/* Mobile: search icon button */}
+          <Link
+            href="/catalog"
+            className="md:hidden theme-toggle shrink-0"
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4" />
+          </Link>
 
           {/* Mobile hamburger */}
           <button
             type="button"
-            className="ml-auto md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-surface-3"
+            className="md:hidden theme-toggle shrink-0"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle menu"
           >
-            {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
 
-        {/* Mobile menu */}
+        {/* ── Mobile dropdown menu ── */}
         {menuOpen && (
-          <div className="md:hidden border-t border-border py-3 space-y-1">
+          <div
+            className="md:hidden py-3 space-y-1 border-t"
+            style={{ borderColor: "var(--border)" }}
+          >
             {navLinks.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 onClick={() => setMenuOpen(false)}
                 className={cn(
-                  "block px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  location === l.href
-                    ? "text-amber bg-amber-glow"
-                    : "text-slate-400 hover:text-slate-100 hover:bg-surface-3",
+                  "block px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors",
                 )}
+                style={
+                  location === l.href
+                    ? {
+                        background: "var(--sd-orange-glow)",
+                        color: "var(--sd-orange)",
+                      }
+                    : { color: "var(--text-subtle)" }
+                }
               >
                 {l.label}
               </Link>
             ))}
+
+            {/* Mobile search inside menu */}
             <form onSubmit={handleSearch} className="px-1 pt-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 pointer-events-none"
+                  style={{ color: "var(--text-faint)" }}
+                />
                 <input
                   type="text"
-                  placeholder="Search appliances..."
+                  placeholder="Search products, brands, categories..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="input-field pl-9 h-9 text-sm"
                 />
               </div>
             </form>
+
             <button
               type="button"
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-400 hover:text-amber transition-colors"
-              onClick={toggleTheme}
+              className="flex items-center gap-2 px-3 py-2 w-full text-sm font-medium rounded-xl transition-colors"
+              style={{ color: "var(--text-subtle)" }}
+              onClick={() => {
+                toggleTheme();
+                setMenuOpen(false);
+              }}
             >
-              {lightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              {lightMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               {lightMode ? "Dark theme" : "Light theme"}
             </button>
           </div>

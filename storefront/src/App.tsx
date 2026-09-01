@@ -10,6 +10,9 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-surface transition-colors duration-300">
       <Navbar />
+
+      {/* Main content — extra bottom padding on mobile leaves room for the
+          floating bottom navigation bar (≈ 4.5rem height + 0.75rem gap × 2) */}
       <main className="flex-1">
         <Switch>
           <Route path="/" component={Home} />
@@ -18,7 +21,11 @@ export default function App() {
           <Route component={NotFound} />
         </Switch>
       </main>
-      <Footer />
+
+      {/* Footer: hidden on mobile — bottom nav replaces it there */}
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 }
