@@ -143,7 +143,7 @@ function BottomNav() {
               aria-label={label}
             >
               <span className="bnav-icon">
-                <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 1.8} />
+                <Icon className="h-4 w-4" strokeWidth={active ? 2.5 : 1.8} />
               </span>
               <span className="bnav-label">{label}</span>
             </button>
