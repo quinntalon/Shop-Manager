@@ -319,6 +319,7 @@ export default function StockTransfers() {
         sku: editForm.sku,
         description: editForm.description || undefined,
         photoUrl: editForm.photoUrl || undefined,
+        originalPhotoUrl: editForm.originalPhotoUrl || undefined,
         price: parseFloat(editForm.price),
         costPrice: editForm.costPrice ? parseFloat(editForm.costPrice) : undefined,
         discountPercent: parseInt(editForm.discountPercent, 10) || 0,
