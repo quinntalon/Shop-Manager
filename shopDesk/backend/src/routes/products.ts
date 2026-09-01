@@ -22,6 +22,7 @@ function buildProduct(row: {
   sku: string;
   description: string | null;
   photoUrl: string | null;
+  originalPhotoUrl: string | null;
   price: string;
   costPrice: string | null;
   stock: number;
@@ -39,6 +40,7 @@ function buildProduct(row: {
     sku: row.sku,
     description: row.description,
     photoUrl: row.photoUrl,
+    originalPhotoUrl: row.originalPhotoUrl,
     price: parseFloat(row.price),
     costPrice: row.costPrice != null ? parseFloat(row.costPrice) : null,
     stock: row.stock,
@@ -58,6 +60,7 @@ const PRODUCT_SELECT = {
   sku: productsTable.sku,
   description: productsTable.description,
   photoUrl: productsTable.photoUrl,
+  originalPhotoUrl: productsTable.originalPhotoUrl,
   price: productsTable.price,
   costPrice: productsTable.costPrice,
   stock: productsTable.stock,
@@ -179,6 +182,8 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         updates.description = parsed.data.description;
       if (parsed.data.photoUrl !== undefined)
         updates.photoUrl = parsed.data.photoUrl;
+      if (parsed.data.originalPhotoUrl !== undefined)
+        updates.originalPhotoUrl = parsed.data.originalPhotoUrl;
       if (parsed.data.price !== undefined)
         updates.price = String(parsed.data.price);
       if (parsed.data.costPrice !== undefined)
