@@ -112,13 +112,13 @@ export default function ProductCard({ product, className, listView = false }: Pr
         <article
           className={cn("mobile-product-card group", className)}
           aria-label={product.name}
+          style={{ minHeight: "9.5rem" }}
         >
           {/* ── Left: product image ── */}
           <div
-            className="shrink-0 relative overflow-hidden"
+            className="shrink-0 relative overflow-hidden self-stretch"
             style={{
-              width: "7.5rem",
-              minHeight: "9rem",
+              width: "8.5rem",
               background: "var(--surface-3)",
               borderRadius: "1.25rem 0 0 1.25rem",
             }}
@@ -128,13 +128,13 @@ export default function ProductCard({ product, className, listView = false }: Pr
                 src={product.photoUrl}
                 alt={product.name}
                 loading="lazy"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                style={{ minHeight: "9rem" }}
+                className="absolute inset-0 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                style={{ padding: "0.5rem" }}
               />
             ) : (
               <div
-                className="w-full h-full flex flex-col items-center justify-center gap-1"
-                style={{ color: "var(--text-quiet)", minHeight: "9rem" }}
+                className="absolute inset-0 flex flex-col items-center justify-center gap-1"
+                style={{ color: "var(--text-quiet)" }}
               >
                 <ImageOff className="h-7 w-7 opacity-40" />
                 <span className="text-[9px] uppercase tracking-widest opacity-40">No image</span>
