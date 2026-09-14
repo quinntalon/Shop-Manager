@@ -66,10 +66,14 @@ export async function createSession(userId: number, reply: FastifyReply): Promis
 
 export async function destroySession(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   const token = getCookie(request, SESSION_COOKIE);
-  if (token) {
-    await db.delete(sessionsTable).where(eq(sessionsTable.tokenHash, hashSessionToken(token)));
+  try {
+    if (token) {
+      await db.delete(sessionsTable).where(eq(sessionsTable.tokenHash, hashSessionToken(token)));
+    }
+  } finally {
+    // Clear the browser cookie even if the database cleanup fails.
+    clearSessionCookie(reply);
   }
-  clearSessionCookie(reply);
 }
 
 export async function getCurrentUser(request: FastifyRequest): Promise<AuthUser | null> {

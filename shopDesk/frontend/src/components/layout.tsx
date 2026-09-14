@@ -65,8 +65,15 @@ function SidebarContent({
   onCollapseToggle?: () => void;
 }) {
   const { settings } = useSettings();
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const businessName = settings?.businessName || "Nexus POS";
   const logoUrl = settings?.logoUrl ?? null;
+
+  async function handleSignOut() {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    await signOut();
+  }
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
@@ -158,15 +165,17 @@ function SidebarContent({
         {/* Logout */}
         <button
           type="button"
-          onClick={() => void signOut()}
+          onClick={() => void handleSignOut()}
+          disabled={isSigningOut}
+          aria-busy={isSigningOut}
           className={cn(
-            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-wait disabled:opacity-60",
             collapsed && "justify-center px-2"
           )}
           title={collapsed ? "Sign out" : undefined}
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && "Sign out"}
+          {!collapsed && (isSigningOut ? "Signing out…" : "Sign out")}
         </button>
 
         {/* Theme toggle */}

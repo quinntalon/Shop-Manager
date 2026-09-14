@@ -28,9 +28,17 @@ export function useRole() {
     isRejected: !isLoading && !!data && data.status === "rejected",
     can: (permission: Permission) => permissions.includes(permission),
     signOut: async () => {
-      await logout();
-      await queryClient.invalidateQueries({ queryKey: authQueryKey });
-      queryClient.setQueryData(authQueryKey, null);
+      try {
+        await logout();
+      } catch {
+        // The local session must still be cleared when the API is unavailable.
+      } finally {
+        await queryClient.cancelQueries({ queryKey: authQueryKey });
+        queryClient.setQueryData(authQueryKey, null);
+        window.location.replace(
+          `${import.meta.env.BASE_URL.replace(/\/$/, "")}/sign-in`,
+        );
+      }
     },
   };
 }
