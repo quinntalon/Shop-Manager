@@ -8,6 +8,7 @@ function Field({
   value,
   onChange,
   type = "text",
+  required = true,
   placeholder,
   autoComplete,
 }: {
@@ -16,6 +17,7 @@ function Field({
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  required?: boolean;
   placeholder?: string;
   autoComplete?: string;
 }) {
@@ -27,6 +29,7 @@ function Field({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         type={type}
+        required={required}
         autoComplete={autoComplete}
         placeholder={placeholder}
         className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-[15px] text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"

@@ -25,13 +25,44 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(body?.error?.message ?? body?.error ?? "Request failed") as Error & {
+    const error = new Error(getApiErrorMessage(body, response.status)) as Error & {
       status?: number;
     };
     error.status = response.status;
     throw error;
   }
   return body as T;
+}
+
+function getApiErrorMessage(body: unknown, status: number): string {
+  if (!body || typeof body !== "object") {
+    return `Request failed (${status}).`;
+  }
+
+  const errorValue = (body as { error?: unknown }).error;
+  if (typeof errorValue === "string" && errorValue.trim()) {
+    return errorValue;
+  }
+
+  if (errorValue && typeof errorValue === "object") {
+    const details = errorValue as {
+      fieldErrors?: Record<string, string[] | undefined>;
+      formErrors?: string[];
+      message?: string;
+    };
+    const messages = [
+      ...(details.formErrors ?? []),
+      ...Object.values(details.fieldErrors ?? {}).flatMap((fieldMessages) => fieldMessages ?? []),
+    ].filter(Boolean);
+    if (messages.length > 0) {
+      return messages.join(" ");
+    }
+    if (details.message) {
+      return details.message;
+    }
+  }
+
+  return `Request failed (${status}).`;
 }
 
 export function getCurrentUser(): Promise<LocalUser | null> {
